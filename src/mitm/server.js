@@ -6,12 +6,29 @@ const path = require("path");
 const dns = require("dns");
 const { promisify } = require("util");
 const { execSync } = require("child_process");
-const { log, err, dumpRequest, createResponseDumper, clearDumpDir } = require("./logger");
-const { IS_DEV, LSOF_BIN, TARGET_HOSTS, URL_PATTERNS, MODEL_SYNONYMS, MODEL_PATTERNS, MODEL_NO_MAP, getToolForHost } = require("./config");
+const {
+  log,
+  err,
+  dumpRequest,
+  createResponseDumper,
+  clearDumpDir,
+} = require("./logger");
+const {
+  IS_DEV,
+  LSOF_BIN,
+  TARGET_HOSTS,
+  URL_PATTERNS,
+  MODEL_SYNONYMS,
+  MODEL_PATTERNS,
+  MODEL_NO_MAP,
+  getToolForHost,
+} = require("./config");
 const { DATA_DIR, MITM_DIR } = require("./paths");
 const { getCertForDomain } = require("./cert/generate");
 const { getMitmAlias } = require("./dbReader");
-const { applyAntigravityIdeVersionOverride } = require("./antigravityIdeVersion");
+const {
+  applyAntigravityIdeVersionOverride,
+} = require("./antigravityIdeVersion");
 const LOCAL_PORT = 443;
 const IS_WIN = process.platform === "win32";
 const ENABLE_FILE_LOG = IS_DEV;
@@ -42,10 +59,11 @@ function sniCallback(servername, cb) {
   try {
     if (certCache.has(servername)) return cb(null, certCache.get(servername));
     const certData = getCertForDomain(servername);
-    if (!certData) return cb(new Error(`Failed to generate cert for ${servername}`));
+    if (!certData)
+      return cb(new Error(`Failed to generate cert for ${servername}`));
     const ctx = require("tls").createSecureContext({
       key: certData.key,
-      cert: `${certData.cert}\n${rootCAPem}`
+      cert: `${certData.cert}\n${rootCAPem}`,
     });
     certCache.set(servername, ctx);
     cb(null, ctx);
@@ -85,7 +103,7 @@ async function resolveTargetIP(hostname) {
 function collectBodyRaw(req) {
   return new Promise((resolve, reject) => {
     const chunks = [];
-    req.on("data", chunk => chunks.push(chunk));
+    req.on("data", (chunk) => chunks.push(chunk));
     req.on("end", () => resolve(Buffer.concat(chunks)));
     req.on("error", reject);
   });
@@ -95,17 +113,22 @@ function collectBodyRaw(req) {
 function extractModel(url, body) {
   const urlMatch = url.match(/\/models\/([^/:]+)/);
   if (urlMatch) return urlMatch[1];
-  
+
   // Skip parsing if body is binary (AWS EventStream, Protocol Buffers, etc.)
   if (isBinaryData(body)) return null;
-  
+
   try {
     const parsed = JSON.parse(body.toString());
     if (parsed.conversationState) {
-      return parsed.conversationState.currentMessage?.userInputMessage?.modelId || null;
+      return (
+        parsed.conversationState.currentMessage?.userInputMessage?.modelId ||
+        null
+      );
     }
     return parsed.model || null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 // Detect binary data vs JSON text
@@ -118,13 +141,13 @@ function isBinaryData(buffer) {
   for (let i = 0; i < sample.length; i++) {
     const byte = sample[i];
     // Count non-ASCII printable chars (excluding whitespace)
-    if (byte < 0x20 && byte !== 0x09 && byte !== 0x0A && byte !== 0x0D) {
+    if (byte < 0x20 && byte !== 0x09 && byte !== 0x0a && byte !== 0x0d) {
       nonPrintable++;
     }
-    if (byte > 0x7E) nonPrintable++;
+    if (byte > 0x7e) nonPrintable++;
   }
   // If >30% non-printable, treat as binary
-  return (nonPrintable / sample.length) > 0.3;
+  return nonPrintable / sample.length > 0.3;
 }
 
 function getMappedModel(tool, model) {
@@ -137,7 +160,9 @@ function getMappedModel(tool, model) {
     const lookup = MODEL_SYNONYMS?.[tool]?.[normalizedModel] || normalizedModel;
     if (aliases[lookup]) return aliases[lookup];
     // Prefix match fallback
-    const prefixKey = Object.keys(aliases).find(k => k && aliases[k] && (lookup.startsWith(k) || k.startsWith(lookup)));
+    const prefixKey = Object.keys(aliases).find(
+      (k) => k && aliases[k] && (lookup.startsWith(k) || k.startsWith(lookup)),
+    );
     if (prefixKey) return aliases[prefixKey];
     // Pattern fallback: catches AG renamed variants (e.g. deprecated pro IDs → gemini-pro-agent)
     const patterns = MODEL_PATTERNS?.[tool] || [];
@@ -145,7 +170,9 @@ function getMappedModel(tool, model) {
       if (match.test(lookup) && aliases[alias]) return aliases[alias];
     }
     return null;
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -157,14 +184,21 @@ function getMappedModel(tool, model) {
 async function passthrough(req, res, bodyBuffer, onResponse) {
   const originalHost = (req.headers.host || TARGET_HOSTS[0]).split(":")[0];
   // Only rewrite host for chat endpoints — daily-cloudcode-pa rejects auth/login requests
-  const isChatEndpoint = req.url.includes(":generateContent") || req.url.includes(":streamGenerateContent");
-  const targetHost = isChatEndpoint ? (HOST_REWRITE[originalHost] || originalHost) : originalHost;
-  const dumper = ENABLE_FILE_LOG ? createResponseDumper(req, "passthrough") : null;
+  const isChatEndpoint =
+    req.url.includes(":generateContent") ||
+    req.url.includes(":streamGenerateContent");
+  const targetHost = isChatEndpoint
+    ? HOST_REWRITE[originalHost] || originalHost
+    : originalHost;
+  const dumper = ENABLE_FILE_LOG
+    ? createResponseDumper(req, "passthrough")
+    : null;
 
   const tool = getToolForHost(req.headers.host);
-  const versionOverride = tool === "antigravity"
-    ? applyAntigravityIdeVersionOverride(bodyBuffer, req.headers)
-    : { bodyBuffer, headers: req.headers };
+  const versionOverride =
+    tool === "antigravity"
+      ? applyAntigravityIdeVersionOverride(bodyBuffer, req.headers)
+      : { bodyBuffer, headers: req.headers };
   const bodyForForwarding = versionOverride.bodyBuffer;
   const headersForForwarding = { ...versionOverride.headers, host: targetHost };
   if (bodyForForwarding !== bodyBuffer) {
@@ -175,13 +209,29 @@ async function passthrough(req, res, bodyBuffer, onResponse) {
   try {
     const proto = await negotiateAlpn(targetHost);
     if (proto === "h2") {
-      return await passthroughHttp2(req, res, bodyForForwarding, headersForForwarding, targetHost, onResponse, dumper);
+      return await passthroughHttp2(
+        req,
+        res,
+        bodyForForwarding,
+        headersForForwarding,
+        targetHost,
+        onResponse,
+        dumper,
+      );
     }
   } catch (e) {
     err(`[mitm] ALPN negotiate failed: ${e.message}, fallback to HTTP/1.1`);
   }
 
-  return passthroughHttps(req, res, bodyForForwarding, headersForForwarding, targetHost, onResponse, dumper);
+  return passthroughHttps(
+    req,
+    res,
+    bodyForForwarding,
+    headersForForwarding,
+    targetHost,
+    onResponse,
+    dumper,
+  );
 }
 
 // ── ALPN negotiation cache ────────────────────────────────────
@@ -190,30 +240,53 @@ async function negotiateAlpn(host) {
   if (alpnCache.has(host)) return alpnCache.get(host);
   const ip = await resolveTargetIP(host);
   return new Promise((resolve, reject) => {
-    const socket = tls.connect({
-      host: ip, port: 443, servername: host,
-      ALPNProtocols: ["h2", "http/1.1"], rejectUnauthorized: false,
-    }, () => {
-      const proto = socket.alpnProtocol || "http/1.1";
-      alpnCache.set(host, proto);
-      log(`🔗 [mitm] ALPN ${host} → ${proto}`);
-      socket.end();
-      resolve(proto);
-    });
+    const socket = tls.connect(
+      {
+        host: ip,
+        port: 443,
+        servername: host,
+        ALPNProtocols: ["h2", "http/1.1"],
+        rejectUnauthorized: false,
+      },
+      () => {
+        const proto = socket.alpnProtocol || "http/1.1";
+        alpnCache.set(host, proto);
+        log(`🔗 [mitm] ALPN ${host} → ${proto}`);
+        socket.end();
+        resolve(proto);
+      },
+    );
     socket.once("error", reject);
-    socket.setTimeout(5000, () => { socket.destroy(new Error("ALPN timeout")); });
+    socket.setTimeout(5000, () => {
+      socket.destroy(new Error("ALPN timeout"));
+    });
   });
 }
 
 // HTTP/2 passthrough using node:http2 native
-async function passthroughHttp2(req, res, bodyBuffer, headers, targetHost, onResponse, dumper) {
+async function passthroughHttp2(
+  req,
+  res,
+  bodyBuffer,
+  headers,
+  targetHost,
+  onResponse,
+  dumper,
+) {
   const targetIP = await resolveTargetIP(targetHost);
   // HTTP/2 pseudo-headers required; strip HTTP/1.1-only headers
   const h2Headers = {};
   for (const [k, v] of Object.entries(headers)) {
     const lk = k.toLowerCase();
-    if (lk === "host" || lk === "connection" || lk === "keep-alive" ||
-        lk === "transfer-encoding" || lk === "upgrade" || lk === "proxy-connection") continue;
+    if (
+      lk === "host" ||
+      lk === "connection" ||
+      lk === "keep-alive" ||
+      lk === "transfer-encoding" ||
+      lk === "upgrade" ||
+      lk === "proxy-connection"
+    )
+      continue;
     h2Headers[lk] = v;
   }
   h2Headers[":method"] = req.method;
@@ -223,21 +296,32 @@ async function passthroughHttp2(req, res, bodyBuffer, headers, targetHost, onRes
 
   return new Promise((resolve) => {
     const client = http2.connect(`https://${targetHost}`, {
-      createConnection: () => tls.connect({
-        host: targetIP, port: 443, servername: targetHost,
-        ALPNProtocols: ["h2"], rejectUnauthorized: false,
-      }),
+      createConnection: () =>
+        tls.connect({
+          host: targetIP,
+          port: 443,
+          servername: targetHost,
+          ALPNProtocols: ["h2"],
+          rejectUnauthorized: false,
+        }),
     });
     client.once("error", (e) => {
       err(`[mitm] http2 client error: ${e.message}`);
-      if (dumper) { dumper.writeChunk(`\n[ERROR h2] ${e.message}\n`); dumper.end(); }
+      if (dumper) {
+        dumper.writeChunk(`\n[ERROR h2] ${e.message}\n`);
+        dumper.end();
+      }
       if (!res.headersSent) res.writeHead(502);
       if (!res.writableEnded) res.end("Bad Gateway");
-      try { client.close(); } catch {}
+      try {
+        client.close();
+      } catch {}
       resolve();
     });
 
-    const stream = client.request(h2Headers, { endStream: bodyBuffer.length === 0 });
+    const stream = client.request(h2Headers, {
+      endStream: bodyBuffer.length === 0,
+    });
     if (bodyBuffer.length > 0) stream.end(bodyBuffer);
 
     stream.once("response", (responseHeaders) => {
@@ -246,14 +330,19 @@ async function passthroughHttp2(req, res, bodyBuffer, headers, targetHost, onRes
       const outHeaders = {};
       for (const [k, v] of Object.entries(responseHeaders)) {
         if (k.startsWith(":")) continue;
-        if (k === "connection" || k === "keep-alive" || k === "transfer-encoding") continue;
+        if (
+          k === "connection" ||
+          k === "keep-alive" ||
+          k === "transfer-encoding"
+        )
+          continue;
         outHeaders[k] = v;
       }
       res.writeHead(status, outHeaders);
       if (dumper) dumper.writeHeader(status, outHeaders);
 
       const chunks = [];
-      stream.on("data", chunk => {
+      stream.on("data", (chunk) => {
         if (dumper) dumper.writeChunk(chunk);
         if (onResponse) chunks.push(chunk);
         res.write(chunk);
@@ -261,58 +350,87 @@ async function passthroughHttp2(req, res, bodyBuffer, headers, targetHost, onRes
       stream.on("end", () => {
         if (dumper) dumper.end();
         if (!res.writableEnded) res.end();
-        if (onResponse) try { onResponse(Buffer.concat(chunks), outHeaders); } catch {}
-        try { client.close(); } catch {}
+        if (onResponse)
+          try {
+            onResponse(Buffer.concat(chunks), outHeaders);
+          } catch {}
+        try {
+          client.close();
+        } catch {}
         resolve();
       });
     });
     stream.once("error", (e) => {
       err(`[mitm] http2 stream error: ${e.message}`);
-      if (dumper) { dumper.writeChunk(`\n[ERROR h2-stream] ${e.message}\n`); dumper.end(); }
+      if (dumper) {
+        dumper.writeChunk(`\n[ERROR h2-stream] ${e.message}\n`);
+        dumper.end();
+      }
       if (!res.headersSent) res.writeHead(502);
       if (!res.writableEnded) res.end();
-      try { client.close(); } catch {}
+      try {
+        client.close();
+      } catch {}
       resolve();
     });
   });
 }
 
 // Fallback: raw https.request HTTP/1.1 with custom DNS (bypasses /etc/hosts MITM loop)
-async function passthroughHttps(req, res, bodyBuffer, headers, targetHost, onResponse, dumper) {
+async function passthroughHttps(
+  req,
+  res,
+  bodyBuffer,
+  headers,
+  targetHost,
+  onResponse,
+  dumper,
+) {
   const targetIP = await resolveTargetIP(targetHost);
-  const forwardReq = https.request({
-    hostname: targetIP,
-    port: 443,
-    path: req.url,
-    method: req.method,
-    headers,
-    servername: targetHost,
-    rejectUnauthorized: false
-  }, (forwardRes) => {
-    res.writeHead(forwardRes.statusCode, forwardRes.headers);
-    if (dumper) dumper.writeHeader(forwardRes.statusCode, forwardRes.headers);
+  const forwardReq = https.request(
+    {
+      hostname: targetIP,
+      port: 443,
+      path: req.url,
+      method: req.method,
+      headers,
+      servername: targetHost,
+      rejectUnauthorized: false,
+    },
+    (forwardRes) => {
+      res.writeHead(forwardRes.statusCode, forwardRes.headers);
+      if (dumper) dumper.writeHeader(forwardRes.statusCode, forwardRes.headers);
 
-    if (!onResponse && !dumper) {
-      forwardRes.pipe(res);
-      return;
-    }
+      if (!onResponse && !dumper) {
+        forwardRes.pipe(res);
+        return;
+      }
 
-    const chunks = [];
-    forwardRes.on("data", chunk => {
-      if (dumper) dumper.writeChunk(chunk);
-      if (onResponse) chunks.push(chunk);
-      res.write(chunk);
-    });
-    forwardRes.on("end", () => {
-      if (dumper) dumper.end();
-      res.end();
-      if (onResponse) try { onResponse(Buffer.concat(chunks), forwardRes.headers); } catch { /* ignore */ }
-    });
-  });
+      const chunks = [];
+      forwardRes.on("data", (chunk) => {
+        if (dumper) dumper.writeChunk(chunk);
+        if (onResponse) chunks.push(chunk);
+        res.write(chunk);
+      });
+      forwardRes.on("end", () => {
+        if (dumper) dumper.end();
+        res.end();
+        if (onResponse)
+          try {
+            onResponse(Buffer.concat(chunks), forwardRes.headers);
+          } catch {
+            /* ignore */
+          }
+      });
+    },
+  );
 
   forwardReq.on("error", (e) => {
     err(`Passthrough error: ${e.message}`);
-    if (dumper) { dumper.writeChunk(`\n[ERROR] ${e.message}\n`); dumper.end(); }
+    if (dumper) {
+      dumper.writeChunk(`\n[ERROR] ${e.message}\n`);
+      dumper.end();
+    }
     if (!res.headersSent) res.writeHead(502);
     res.end("Bad Gateway");
   });
@@ -334,8 +452,11 @@ const server = https.createServer(sslOptions, async (req, res) => {
     const bodyBuffer = await collectBodyRaw(req);
     if (ENABLE_FILE_LOG) dumpRequest(req, bodyBuffer, "raw");
 
-    // Anti-loop: skip requests from 9Router
-    if (req.headers[INTERNAL_REQUEST_HEADER.name] === INTERNAL_REQUEST_HEADER.value) {
+    // Anti-loop: skip requests from mairouter
+    if (
+      req.headers[INTERNAL_REQUEST_HEADER.name] ===
+      INTERNAL_REQUEST_HEADER.value
+    ) {
       return passthrough(req, res, bodyBuffer);
     }
 
@@ -343,7 +464,7 @@ const server = https.createServer(sslOptions, async (req, res) => {
     if (!tool) return passthrough(req, res, bodyBuffer);
 
     const patterns = URL_PATTERNS[tool] || [];
-    const isChat = patterns.some(p => req.url.includes(p));
+    const isChat = patterns.some((p) => req.url.includes(p));
     if (!isChat) return passthrough(req, res, bodyBuffer);
 
     // Cursor uses binary proto — model extraction not possible at this layer.
@@ -366,11 +487,20 @@ const server = https.createServer(sslOptions, async (req, res) => {
       return passthrough(req, res, bodyBuffer);
     }
 
-    return handlers[tool].intercept(req, res, bodyBuffer, mappedModel, passthrough);
+    return handlers[tool].intercept(
+      req,
+      res,
+      bodyBuffer,
+      mappedModel,
+      passthrough,
+    );
   } catch (e) {
     err(`Unhandled error: ${e.message}`);
-    if (!res.headersSent) res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: { message: e.message, type: "mitm_error" } }));
+    if (!res.headersSent)
+      res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({ error: { message: e.message, type: "mitm_error" } }),
+    );
   }
 });
 
@@ -379,18 +509,28 @@ function killPort(port) {
   try {
     let pidList = [];
     if (IS_WIN) {
-      const psCmd = `powershell -NonInteractive -WindowStyle Hidden -Command ` +
+      const psCmd =
+        `powershell -NonInteractive -WindowStyle Hidden -Command ` +
         `"Get-NetTCPConnection -LocalPort ${port} -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess"`;
-      const out = execSync(psCmd, { encoding: "utf-8", windowsHide: true }).trim();
+      const out = execSync(psCmd, {
+        encoding: "utf-8",
+        windowsHide: true,
+      }).trim();
       if (!out) return;
-      pidList = out.split(/\r?\n/).map(s => s.trim()).filter(p => p && Number(p) !== process.pid && Number(p) > 4);
+      pidList = out
+        .split(/\r?\n/)
+        .map((s) => s.trim())
+        .filter((p) => p && Number(p) !== process.pid && Number(p) > 4);
     } else {
-      const out = execSync(`${LSOF_BIN} -nP -iTCP:${port} -sTCP:LISTEN -t`, { encoding: "utf-8", windowsHide: true }).trim();
+      const out = execSync(`${LSOF_BIN} -nP -iTCP:${port} -sTCP:LISTEN -t`, {
+        encoding: "utf-8",
+        windowsHide: true,
+      }).trim();
       if (!out) return;
-      pidList = out.split("\n").filter(p => p && Number(p) !== process.pid);
+      pidList = out.split("\n").filter((p) => p && Number(p) !== process.pid);
     }
     if (pidList.length === 0) return;
-    pidList.forEach(pid => {
+    pidList.forEach((pid) => {
       try {
         if (IS_WIN) execSync(`taskkill /F /PID ${pid}`, { windowsHide: true });
         else process.kill(Number(pid), "SIGKILL");
@@ -428,7 +568,10 @@ const shutdown = () => {
   // Strip tool hosts from /etc/hosts so other apps aren't broken after exit
   removeAllDNSEntriesSync();
   const forceExit = setTimeout(() => process.exit(0), 1500);
-  server.close(() => { clearTimeout(forceExit); process.exit(0); });
+  server.close(() => {
+    clearTimeout(forceExit);
+    process.exit(0);
+  });
 };
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);

@@ -1,11 +1,11 @@
 const { err } = require("../logger");
 const { fetchRouter, pipeSSE } = require("./base");
 
-// Map Copilot endpoint → 9Router path
+// Map Copilot endpoint → mairouter path
 const URL_MAP = {
   "/chat/completions": "/v1/chat/completions",
-  "/v1/messages":      "/v1/messages",
-  "/responses":        "/v1/responses",
+  "/v1/messages": "/v1/messages",
+  "/responses": "/v1/responses",
 };
 
 function resolveRouterPath(reqUrl) {
@@ -16,7 +16,7 @@ function resolveRouterPath(reqUrl) {
 }
 
 /**
- * Intercept Copilot request — replace model and forward to matching 9Router endpoint
+ * Intercept Copilot request — replace model and forward to matching mairouter endpoint
  */
 async function intercept(req, res, bodyBuffer, mappedModel) {
   try {
@@ -27,8 +27,11 @@ async function intercept(req, res, bodyBuffer, mappedModel) {
     await pipeSSE(routerRes, res);
   } catch (error) {
     err(`[copilot] ${error.message}`);
-    if (!res.headersSent) res.writeHead(500, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ error: { message: error.message, type: "mitm_error" } }));
+    if (!res.headersSent)
+      res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({ error: { message: error.message, type: "mitm_error" } }),
+    );
   }
 }
 

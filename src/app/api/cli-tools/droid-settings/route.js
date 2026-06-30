@@ -18,7 +18,10 @@ const checkDroidInstalled = async () => {
     const isWindows = os.platform() === "win32";
     const command = isWindows ? "where droid" : "which droid";
     const env = isWindows
-      ? { ...process.env, PATH: `${process.env.APPDATA}\\npm;${process.env.PATH}` }
+      ? {
+          ...process.env,
+          PATH: `${process.env.APPDATA}\\npm;${process.env.PATH}`,
+        }
       : process.env;
     await execAsync(command, { windowsHide: true, env });
     return true;
@@ -46,17 +49,19 @@ const readSettings = async () => {
   }
 };
 
-// Check if settings has 9Router customModels
-const has9RouterConfig = (settings) => {
+// Check if settings has mairouter customModels
+const hasmairouterConfig = (settings) => {
   if (!settings || !settings.customModels) return false;
-  return settings.customModels.some(m => m.id?.startsWith("custom:9Router"));
+  return settings.customModels.some((m) =>
+    m.id?.startsWith("custom:mairouter"),
+  );
 };
 
 // GET - Check droid CLI and read current settings
 export async function GET() {
   try {
     const isInstalled = await checkDroidInstalled();
-    
+
     if (!isInstalled) {
       return NextResponse.json({
         installed: false,
@@ -70,27 +75,38 @@ export async function GET() {
     return NextResponse.json({
       installed: true,
       settings,
-      has9Router: has9RouterConfig(settings),
+      hasmairouter: hasmairouterConfig(settings),
       settingsPath: getDroidSettingsPath(),
     });
   } catch (error) {
     console.log("Error checking droid settings:", error);
-    return NextResponse.json({ error: "Failed to check droid settings" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to check droid settings" },
+      { status: 500 },
+    );
   }
 }
 
-// POST - Update 9Router customModels (merge with existing settings)
+// POST - Update mairouter customModels (merge with existing settings)
 // Accepts either `model` (string, legacy single-model) or `models` (array of strings, multi-model)
 // Also accepts `activeModel` to set which model is active/primary
 export async function POST(request) {
   try {
-    const { baseUrl, apiKey, model, models, activeModel } = await request.json();
-    
+    const { baseUrl, apiKey, model, models, activeModel } =
+      await request.json();
+
     // Accept either `models` (array) or `model` (string, legacy)
-    const modelsArray = Array.isArray(models) ? models.slice() : (typeof model === "string" ? [model] : []);
-    
+    const modelsArray = Array.isArray(models)
+      ? models.slice()
+      : typeof model === "string"
+        ? [model]
+        : [];
+
     if (!baseUrl || modelsArray.length === 0) {
-      return NextResponse.json({ error: "baseUrl and at least one model are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "baseUrl and at least one model are required" },
+        { status: 400 },
+      );
     }
 
     const droidDir = getDroidDir();
@@ -104,18 +120,24 @@ export async function POST(request) {
     try {
       const existingSettings = await fs.readFile(settingsPath, "utf-8");
       settings = JSON.parse(existingSettings);
-    } catch { /* No existing settings */ }
+    } catch {
+      /* No existing settings */
+    }
 
     // Ensure customModels array exists
     if (!settings.customModels) {
       settings.customModels = [];
     }
 
-    // Remove all existing 9Router configs
-    settings.customModels = settings.customModels.filter(m => !m.id?.startsWith("custom:9Router"));
+    // Remove all existing mairouter configs
+    settings.customModels = settings.customModels.filter(
+      (m) => !m.id?.startsWith("custom:mairouter"),
+    );
 
     // Normalize baseUrl to ensure /v1 suffix
-    const normalizedBaseUrl = baseUrl.endsWith("/v1") ? baseUrl : `${baseUrl}/v1`;
+    const normalizedBaseUrl = baseUrl.endsWith("/v1")
+      ? baseUrl
+      : `${baseUrl}/v1`;
     const keyToUse = apiKey || "your_api_key";
 
     // Determine active model: prefer explicit activeModel, else first of modelsArray
@@ -137,7 +159,7 @@ export async function POST(request) {
       if (!m || typeof m !== "string") continue;
       settings.customModels.push({
         model: m,
-        id: `custom:9Router-${i}`,
+        id: `custom:mairouter-${i}`,
         index: i,
         baseUrl: normalizedBaseUrl,
         apiKey: keyToUse,
@@ -154,7 +176,9 @@ export async function POST(request) {
       const [defaultEntry] = settings.customModels.splice(defaultIndex, 1);
       settings.customModels.unshift({ ...defaultEntry, index: 0 });
       // Re-index the rest
-      settings.customModels.forEach((m, i) => { m.index = i; });
+      settings.customModels.forEach((m, i) => {
+        m.index = i;
+      });
     }
 
     // Write settings
@@ -167,11 +191,14 @@ export async function POST(request) {
     });
   } catch (error) {
     console.log("Error updating droid settings:", error);
-    return NextResponse.json({ error: "Failed to update droid settings" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update droid settings" },
+      { status: 500 },
+    );
   }
 }
 
-// DELETE - Remove 9Router customModels only (keep other settings)
+// DELETE - Remove mairouter customModels only (keep other settings)
 export async function DELETE() {
   try {
     const settingsPath = getDroidSettingsPath();
@@ -191,10 +218,12 @@ export async function DELETE() {
       throw error;
     }
 
-    // Remove 9Router customModels
+    // Remove mairouter customModels
     if (settings.customModels) {
-      settings.customModels = settings.customModels.filter(m => !m.id?.startsWith("custom:9Router"));
-      
+      settings.customModels = settings.customModels.filter(
+        (m) => !m.id?.startsWith("custom:mairouter"),
+      );
+
       // Remove customModels array if empty
       if (settings.customModels.length === 0) {
         delete settings.customModels;
@@ -206,10 +235,13 @@ export async function DELETE() {
 
     return NextResponse.json({
       success: true,
-      message: "9Router settings removed successfully",
+      message: "mairouter settings removed successfully",
     });
   } catch (error) {
     console.log("Error resetting droid settings:", error);
-    return NextResponse.json({ error: "Failed to reset droid settings" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to reset droid settings" },
+      { status: 500 },
+    );
   }
 }

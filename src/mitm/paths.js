@@ -2,11 +2,14 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 
-const APP_NAME = "9router";
+const APP_NAME = "mairouter";
 
 function defaultDir() {
   if (process.platform === "win32") {
-    return path.join(process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"), APP_NAME);
+    return path.join(
+      process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming"),
+      APP_NAME,
+    );
   }
   return path.join(os.homedir(), `.${APP_NAME}`);
 }
@@ -19,7 +22,9 @@ function getDataDir() {
     return configured;
   } catch (e) {
     if (e?.code === "EACCES" || e?.code === "EPERM") {
-      console.warn(`[DATA_DIR] '${configured}' not writable → fallback ~/.${APP_NAME}`);
+      console.warn(
+        `[DATA_DIR] '${configured}' not writable → fallback ~/.${APP_NAME}`,
+      );
       return defaultDir();
     }
     throw e;

@@ -19,7 +19,10 @@ export default function LoginPage() {
   // Countdown for rate-limit
   useEffect(() => {
     if (retryAfter <= 0) return;
-    const id = setInterval(() => setRetryAfter((s) => (s > 0 ? s - 1 : 0)), 1000);
+    const id = setInterval(
+      () => setRetryAfter((s) => (s > 0 ? s - 1 : 0)),
+      1000,
+    );
     return () => clearInterval(id);
   }, [retryAfter]);
 
@@ -27,7 +30,8 @@ export default function LoginPage() {
     async function checkAuth() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000);
-      const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+      const baseUrl =
+        typeof window !== "undefined" ? window.location.origin : "";
 
       try {
         const res = await fetch(`${baseUrl}/api/auth/status`, {
@@ -136,10 +140,13 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-bg p-4 relative overflow-hidden">
       {/* Faint grid background */}
-      <div className="landing-grid absolute inset-0 pointer-events-none" aria-hidden="true" />
+      <div
+        className="landing-grid absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+      />
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary mb-2">9Router</h1>
+          <h1 className="text-3xl font-bold text-primary mb-2">mairouter</h1>
           <p className="text-text-muted">
             {authMode === "oidc" && oidcConfigured
               ? "Sign in with your OIDC provider to access the dashboard"
@@ -149,7 +156,10 @@ export default function LoginPage() {
 
         <Card>
           {mustChange ? (
-            <form onSubmit={handleSetNewPassword} className="flex flex-col gap-4">
+            <form
+              onSubmit={handleSetNewPassword}
+              className="flex flex-col gap-4"
+            >
               <p className="text-sm text-amber-600 dark:text-amber-400 text-center">
                 Set a new password before accessing the dashboard remotely.
               </p>
@@ -165,80 +175,104 @@ export default function LoginPage() {
                 />
                 {error && <p className="text-xs text-red-500">{error}</p>}
               </div>
-              <Button type="submit" variant="primary" className="w-full" loading={loading} disabled={!newPassword}>
+              <Button
+                type="submit"
+                variant="primary"
+                className="w-full"
+                loading={loading}
+                disabled={!newPassword}
+              >
                 Set password
               </Button>
             </form>
           ) : (
-          <div className="flex flex-col gap-4">
-            {oidcAvailable && (
-              <Button type="button" variant="primary" className="w-full" onClick={handleOidcLogin}>
-                {oidcLoginLabel}
-              </Button>
-            )}
-
-            {oidcAvailable && passwordAvailable && <div className="h-px bg-border/60" />}
-
-            {passwordAvailable ? (
-              <form onSubmit={handleLogin} className="flex flex-col gap-4">
-                {((authMode === "oidc" && !oidcConfigured) || (authMode === "both" && !oidcConfigured)) && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
-                    OIDC login is enabled, but the issuer/client fields are not configured yet. Password login is still available for recovery.
-                  </p>
-                )}
-
-                {authMode === "both" && oidcConfigured && (
-                  <p className="text-xs text-text-muted text-center">
-                    Password and OIDC login are both enabled.
-                  </p>
-                )}
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-medium">Password</label>
-                  <Input
-                    type="password"
-                    placeholder="Enter password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoFocus={!oidcAvailable}
-                  />
-                  {error && <p className="text-xs text-red-500">{error}</p>}
-                  {retryAfter > 0 && (
-                    <p className="text-xs text-amber-600 dark:text-amber-400">
-                      Locked. Retry in <span className="font-mono">{retryAfter}s</span>.
-                    </p>
-                  )}
-                  {resetHint && (
-                    <p className="text-xs text-text-muted">
-                      Forgot password? Open <code className="bg-sidebar px-1 rounded">9router</code> CLI on the host → <b>Settings</b> → <b>Reset Password to Default</b>.
-                    </p>
-                  )}
-                </div>
-
+            <div className="flex flex-col gap-4">
+              {oidcAvailable && (
                 <Button
-                  type="submit"
+                  type="button"
                   variant="primary"
                   className="w-full"
-                  loading={loading}
-                  disabled={retryAfter > 0}
+                  onClick={handleOidcLogin}
                 >
-                  {retryAfter > 0 ? `Wait ${retryAfter}s` : "Login"}
+                  {oidcLoginLabel}
                 </Button>
+              )}
 
-                <p className="text-xs text-center text-text-muted mt-2">
-                  Default password is <code className="bg-sidebar px-1 rounded">123456</code>
-                </p>
-                {hasPassword === false && (
-                  <p className="text-xs text-center text-amber-600 dark:text-amber-400">
-                    Security risk: no password set. You will be asked to set one when logging in remotely.
+              {oidcAvailable && passwordAvailable && (
+                <div className="h-px bg-border/60" />
+              )}
+
+              {passwordAvailable ? (
+                <form onSubmit={handleLogin} className="flex flex-col gap-4">
+                  {((authMode === "oidc" && !oidcConfigured) ||
+                    (authMode === "both" && !oidcConfigured)) && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 text-center">
+                      OIDC login is enabled, but the issuer/client fields are
+                      not configured yet. Password login is still available for
+                      recovery.
+                    </p>
+                  )}
+
+                  {authMode === "both" && oidcConfigured && (
+                    <p className="text-xs text-text-muted text-center">
+                      Password and OIDC login are both enabled.
+                    </p>
+                  )}
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm font-medium">Password</label>
+                    <Input
+                      type="password"
+                      placeholder="Enter password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      autoFocus={!oidcAvailable}
+                    />
+                    {error && <p className="text-xs text-red-500">{error}</p>}
+                    {retryAfter > 0 && (
+                      <p className="text-xs text-amber-600 dark:text-amber-400">
+                        Locked. Retry in{" "}
+                        <span className="font-mono">{retryAfter}s</span>.
+                      </p>
+                    )}
+                    {resetHint && (
+                      <p className="text-xs text-text-muted">
+                        Forgot password? Open{" "}
+                        <code className="bg-sidebar px-1 rounded">
+                          mairouter
+                        </code>{" "}
+                        CLI on the host → <b>Settings</b> →{" "}
+                        <b>Reset Password to Default</b>.
+                      </p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="w-full"
+                    loading={loading}
+                    disabled={retryAfter > 0}
+                  >
+                    {retryAfter > 0 ? `Wait ${retryAfter}s` : "Login"}
+                  </Button>
+
+                  <p className="text-xs text-center text-text-muted mt-2">
+                    Default password is{" "}
+                    <code className="bg-sidebar px-1 rounded">123456</code>
                   </p>
-                )}
-              </form>
-            ) : (
-              error && <p className="text-xs text-red-500">{error}</p>
-            )}
-          </div>
+                  {hasPassword === false && (
+                    <p className="text-xs text-center text-amber-600 dark:text-amber-400">
+                      Security risk: no password set. You will be asked to set
+                      one when logging in remotely.
+                    </p>
+                  )}
+                </form>
+              ) : (
+                error && <p className="text-xs text-red-500">{error}</p>
+              )}
+            </div>
           )}
         </Card>
       </div>

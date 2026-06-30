@@ -27,19 +27,22 @@ describe("Kiro external_idp (CLIProxyAPI) import and refresh", () => {
   it("refreshes Microsoft external_idp tokens with form-encoded OAuth body", async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({
-        access_token: "new-access-token",
-        refresh_token: "rotated-refresh-token",
-        expires_in: 3600,
-      }),
+      json: () =>
+        Promise.resolve({
+          access_token: "new-access-token",
+          refresh_token: "rotated-refresh-token",
+          expires_in: 3600,
+        }),
     });
     global.fetch = fetchMock;
 
-    const { refreshKiroToken } = await import("../../open-sse/services/tokenRefresh.js");
+    const { refreshKiroToken } =
+      await import("../../open-sse/services/tokenRefresh.js");
     const result = await refreshKiroToken("old-refresh-token", {
       authMethod: "external_idp",
       clientId: TEST_CLIENT_ID,
-      tokenEndpoint: "https://login.microsoftonline.com/tenant-id/oauth2/v2.0/token",
+      tokenEndpoint:
+        "https://login.microsoftonline.com/tenant-id/oauth2/v2.0/token",
       scope: TEST_SCOPE,
       profileArn: "arn:aws:codewhisperer:us-east-1:123456789012:profile/ABC",
       region: "us-east-1",
@@ -53,7 +56,8 @@ describe("Kiro external_idp (CLIProxyAPI) import and refresh", () => {
         profileArn: "arn:aws:codewhisperer:us-east-1:123456789012:profile/ABC",
         authMethod: "external_idp",
         clientId: TEST_CLIENT_ID,
-        tokenEndpoint: "https://login.microsoftonline.com/tenant-id/oauth2/v2.0/token",
+        tokenEndpoint:
+          "https://login.microsoftonline.com/tenant-id/oauth2/v2.0/token",
         scope: TEST_SCOPE,
         region: "us-east-1",
       },
@@ -61,7 +65,9 @@ describe("Kiro external_idp (CLIProxyAPI) import and refresh", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe("https://login.microsoftonline.com/tenant-id/oauth2/v2.0/token");
+    expect(url).toBe(
+      "https://login.microsoftonline.com/tenant-id/oauth2/v2.0/token",
+    );
     expect(init.method).toBe("POST");
     expect(init.headers).toMatchObject({
       "Content-Type": "application/x-www-form-urlencoded",
@@ -77,7 +83,8 @@ describe("Kiro external_idp (CLIProxyAPI) import and refresh", () => {
   });
 
   it("rejects external_idp refresh endpoints outside Microsoft login", async () => {
-    const { refreshKiroToken } = await import("../../open-sse/services/tokenRefresh.js");
+    const { refreshKiroToken } =
+      await import("../../open-sse/services/tokenRefresh.js");
     const fetchMock = vi.fn();
     global.fetch = fetchMock;
 
@@ -106,7 +113,7 @@ describe("Kiro external_idp (CLIProxyAPI) import and refresh", () => {
     expect(headers.tokentype).toBeUndefined();
 
     expect(executor.buildUrl("claude-sonnet-4.5", true, 0, credentials)).toBe(
-      "https://codewhisperer.us-east-1.amazonaws.com/generateAssistantResponse"
+      "https://codewhisperer.us-east-1.amazonaws.com/generateAssistantResponse",
     );
   });
 
@@ -125,7 +132,8 @@ describe("Kiro external_idp (CLIProxyAPI) import and refresh", () => {
       }),
     }));
 
-    const { getKiroUsage } = await import("../../open-sse/services/usage/kiro.js");
+    const { getKiroUsage } =
+      await import("../../open-sse/services/usage/kiro.js");
     const result = await getKiroUsage("microsoft-access-token", {
       authMethod: "external_idp",
       profileArn: "arn:aws:codewhisperer:us-east-1:123456789012:profile/ABC",
@@ -133,7 +141,9 @@ describe("Kiro external_idp (CLIProxyAPI) import and refresh", () => {
 
     expect(result.plan).toBe("Kiro Enterprise");
     expect(calls).toHaveLength(1);
-    expect(calls[0].init.headers.Authorization).toBe("Bearer microsoft-access-token");
+    expect(calls[0].init.headers.Authorization).toBe(
+      "Bearer microsoft-access-token",
+    );
     expect(calls[0].init.headers.TokenType).toBe("EXTERNAL_IDP");
     expect(calls[0].init.headers.tokentype).toBeUndefined();
   });
@@ -158,7 +168,8 @@ describe("Kiro external_idp (CLIProxyAPI) import and refresh", () => {
       }),
     }));
 
-    const { POST } = await import("../../src/app/api/oauth/kiro/import-cli-proxy/route.js");
+    const { POST } =
+      await import("../../src/app/api/oauth/kiro/import-cli-proxy/route.js");
     const accessToken = makeJwt({
       preferred_username: TEST_EMAIL,
       exp: Math.floor(Date.now() / 1000) + 3600,
@@ -169,18 +180,21 @@ describe("Kiro external_idp (CLIProxyAPI) import and refresh", () => {
       access_token: accessToken,
       refresh_token: "1.AcY-refresh-token",
       client_id: TEST_CLIENT_ID,
-      token_endpoint: "https://login.microsoftonline.com/tenant-id/oauth2/v2.0/token",
+      token_endpoint:
+        "https://login.microsoftonline.com/tenant-id/oauth2/v2.0/token",
       profile_arn: "arn:aws:codewhisperer:us-east-1:123456789012:profile/ABC",
       region: "us-east-1",
       scopes: TEST_SCOPE,
       expired: new Date(Date.now() + 3600_000).toISOString(),
     };
 
-    const response = await POST(new Request("https://9router.local/api/oauth/kiro/import-cli-proxy", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cliProxyAuth }),
-    }));
+    const response = await POST(
+      new Request("https://mairouter.local/api/oauth/kiro/import-cli-proxy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cliProxyAuth }),
+      }),
+    );
     const body = await response.json();
 
     expect(response.status).toBe(200);
@@ -198,7 +212,8 @@ describe("Kiro external_idp (CLIProxyAPI) import and refresh", () => {
         profileArn: "arn:aws:codewhisperer:us-east-1:123456789012:profile/ABC",
         region: "us-east-1",
         clientId: TEST_CLIENT_ID,
-        tokenEndpoint: "https://login.microsoftonline.com/tenant-id/oauth2/v2.0/token",
+        tokenEndpoint:
+          "https://login.microsoftonline.com/tenant-id/oauth2/v2.0/token",
         scope: TEST_SCOPE,
       },
       testStatus: "active",

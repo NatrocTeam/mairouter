@@ -47,7 +47,10 @@ const checkCodexInstalled = async () => {
     const isWindows = os.platform() === "win32";
     const command = isWindows ? "where codex" : "which codex";
     const env = isWindows
-      ? { ...process.env, PATH: `${process.env.APPDATA}\\npm;${process.env.PATH}` }
+      ? {
+          ...process.env,
+          PATH: `${process.env.APPDATA}\\npm;${process.env.PATH}`,
+        }
       : process.env;
     await execAsync(command, { windowsHide: true, env });
     return true;
@@ -73,17 +76,20 @@ const readConfig = async () => {
   }
 };
 
-// Check if config has 9Router settings
-const has9RouterConfig = (config) => {
+// Check if config has mairouter settings
+const hasmairouterConfig = (config) => {
   if (!config) return false;
-  return config.includes("model_provider = \"9router\"") || config.includes("[model_providers.9router]");
+  return (
+    config.includes('model_provider = "mairouter"') ||
+    config.includes("[model_providers.mairouter]")
+  );
 };
 
 // GET - Check codex CLI and read current settings
 export async function GET() {
   try {
     const isInstalled = await checkCodexInstalled();
-    
+
     if (!isInstalled) {
       return NextResponse.json({
         installed: false,
@@ -97,22 +103,28 @@ export async function GET() {
     return NextResponse.json({
       installed: true,
       config,
-      has9Router: has9RouterConfig(config),
+      hasmairouter: hasmairouterConfig(config),
       configPath: getCodexConfigPath(),
     });
   } catch (error) {
     console.log("Error checking codex settings:", error);
-    return NextResponse.json({ error: "Failed to check codex settings" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to check codex settings" },
+      { status: 500 },
+    );
   }
 }
 
-// POST - Update 9Router settings (merge with existing config)
+// POST - Update mairouter settings (merge with existing config)
 export async function POST(request) {
   try {
     const { baseUrl, apiKey, model, subagentModel } = await request.json();
-    
+
     if (!baseUrl || !apiKey || !model) {
-      return NextResponse.json({ error: "baseUrl, apiKey and model are required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "baseUrl, apiKey and model are required" },
+        { status: 400 },
+      );
     }
 
     const codexDir = getCodexDir();
@@ -126,17 +138,21 @@ export async function POST(request) {
     try {
       const existingConfig = await fs.readFile(configPath, "utf-8");
       parsed = parsedToWritable(parseTOML(existingConfig));
-    } catch { /* No existing config */ }
+    } catch {
+      /* No existing config */
+    }
 
-    // Update only 9Router related fields (api_key goes to auth.json, not config.toml)
+    // Update only mairouter related fields (api_key goes to auth.json, not config.toml)
     parsed.model = model;
-    parsed.model_provider = "9router";
+    parsed.model_provider = "mairouter";
 
-    // Update or create 9router provider section (no api_key - Codex reads from auth.json)
+    // Update or create mairouter provider section (no api_key - Codex reads from auth.json)
     // Ensure /v1 suffix is added only once
-    const normalizedBaseUrl = baseUrl.endsWith("/v1") ? baseUrl : `${baseUrl}/v1`;
-    setNestedSection(parsed, "model_providers.9router", {
-      name: "9Router",
+    const normalizedBaseUrl = baseUrl.endsWith("/v1")
+      ? baseUrl
+      : `${baseUrl}/v1`;
+    setNestedSection(parsed, "model_providers.mairouter", {
+      name: "mairouter",
       base_url: normalizedBaseUrl,
       wire_api: "responses",
     });
@@ -157,8 +173,10 @@ export async function POST(request) {
     try {
       const existingAuth = await fs.readFile(authPath, "utf-8");
       authData = JSON.parse(existingAuth);
-    } catch { /* No existing auth */ }
-    
+    } catch {
+      /* No existing auth */
+    }
+
     // Force apikey mode (keep existing tokens untouched for ChatGPT login reuse)
     authData.OPENAI_API_KEY = apiKey;
     authData.auth_mode = "apikey";
@@ -171,11 +189,14 @@ export async function POST(request) {
     });
   } catch (error) {
     console.log("Error updating codex settings:", error);
-    return NextResponse.json({ error: "Failed to update codex settings" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to update codex settings" },
+      { status: 500 },
+    );
   }
 }
 
-// DELETE - Remove 9Router settings only (keep other settings)
+// DELETE - Remove mairouter settings only (keep other settings)
 export async function DELETE() {
   try {
     const configPath = getCodexConfigPath();
@@ -195,14 +216,14 @@ export async function DELETE() {
       throw error;
     }
 
-    // Remove 9Router related root fields only if they point to 9router
-    if (parsed.model_provider === "9router") {
+    // Remove mairouter related root fields only if they point to mairouter
+    if (parsed.model_provider === "mairouter") {
       delete parsed.model;
       delete parsed.model_provider;
     }
 
-    // Remove 9router provider section
-    deleteNestedSection(parsed, "model_providers.9router");
+    // Remove mairouter provider section
+    deleteNestedSection(parsed, "model_providers.mairouter");
 
     // Remove subagent configuration
     deleteNestedSection(parsed, "agents.subagent");
@@ -225,14 +246,19 @@ export async function DELETE() {
       } else {
         await fs.writeFile(authPath, JSON.stringify(authData, null, 2));
       }
-    } catch { /* No auth file */ }
+    } catch {
+      /* No auth file */
+    }
 
     return NextResponse.json({
       success: true,
-      message: "9Router settings removed successfully",
+      message: "mairouter settings removed successfully",
     });
   } catch (error) {
     console.log("Error resetting codex settings:", error);
-    return NextResponse.json({ error: "Failed to reset codex settings" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to reset codex settings" },
+      { status: 500 },
+    );
   }
 }

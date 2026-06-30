@@ -16,7 +16,8 @@ export const XAI_TOKEN_ENDPOINT_PATH = "/oauth2/token";
 export const XAI_DISCOVERY_PATH = "/.well-known/openid-configuration";
 
 // Scopes (space-separated, matches Go upstream)
-export const XAI_SCOPE = "openid profile email offline_access grok-cli:access api:access";
+export const XAI_SCOPE =
+  "openid profile email offline_access grok-cli:access api:access";
 
 // xAI inference API base URL
 export const XAI_API_BASE = "https://api.x.ai/v1";
@@ -33,7 +34,7 @@ export const XAI_PKCE_VERIFIER_BYTES = 96;
 export const XAI_REFRESH_LEAD_SECONDS = 5 * 60;
 
 // User-Agent — mirror Go grok-cli UA. Version is best-effort; xAI does not pin a specific version.
-export const XAI_USER_AGENT = "grok-cli/9router";
+export const XAI_USER_AGENT = "grok-cli/mairouter";
 
 /**
  * Aggregated config object — mirrors the shape of CLAUDE_CONFIG/CODEX_CONFIG in oauth.js.

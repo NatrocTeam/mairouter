@@ -8,14 +8,16 @@ let tempDir;
 const originalDataDir = process.env.DATA_DIR;
 
 beforeEach(() => {
-  tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "9router-chain-"));
+  tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "mairouter-chain-"));
   process.env.DATA_DIR = tempDir;
   delete global._dbAdapter;
   vi.resetModules();
 });
 
 afterEach(() => {
-  try { global._dbAdapter?.instance?.close?.(); } catch {}
+  try {
+    global._dbAdapter?.instance?.close?.();
+  } catch {}
   delete global._dbAdapter;
   if (tempDir) fs.rmSync(tempDir, { recursive: true, force: true });
   if (originalDataDir === undefined) delete process.env.DATA_DIR;
