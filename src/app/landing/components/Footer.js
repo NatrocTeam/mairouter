@@ -22,7 +22,7 @@ export default function Footer() {
             <div className="flex gap-4">
               <a
                 className="text-gray-400 hover:text-white transition-colors"
-                href="https://github.com/decolua/mairouter"
+                href="https://github.com/NatrocTeam/mairouter"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -48,7 +48,7 @@ export default function Footer() {
             </a>
             <a
               className="text-gray-400 hover:text-[#f97815] text-sm transition-colors"
-              href="https://github.com/decolua/mairouter"
+              href="https://github.com/NatrocTeam/mairouter"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -61,7 +61,7 @@ export default function Footer() {
             <h4 className="font-bold text-white">Resources</h4>
             <a
               className="text-gray-400 hover:text-[#f97815] text-sm transition-colors"
-              href="https://github.com/decolua/mairouter#readme"
+              href="https://github.com/NatrocTeam/mairouter#readme"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -69,7 +69,7 @@ export default function Footer() {
             </a>
             <a
               className="text-gray-400 hover:text-[#f97815] text-sm transition-colors"
-              href="https://github.com/decolua/mairouter"
+              href="https://github.com/NatrocTeam/mairouter"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -90,7 +90,7 @@ export default function Footer() {
             <h4 className="font-bold text-white">Legal</h4>
             <a
               className="text-gray-400 hover:text-[#f97815] text-sm transition-colors"
-              href="https://github.com/decolua/mairouter/blob/main/LICENSE"
+              href="https://github.com/NatrocTeam/mairouter/blob/main/LICENSE"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -102,12 +102,12 @@ export default function Footer() {
         {/* Bottom */}
         <div className="border-t border-[#3a2f27] pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-gray-600 text-sm">
-            © 2025 mairouter. All rights reserved.
+            © 2026 Natroc Team. All rights reserved.
           </p>
           <div className="flex gap-6">
             <a
               className="text-gray-600 hover:text-white text-sm transition-colors"
-              href="https://github.com/decolua/mairouter"
+              href="https://github.com/NatrocTeam/mairouter"
               target="_blank"
               rel="noopener noreferrer"
             >

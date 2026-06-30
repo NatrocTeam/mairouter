@@ -81,7 +81,7 @@ export default function LandingPage() {
                 <button
                   onClick={() =>
                     window.open(
-                      "https://github.com/decolua/mairouter#readme",
+                      "https://github.com/NatrocTeam/mairouter#readme",
                       "_blank",
                     )
                   }

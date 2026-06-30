@@ -1,11 +1,11 @@
 ---
-name: 9router-web-fetch
-description: Fetch URL → markdown / text / HTML via 9Router /v1/web/fetch using Firecrawl / Jina Reader / Tavily Extract / Exa Contents. Use when the user wants to scrape a webpage, extract URL content, read article, or convert a URL to markdown.
+name: mairouter-web-fetch
+description: Fetch URL → markdown / text / HTML via mairouter /v1/web/fetch using Firecrawl / Jina Reader / Tavily Extract / Exa Contents. Use when the user wants to scrape a webpage, extract URL content, read article, or convert a URL to markdown.
 ---
 
-# 9Router — Web Fetch
+# mairouter — Web Fetch
 
-Requires `NINEROUTER_URL` (and `NINEROUTER_KEY` if auth enabled). See https://raw.githubusercontent.com/decolua/9router/refs/heads/master/skills/9router/SKILL.md for setup.
+Requires `NINEROUTER_URL` (and `NINEROUTER_KEY` if auth enabled). See https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter/SKILL.md for setup.
 
 ## Discover
 
@@ -21,24 +21,26 @@ IDs end in `/fetch` (e.g. `firecrawl/fetch`, `jina/fetch`). `fetch-combo` chains
 
 `POST $NINEROUTER_URL/v1/web/fetch`
 
-| Field | Required | Notes |
-|---|---|---|
-| `model` (or `provider`) | yes | from `/v1/models/web` (e.g. `firecrawl` or `jina-reader`) |
-| `url` | yes | URL to extract |
-| `format` | no | `markdown` (default) / `text` / `html` |
-| `max_characters` | no | truncate output |
+| Field                   | Required | Notes                                                     |
+| ----------------------- | -------- | --------------------------------------------------------- |
+| `model` (or `provider`) | yes      | from `/v1/models/web` (e.g. `firecrawl` or `jina-reader`) |
+| `url`                   | yes      | URL to extract                                            |
+| `format`                | no       | `markdown` (default) / `text` / `html`                    |
+| `max_characters`        | no       | truncate output                                           |
 
 ## Examples
 
 ### Jina Reader
+
 ```bash
 curl -X POST $NINEROUTER_URL/v1/web/fetch \
   -H "Authorization: Bearer $NINEROUTER_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"model":"jina-reader","url":"https://9router.com","format":"markdown"}'
+  -d '{"model":"jina-reader","url":"https://mairouter.com","format":"markdown"}'
 ```
 
 ### Exa
+
 ```bash
 curl -X POST $NINEROUTER_URL/v1/web/fetch \
   -H "Authorization: Bearer $NINEROUTER_KEY" \
@@ -47,6 +49,7 @@ curl -X POST $NINEROUTER_URL/v1/web/fetch \
 ```
 
 ### Firecrawl
+
 ```bash
 curl -X POST $NINEROUTER_URL/v1/web/fetch \
   -H "Authorization: Bearer $NINEROUTER_KEY" \
@@ -55,6 +58,7 @@ curl -X POST $NINEROUTER_URL/v1/web/fetch \
 ```
 
 ### Tavily
+
 ```bash
 curl -X POST $NINEROUTER_URL/v1/web/fetch \
   -H "Authorization: Bearer $NINEROUTER_KEY" \
@@ -62,14 +66,21 @@ curl -X POST $NINEROUTER_URL/v1/web/fetch \
   -d '{"model":"tavily","url":"https://example.com","format":"markdown","max_characters":0}'
 ```
 
-
 JS:
 
 ```js
 const r = await fetch(`${process.env.NINEROUTER_URL}/v1/web/fetch`, {
   method: "POST",
-  headers: { "Authorization": `Bearer ${process.env.NINEROUTER_KEY}`, "Content-Type": "application/json" },
-  body: JSON.stringify({ model: "fetch-combo", url: "https://example.com", format: "markdown", max_characters: 5000 }),
+  headers: {
+    Authorization: `Bearer ${process.env.NINEROUTER_KEY}`,
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    model: "fetch-combo",
+    url: "https://example.com",
+    format: "markdown",
+    max_characters: 5000,
+  }),
 });
 const { data } = await r.json();
 console.log(data.title, data.content.length);
@@ -91,9 +102,9 @@ console.log(data.title, data.content.length);
 
 ## Provider quirks
 
-| Provider | Auth | Best for |
-|---|---|---|
-| `firecrawl` | Bearer | JS-rendered pages, `format=markdown/html` |
+| Provider      | Auth              | Best for                                         |
+| ------------- | ----------------- | ------------------------------------------------ |
+| `firecrawl`   | Bearer            | JS-rendered pages, `format=markdown/html`        |
 | `jina-reader` | Bearer (optional) | Free tier (~1M chars/mo); fastest plain markdown |
-| `tavily` | Bearer | Bulk extract; returns `raw_content` |
-| `exa` | `x-api-key` | Pre-indexed pages; fast text extraction |
+| `tavily`      | Bearer            | Bulk extract; returns `raw_content`              |
+| `exa`         | `x-api-key`       | Pre-indexed pages; fast text extraction          |

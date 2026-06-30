@@ -40,7 +40,7 @@ export default function Navigation() {
           </a>
           <a
             className="text-gray-300 hover:text-white text-sm font-medium transition-colors"
-            href="https://github.com/decolua/mairouter#readme"
+            href="https://github.com/NatrocTeam/mairouter#readme"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -48,7 +48,7 @@ export default function Navigation() {
           </a>
           <a
             className="text-gray-300 hover:text-white text-sm font-medium transition-colors flex items-center gap-1"
-            href="https://github.com/decolua/mairouter"
+            href="https://github.com/NatrocTeam/mairouter"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -98,7 +98,7 @@ export default function Navigation() {
             </a>
             <a
               className="text-gray-300 hover:text-white text-sm font-medium transition-colors"
-              href="https://github.com/decolua/mairouter#readme"
+              href="https://github.com/NatrocTeam/mairouter#readme"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -106,7 +106,7 @@ export default function Navigation() {
             </a>
             <a
               className="text-gray-300 hover:text-white text-sm font-medium transition-colors"
-              href="https://github.com/decolua/mairouter"
+              href="https://github.com/NatrocTeam/mairouter"
               target="_blank"
               rel="noopener noreferrer"
             >

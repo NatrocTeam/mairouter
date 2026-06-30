@@ -10,7 +10,7 @@ export const APP_CONFIG = {
 // GitHub configuration
 export const GITHUB_CONFIG = {
   changelogUrl:
-    "https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/CHANGELOG.md",
+    "https://raw.githubusercontent.com/NatrocTeam/mairouter/refs/heads/master/CHANGELOG.md",
   donateUrl: "https://mairouter.com/api/donate",
 };
 

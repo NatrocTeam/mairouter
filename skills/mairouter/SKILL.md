@@ -1,9 +1,9 @@
 ---
-name: 9router
-description: Entry point for 9Router — local/remote AI gateway with OpenAI-compatible REST for chat, image, TTS, embeddings, web search, web fetch. Use when the user mentions 9Router, NINEROUTER_URL, or wants AI without writing provider boilerplate. This skill covers setup + indexes capability skills; fetch the relevant capability SKILL.md from the URLs below when needed.
+name: mairouter
+description: Entry point for mairouter — local/remote AI gateway with OpenAI-compatible REST for chat, image, TTS, embeddings, web search, web fetch. Use when the user mentions mairouter, NINEROUTER_URL, or wants AI without writing provider boilerplate. This skill covers setup + indexes capability skills; fetch the relevant capability SKILL.md from the URLs below when needed.
 ---
 
-# 9Router
+# mairouter
 
 Local/remote AI gateway exposing OpenAI-compatible REST. One key, many providers, auto-fallback.
 
@@ -59,15 +59,15 @@ Response shape:
 
 When the user needs a specific capability, fetch that skill's `SKILL.md` from its raw URL:
 
-| Capability                 | Raw URL                                                                                                |
-| -------------------------- | ------------------------------------------------------------------------------------------------------ |
-| Chat / code-gen            | https://raw.githubusercontent.com/decolua/9router/refs/heads/master/skills/9router-chat/SKILL.md       |
-| Image generation           | https://raw.githubusercontent.com/decolua/9router/refs/heads/master/skills/9router-image/SKILL.md      |
-| Text-to-speech             | https://raw.githubusercontent.com/decolua/9router/refs/heads/master/skills/9router-tts/SKILL.md        |
-| Speech-to-text             | https://raw.githubusercontent.com/decolua/9router/refs/heads/master/skills/9router-stt/SKILL.md        |
-| Embeddings                 | https://raw.githubusercontent.com/decolua/9router/refs/heads/master/skills/9router-embeddings/SKILL.md |
-| Web search                 | https://raw.githubusercontent.com/decolua/9router/refs/heads/master/skills/9router-web-search/SKILL.md |
-| Web fetch (URL → markdown) | https://raw.githubusercontent.com/decolua/9router/refs/heads/master/skills/9router-web-fetch/SKILL.md  |
+| Capability                 | Raw URL                                                                                                    |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Chat / code-gen            | https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter-chat/SKILL.md       |
+| Image generation           | https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter-image/SKILL.md      |
+| Text-to-speech             | https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter-tts/SKILL.md        |
+| Speech-to-text             | https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter-stt/SKILL.md        |
+| Embeddings                 | https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter-embeddings/SKILL.md |
+| Web search                 | https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter-web-search/SKILL.md |
+| Web fetch (URL → markdown) | https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter-web-fetch/SKILL.md  |
 
 ## Errors
 
