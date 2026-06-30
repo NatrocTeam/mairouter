@@ -7,19 +7,20 @@
  * `chat.completion.chunk` objects. So the chunks arriving here are OpenAI
  * streaming chunks, and our job is OpenAI-chunk → Claude SSE events — the same
  * transformation openai-to-claude.js performs. We re-implement it here so the
- * direct `kiro:claude` route is self-contained and lossless (reasoning_content
- * → thinking blocks, tool_calls → tool_use blocks, usage → message_delta).
+ * direct `kiro:claude` route is self-contained (unsigned reasoning_content
+ * → labeled text, tool_calls → tool_use blocks, usage → message_delta).
  *
  * Registered on the direct route by ../index.js; reached only when source
  * format is Claude and target is Kiro.
  */
 import { register } from "../index.js";
 import { FORMATS } from "../formats.js";
+import { asClaudeReasoningContext } from "../concerns/reasoning.js";
 
-function stopThinkingBlock(state, results) {
-  if (!state.thinkingBlockStarted) return;
-  results.push({ type: "content_block_stop", index: state.thinkingBlockIndex });
-  state.thinkingBlockStarted = false;
+function stopReasoningTextBlock(state, results) {
+  if (!state.reasoningTextBlockStarted) return;
+  results.push({ type: "content_block_stop", index: state.reasoningTextBlockIndex });
+  state.reasoningTextBlockStarted = false;
 }
 
 function stopTextBlock(state, results) {
@@ -104,25 +105,30 @@ export function kiroToClaudeResponse(chunk, state) {
   const reasoningContent = delta.reasoning_content || delta.reasoning;
   if (reasoningContent) {
     stopTextBlock(state, results);
-    if (!state.thinkingBlockStarted) {
-      state.thinkingBlockIndex = state.nextBlockIndex++;
-      state.thinkingBlockStarted = true;
+    if (!state.reasoningTextBlockStarted) {
+      state.reasoningTextBlockIndex = state.nextBlockIndex++;
+      state.reasoningTextBlockStarted = true;
       results.push({
         type: "content_block_start",
-        index: state.thinkingBlockIndex,
-        content_block: { type: "thinking", thinking: "" },
+        index: state.reasoningTextBlockIndex,
+        content_block: { type: "text", text: "" },
+      });
+      results.push({
+        type: "content_block_delta",
+        index: state.reasoningTextBlockIndex,
+        delta: { type: "text_delta", text: asClaudeReasoningContext("") },
       });
     }
     results.push({
       type: "content_block_delta",
-      index: state.thinkingBlockIndex,
-      delta: { type: "thinking_delta", thinking: reasoningContent },
+      index: state.reasoningTextBlockIndex,
+      delta: { type: "text_delta", text: reasoningContent },
     });
   }
 
   // Regular text content.
   if (delta.content) {
-    stopThinkingBlock(state, results);
+    stopReasoningTextBlock(state, results);
     if (!state.textBlockStarted) {
       state.textBlockIndex = state.nextBlockIndex++;
       state.textBlockStarted = true;
@@ -147,7 +153,7 @@ export function kiroToClaudeResponse(chunk, state) {
     for (const tc of delta.tool_calls) {
       const idx = tc.index ?? 0;
       if (tc.id) {
-        stopThinkingBlock(state, results);
+        stopReasoningTextBlock(state, results);
         stopTextBlock(state, results);
         const toolBlockIndex = state.nextBlockIndex++;
         state.toolCalls.set(idx, {
@@ -180,7 +186,7 @@ export function kiroToClaudeResponse(chunk, state) {
 
   // Finish.
   if (choice.finish_reason) {
-    stopThinkingBlock(state, results);
+    stopReasoningTextBlock(state, results);
     stopTextBlock(state, results);
 
     if (state.toolCalls) {
@@ -220,6 +226,10 @@ export function kiroToClaudeNonStreaming(data) {
   const choice = data?.choices?.[0];
   const message = choice?.message || {};
 
+  const reasoningContent = message.reasoning_content || message.reasoning;
+  if (reasoningContent) {
+    content.push({ type: "text", text: asClaudeReasoningContext(reasoningContent) });
+  }
   if (message.content) {
     content.push({ type: "text", text: message.content });
   }

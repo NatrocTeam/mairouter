@@ -4,6 +4,7 @@ import { adjustMaxTokens } from "../formats/maxTokens.js";
 import { encodeDataUri } from "../concerns/image.js";
 import { ROLE, OPENAI_BLOCK, CLAUDE_BLOCK } from "../schema/index.js";
 import { collapseTextParts } from "../concerns/message.js";
+import { assertClaudeTranslationIsLossless } from "../concerns/translationCompatibility.js";
 
 function stripAnthropicBillingHeader(text) {
   if (typeof text !== "string") return "";
@@ -12,6 +13,10 @@ function stripAnthropicBillingHeader(text) {
 
 // Convert Claude request to OpenAI format
 export function claudeToOpenAIRequest(model, body, stream) {
+  // Keep this invariant on the exported translator too, even when callers
+  // bypass translateRequest() and invoke this function directly.
+  assertClaudeTranslationIsLossless(body, FORMATS.OPENAI);
+
   const result = {
     model: model,
     messages: [],
@@ -158,6 +163,11 @@ function convertClaudeMessage(msg) {
                 url: encodeDataUri(block.source.media_type, block.source.data)
               }
             });
+          } else if (block.source?.type === "url") {
+            parts.push({
+              type: OPENAI_BLOCK.IMAGE_URL,
+              image_url: { url: block.source.url }
+            });
           }
           break;
 
@@ -180,9 +190,7 @@ function convertClaudeMessage(msg) {
             resultContent = block.content
               .filter(c => c.type === CLAUDE_BLOCK.TEXT)
               .map(c => c.text)
-              .join("\n") || JSON.stringify(block.content);
-          } else if (block.content) {
-            resultContent = JSON.stringify(block.content);
+              .join("\n");
           }
           
           toolResults.push({

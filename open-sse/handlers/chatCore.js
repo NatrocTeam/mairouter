@@ -26,6 +26,7 @@ import { compressWithHeadroom, formatHeadroomLog, formatHeadroomSizeLog, isHeadr
 import { getCapabilitiesForModel } from "../providers/capabilities.js";
 import { stripUnsupportedModalities } from "../translator/concerns/modality.js";
 import { prefetchRemoteImages } from "../translator/concerns/prefetch.js";
+import { assertClaudeModalitiesSupported, isTranslationCompatibilityError } from "../translator/concerns/translationCompatibility.js";
 
 /**
  * Core chat handler - shared between SSE and Worker
@@ -109,6 +110,18 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
   // Auto-strip media blocks the model can't read (vision/audio/pdf) before translation.
   if (!passthrough) {
     const caps = getCapabilitiesForModel(provider, model);
+    if (sourceFormat === FORMATS.CLAUDE) {
+      try {
+        assertClaudeModalitiesSupported(body, caps, targetFormat);
+      } catch (error) {
+        if (isTranslationCompatibilityError(error)) {
+          log?.warn?.("TRANSLATION", error.message);
+          trackPendingRequest(model, provider, connectionId, false, true);
+          return createErrorResult(HTTP_STATUS.BAD_REQUEST, error.message);
+        }
+        throw error;
+      }
+    }
     if (stripUnsupportedModalities(body, sourceFormat, caps)) {
       log?.debug?.("MODALITY", `stripped unsupported media for ${provider}/${model}`);
     }
@@ -127,7 +140,16 @@ export async function handleChatCore({ body, modelInfo, credentials, log, onCred
     // Normalize newer Cowork/CC beta shapes (adaptive thinking, mid-conversation system) the API rejects
     if (clientTool === "claude") normalizeClaudePassthrough(translatedBody, upstreamModel);
   } else {
-    translatedBody = translateRequest(sourceFormat, targetFormat, upstreamModel, body, stream, credentials, provider, reqLogger, stripList, connectionId, clientTool);
+    try {
+      translatedBody = translateRequest(sourceFormat, targetFormat, upstreamModel, body, stream, credentials, provider, reqLogger, stripList, connectionId, clientTool);
+    } catch (error) {
+      if (isTranslationCompatibilityError(error)) {
+        log?.warn?.("TRANSLATION", error.message);
+        trackPendingRequest(model, provider, connectionId, false, true);
+        return createErrorResult(HTTP_STATUS.BAD_REQUEST, error.message);
+      }
+      throw error;
+    }
     if (!translatedBody) {
       trackPendingRequest(model, provider, connectionId, false, true);
       return createErrorResult(HTTP_STATUS.BAD_REQUEST, `Failed to translate request for ${sourceFormat} → ${targetFormat}`);

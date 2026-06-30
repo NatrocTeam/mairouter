@@ -2,7 +2,7 @@ import { register } from "../index.js";
 import { FORMATS } from "../formats.js";
 import { ROLE, CLAUDE_BLOCK, MODEL_FALLBACK } from "../schema/index.js";
 import { fromOpenAIFinish } from "../concerns/finishReason.js";
-import { extractReasoningText } from "../concerns/reasoning.js";
+import { asClaudeReasoningContext, extractReasoningText } from "../concerns/reasoning.js";
 
 // Legacy "proxy_" prefix used by older request translators. Response strips it
 // defensively so tool names from such turns resolve back (e.g. proxy_Read → Read
@@ -46,14 +46,15 @@ function isValidPdfPagesArg(filePath, pages) {
     /^\d+(?:-\d+)?$/.test(pages);
 }
 
-// Helper: stop thinking block if started
-function stopThinkingBlock(state, results) {
-  if (!state.thinkingBlockStarted) return;
+// Non-Anthropic reasoning has no Anthropic signature. Emit it as a separate
+// text block so Claude clients can round-trip it without forging thinking.
+function stopReasoningTextBlock(state, results) {
+  if (!state.reasoningTextBlockStarted) return;
   results.push({
     type: "content_block_stop",
-    index: state.thinkingBlockIndex
+    index: state.reasoningTextBlockIndex
   });
-  state.thinkingBlockStarted = false;
+  state.reasoningTextBlockStarted = false;
 }
 
 // Helper: stop text block if started
@@ -140,26 +141,31 @@ export function openaiToClaudeResponse(chunk, state) {
   if (reasoningContent) {
     stopTextBlock(state, results);
 
-    if (!state.thinkingBlockStarted) {
-      state.thinkingBlockIndex = state.nextBlockIndex++;
-      state.thinkingBlockStarted = true;
+    if (!state.reasoningTextBlockStarted) {
+      state.reasoningTextBlockIndex = state.nextBlockIndex++;
+      state.reasoningTextBlockStarted = true;
       results.push({
         type: "content_block_start",
-        index: state.thinkingBlockIndex,
-        content_block: { type: CLAUDE_BLOCK.THINKING, thinking: "" }
+        index: state.reasoningTextBlockIndex,
+        content_block: { type: CLAUDE_BLOCK.TEXT, text: "" }
+      });
+      results.push({
+        type: "content_block_delta",
+        index: state.reasoningTextBlockIndex,
+        delta: { type: "text_delta", text: asClaudeReasoningContext("") }
       });
     }
 
     results.push({
       type: "content_block_delta",
-      index: state.thinkingBlockIndex,
-      delta: { type: "thinking_delta", thinking: reasoningContent }
+      index: state.reasoningTextBlockIndex,
+      delta: { type: "text_delta", text: reasoningContent }
     });
   }
 
   // Handle regular content
   if (delta?.content) {
-    stopThinkingBlock(state, results);
+    stopReasoningTextBlock(state, results);
 
     if (!state.textBlockStarted) {
       state.textBlockIndex = state.nextBlockIndex++;
@@ -188,7 +194,7 @@ export function openaiToClaudeResponse(chunk, state) {
 
       // GLM/fireworks repeats id+null-name on every arg chunk; open block once per idx
       if (tc.id && !state.toolCalls.has(idx)) {
-        stopThinkingBlock(state, results);
+        stopReasoningTextBlock(state, results);
         stopTextBlock(state, results);
 
         const toolBlockIndex = state.nextBlockIndex++;
@@ -260,7 +266,7 @@ export function openaiToClaudeResponse(chunk, state) {
 
   // Finish
   if (choice.finish_reason) {
-    stopThinkingBlock(state, results);
+    stopReasoningTextBlock(state, results);
     stopTextBlock(state, results);
 
     for (const [idx, toolInfo] of state.toolCalls) {

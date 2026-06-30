@@ -128,7 +128,7 @@ describe("Kiro → Claude (direct route, OpenAI-shaped chunks from executor)", (
     expect(events.some((e) => e.type === "message_stop")).toBe(true);
   });
 
-  it("reasoning_content maps to a thinking block", () => {
+  it("reasoning_content maps to labeled text without forging a thinking signature", () => {
     const state = {};
     const events = R(
       {
@@ -140,9 +140,13 @@ describe("Kiro → Claude (direct route, OpenAI-shaped chunks from executor)", (
       state
     );
     const start = events.find((e) => e.type === "content_block_start");
-    expect(start.content_block.type).toBe("thinking");
-    const delta = events.find((e) => e.type === "content_block_delta");
-    expect(delta.delta).toEqual({ type: "thinking_delta", thinking: "pondering" });
+    expect(start.content_block.type).toBe("text");
+    const deltas = events.filter((e) => e.type === "content_block_delta");
+    expect(deltas.map((event) => event.delta)).toEqual([
+      { type: "text_delta", text: "[Reasoning from previous assistant]\n" },
+      { type: "text_delta", text: "pondering" },
+    ]);
+    expect(events.some((event) => event.delta?.type === "thinking_delta")).toBe(false);
   });
 
   it("tool_calls map to a tool_use block with buffered input_json_delta", () => {

@@ -17,7 +17,7 @@ describe("OpenAI → Claude context mapping", () => {
     expect(JSON.stringify(out.system), "Claude Code prompt injected").not.toContain("Claude Code");
   });
 
-  it("assistant reasoning_content becomes a thinking block", () => {
+  it("assistant reasoning_content is preserved without forging a signed thinking block", () => {
     const out = T({
       messages: [
         { role: "user", content: "q" },
@@ -27,10 +27,11 @@ describe("OpenAI → Claude context mapping", () => {
     });
     expect(JSON.stringify(out), "reasoning_content lost").toContain("my hidden reasoning");
     const assistant = out.messages.find((m) => m.role === "assistant");
-    expect(assistant.content[0]).toEqual(expect.objectContaining({
-      type: "thinking",
-      thinking: "my hidden reasoning",
-    }));
+    expect(assistant.content[0]).toEqual({
+      type: "text",
+      text: "[Reasoning from previous assistant]\nmy hidden reasoning",
+    });
+    expect(assistant.content.some((block) => block.type === "thinking")).toBe(false);
   });
 
   // openai-to-claude.js:298 — tool_choice "none" mapped to {type:"auto"} (loses "do not call" intent)

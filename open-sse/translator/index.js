@@ -8,6 +8,7 @@ import { applyThinking, captureThinking } from "./concerns/thinkingUnified.js";
 import { captureSessionId } from "../utils/sessionManager.js";
 import { AntigravityExecutor } from "../executors/antigravity.js";
 import { PROVIDERS } from "../providers/index.js";
+import { assertClaudeTranslationIsLossless } from "./concerns/translationCompatibility.js";
 
 // Registry for translators. Lazy-init guards against circular-import order:
 // translator modules call register() (side-effect) before this module's body runs.
@@ -52,6 +53,13 @@ function stripContentTypes(body, stripList = []) {
 export function translateRequest(sourceFormat, targetFormat, model, body, stream = true, credentials = null, provider = null, reqLogger = null, stripList = [], connectionId = null, clientTool = null) {
   ensureInitialized();
   let result = body;
+
+  // Validate before any normalizer can drop or rewrite Anthropic-only blocks.
+  // Cross-provider formats cannot safely carry signed thinking, tool error
+  // semantics, or multimodal tool results, so those requests fail closed.
+  if (sourceFormat === FORMATS.CLAUDE && sourceFormat !== targetFormat) {
+    assertClaudeTranslationIsLossless(result, targetFormat, { stripList });
+  }
 
   // Strip explicit content types (opt-in via strip[] in PROVIDER_MODELS entry)
   stripContentTypes(result, stripList);

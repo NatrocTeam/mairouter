@@ -9,9 +9,7 @@ const T = (src, tgt, body, provider = null) =>
   translateRequest(src, tgt, "m", body, true, null, provider);
 
 describe("bug: Claude → OpenAI bridge data loss", () => {
-  // claude-to-openai.js:133-141 — image source.type==="url" only handles base64
-  // KNOWN BUG: it.fails passes while app drops the url; flips to failing once fixed.
-  it.fails("image with source.type=url is preserved (NOT dropped)", () => {
+  it("image with source.type=url is preserved (NOT dropped)", () => {
     const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
       messages: [{ role: "user", content: [
         { type: "text", text: "look" },
@@ -22,23 +20,20 @@ describe("bug: Claude → OpenAI bridge data loss", () => {
     expect(json, "remote image url silently dropped").toContain("a.png");
   });
 
-  // claude-to-openai.js:128 switch — missing thinking/redacted_thinking case
-  it("thinking block survives round-trip Claude→OpenAI→Claude", () => {
+  it("signed thinking fails closed instead of being silently dropped", () => {
     const body = {
       messages: [{ role: "assistant", content: [
         { type: "thinking", thinking: "secret reasoning", signature: "sig" },
         { type: "text", text: "answer" },
       ] }, { role: "user", content: "go" }],
     };
-    const out = T(FORMATS.CLAUDE, FORMATS.CLAUDE, body);
-    const json = JSON.stringify(out);
-    expect(json, "thinking content lost via OpenAI bridge").toContain("secret reasoning");
+    expect(() => T(FORMATS.CLAUDE, FORMATS.OPENAI, body)).toThrowError(
+      /Cannot translate claude to openai losslessly.*thinking block/,
+    );
   });
 
-  // claude-to-openai.js:155-173 — tool_result image block dropped (text only)
-  // KNOWN BUG
-  it.fails("tool_result with image block is not turned into raw JSON / dropped", () => {
-    const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+  it("tool_result image fails closed instead of being stringified or dropped", () => {
+    expect(() => T(FORMATS.CLAUDE, FORMATS.OPENAI, {
       messages: [
         { role: "assistant", content: [
           { type: "tool_use", id: "call_1", name: "shot", input: {} },
@@ -49,25 +44,18 @@ describe("bug: Claude → OpenAI bridge data loss", () => {
           ] },
         ] },
       ],
-    });
-    const toolMsg = out.messages.find((m) => m.role === "tool");
-    // Should keep the image; currently stringifies the whole array into raw JSON
-    expect(toolMsg?.content, "image in tool_result lost").not.toMatch(/^\[/);
+    })).toThrowError(/image tool_result block.*not supported/);
   });
 
-  // claude-to-openai.js:155-173 — is_error lost
-  // KNOWN BUG
-  it.fails("tool_result is_error flag is preserved", () => {
-    const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+  it("tool_result is_error fails closed instead of becoming success", () => {
+    expect(() => T(FORMATS.CLAUDE, FORMATS.OPENAI, {
       messages: [
         { role: "assistant", content: [{ type: "tool_use", id: "call_1", name: "f", input: {} }] },
         { role: "user", content: [
           { type: "tool_result", tool_use_id: "call_1", is_error: true, content: "boom" },
         ] },
       ],
-    });
-    const json = JSON.stringify(out);
-    expect(json, "is_error dropped → model can't see tool failure").toContain("is_error");
+    })).toThrowError(/tool_result\.is_error.*no equivalent error flag/);
   });
 
   // claude-to-openai.js:24-27 — system array only takes .text, drops cache_control/non-text

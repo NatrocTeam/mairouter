@@ -39,10 +39,8 @@ describe("Claude Code CLI context → OpenAI", () => {
     expect(JSON.stringify(out)).toContain("step-by-step plan");
   });
 
-  // claude-to-openai.js:128 — redacted_thinking also dropped
-  // KNOWN BUG
-  it.fails("redacted_thinking block is not silently dropped", () => {
-    const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+  it("redacted_thinking fails closed instead of being silently dropped", () => {
+    expect(() => T(FORMATS.CLAUDE, FORMATS.OPENAI, {
       messages: [
         { role: "assistant", content: [
           { type: "redacted_thinking", data: "ENCRYPTED_BLOB" },
@@ -50,14 +48,11 @@ describe("Claude Code CLI context → OpenAI", () => {
         ] },
         { role: "user", content: "go" },
       ],
-    });
-    expect(JSON.stringify(out)).toContain("ENCRYPTED_BLOB");
+    })).toThrowError(/redacted_thinking block.*portable signed equivalent/);
   });
 
-  // claude-to-openai.js:155-173 — tool_result image block stringified into raw JSON
-  // KNOWN BUG
-  it.fails("tool_result image block is preserved", () => {
-    const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+  it("tool_result image block fails closed", () => {
+    expect(() => T(FORMATS.CLAUDE, FORMATS.OPENAI, {
       messages: [
         { role: "assistant", content: [{ type: "tool_use", id: "call_1", name: "screenshot", input: {} }] },
         { role: "user", content: [
@@ -66,8 +61,6 @@ describe("Claude Code CLI context → OpenAI", () => {
           ] },
         ] },
       ],
-    });
-    const tool = out.messages.find((m) => m.role === "tool");
-    expect(tool?.content, "image turned into raw JSON").not.toMatch(/^\[/);
+    })).toThrowError(/image tool_result block.*not supported/);
   });
 });

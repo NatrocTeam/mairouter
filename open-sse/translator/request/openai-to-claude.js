@@ -6,6 +6,7 @@ import { safeParseJSON } from "../concerns/json.js";
 import { parseDataUri } from "../concerns/image.js";
 import { extractTextContent } from "../formats/gemini.js";
 import { ROLE, OPENAI_BLOCK, CLAUDE_BLOCK } from "../schema/index.js";
+import { asClaudeReasoningContext } from "../concerns/reasoning.js";
 
 // Empty prefix matches real Claude Code behavior (no tool name prefix).
 // Previously "proxy_" was used but this is a detectable fingerprint difference.
@@ -240,6 +241,16 @@ function getContentBlocksFromMessage(msg, toolNameMap = new Map()) {
       }
     }
   } else if (msg.role === ROLE.ASSISTANT) {
+    // OpenAI-compatible reasoning has no Anthropic signature. Preserve it as
+    // ordinary assistant context; forging a native thinking block would violate
+    // Anthropic's requirement to return signed thinking blocks unchanged.
+    if (typeof msg.reasoning_content === "string" && msg.reasoning_content) {
+      blocks.push({
+        type: CLAUDE_BLOCK.TEXT,
+        text: asClaudeReasoningContext(msg.reasoning_content)
+      });
+    }
+
     if (Array.isArray(msg.content)) {
       for (const part of msg.content) {
         if (part.type === OPENAI_BLOCK.TEXT && part.text) {
@@ -247,8 +258,9 @@ function getContentBlocksFromMessage(msg, toolNameMap = new Map()) {
         } else if (part.type === CLAUDE_BLOCK.TOOL_USE) {
           // Tool name already has prefix from tool declarations, keep as-is
           blocks.push({ type: CLAUDE_BLOCK.TOOL_USE, id: part.id, name: part.name, input: part.input });
-        } else if (part.type === CLAUDE_BLOCK.THINKING) {
-          // Include thinking block but strip cache_control (not allowed on thinking blocks)
+        } else if (part.type === CLAUDE_BLOCK.THINKING || part.type === CLAUDE_BLOCK.REDACTED_THINKING) {
+          // Only pass through already-native Anthropic blocks. Never synthesize
+          // these from unsigned OpenAI reasoning fields.
           const { cache_control, ...thinkingBlock } = part;
           blocks.push(thinkingBlock);
         }
@@ -367,4 +379,3 @@ export { openaiToClaudeRequestForAntigravity };
 
 // Register
 register(FORMATS.OPENAI, FORMATS.CLAUDE, openaiToClaudeRequest, null);
-

@@ -1,5 +1,11 @@
 import { ROLE } from "../schema/index.js";
 
+export const REASONING_CONTEXT_PREFIX = "[Reasoning from previous assistant]\n";
+
+export function asClaudeReasoningContext(text) {
+  return `${REASONING_CONTEXT_PREFIX}${text}`;
+}
+
 // Build OpenAI delta carrying reasoning_content (optional leading assistant role)
 export function reasoningDelta(text, withRole = false) {
   return withRole
