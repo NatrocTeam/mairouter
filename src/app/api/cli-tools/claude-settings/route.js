@@ -6,6 +6,7 @@ import { promisify } from "util";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
+import { toAnthropicBaseUrl } from "@/shared/utils/endpointBaseUrl";
 
 const execAsync = promisify(exec);
 
@@ -112,11 +113,9 @@ export async function POST(request) {
       }
     }
 
-    // Normalize ANTHROPIC_BASE_URL to ensure /v1 suffix
+    // Claude Code appends /v1/messages itself, so store the gateway root.
     if (env.ANTHROPIC_BASE_URL) {
-      env.ANTHROPIC_BASE_URL = env.ANTHROPIC_BASE_URL.endsWith("/v1")
-        ? env.ANTHROPIC_BASE_URL
-        : `${env.ANTHROPIC_BASE_URL}/v1`;
+      env.ANTHROPIC_BASE_URL = toAnthropicBaseUrl(env.ANTHROPIC_BASE_URL);
     }
 
     // Merge new env with existing settings

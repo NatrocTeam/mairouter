@@ -12,6 +12,7 @@ import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
 import ApiKeySelect from "./ApiKeySelect";
 import { matchKnownEndpoint } from "./cliEndpointMatch";
+import { toAnthropicBaseUrl } from "@/shared/utils/endpointBaseUrl";
 
 const CLOUD_URL = process.env.NEXT_PUBLIC_CLOUD_URL;
 
@@ -148,12 +149,12 @@ export default function ClaudeToolCard({
 
   const getEffectiveBaseUrl = () => {
     const url = customBaseUrl || baseUrl;
-    return url.endsWith("/v1") ? url : `${url}/v1`;
+    return toAnthropicBaseUrl(url);
   };
 
   const getDisplayUrl = () => {
     const url = customBaseUrl || baseUrl;
-    return url.endsWith("/v1") ? url : `${url}/v1`;
+    return toAnthropicBaseUrl(url);
   };
 
   const handleApplySettings = async () => {
@@ -411,6 +412,7 @@ export default function ClaudeToolCard({
                     tunnelPublicUrl={tunnelPublicUrl}
                     tailscaleEnabled={tailscaleEnabled}
                     tailscaleUrl={tailscaleUrl}
+                    withV1={false}
                   />
                 </div>
 

@@ -2,16 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { UPDATER_CONFIG } from "@/shared/constants/config";
+import {
+  toAnthropicBaseUrl,
+  toOpenAIBaseUrl,
+} from "@/shared/utils/endpointBaseUrl";
 
 const STORAGE_KEY = "mairouter.cliToolEndpointPresets";
 const CUSTOM_VALUE = "__custom__";
 const SAVE_VALUE = "__save__";
-
-const ensureV1 = (url) => {
-  const trimmed = (url || "").replace(/\/+$/, "");
-  if (!trimmed) return "";
-  return /\/v1$/.test(trimmed) ? trimmed : `${trimmed}/v1`;
-};
 
 const readSavedPresets = () => {
   if (typeof window === "undefined") return [];
@@ -42,7 +40,7 @@ const buildOptions = ({
 }) => {
   const opts = [];
   const wrap = (url) =>
-    withV1 ? ensureV1(url) : (url || "").replace(/\/+$/, "");
+    withV1 ? toOpenAIBaseUrl(url) : toAnthropicBaseUrl(url);
   if (!requiresExternalUrl) {
     const localUrl = wrap(`http://127.0.0.1:${UPDATER_CONFIG.appPort}`);
     opts.push({ value: "local", label: localUrl, url: localUrl });
@@ -60,10 +58,11 @@ const buildOptions = ({
     opts.push({ value: "cloud", label: u, url: u });
   }
   savedPresets.forEach((p) => {
+    const url = wrap(p.baseUrl);
     opts.push({
       value: `saved:${p.name}`,
-      label: p.baseUrl,
-      url: p.baseUrl,
+      label: url,
+      url,
       saved: true,
     });
   });

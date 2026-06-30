@@ -96,7 +96,7 @@ async function getClaudeModel(envKey) {
  * @param {number} port
  */
 async function claudeQuickSetup(port) {
-  const { endpoint } = await getEndpoint(port);
+  const { endpoint } = await getEndpoint(port, { withV1: false });
   const apiKey = await getFirstApiKey();
 
   if (!apiKey) {
@@ -144,7 +144,7 @@ async function claudeSelectModel(modelType, port) {
   // Also set base URL if not configured yet
   const settingsResult = await api.getCliToolSettings("claude");
   if (!settingsResult.data?.settings?.env?.ANTHROPIC_BASE_URL) {
-    const { endpoint } = await getEndpoint(port);
+    const { endpoint } = await getEndpoint(port, { withV1: false });
     const apiKey = await getFirstApiKey();
     env.ANTHROPIC_BASE_URL = endpoint;
     env.API_TIMEOUT_MS = "600000";

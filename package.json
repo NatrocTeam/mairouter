@@ -1,6 +1,6 @@
 {
   "name": "mairouter-app",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha",
   "description": "mairouter web dashboard",
   "private": true,
   "author": "NatrocTeam",
@@ -13,9 +13,11 @@
     "start": "next start",
     "build": "next build --webpack",
     "build:cli": "cd cli && npm run build",
+    "build:all": "npm run build && npm run build:cli",
     "install:test": "cd tests && npm install",
     "install:cli": "cd cli && npm install",
-    "install:all": "npm install && npm run install:test && npm run install:cli"
+    "install:all": "npm install && npm run install:test && npm run install:cli",
+    "clean": "rimraf .next"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

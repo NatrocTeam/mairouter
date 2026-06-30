@@ -13,6 +13,10 @@ import {
 } from "@/shared/components";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
 import {
+  toAnthropicBaseUrl,
+  toOpenAIBaseUrl,
+} from "@/shared/utils/endpointBaseUrl";
+import {
   TUNNEL_BENEFITS,
   TUNNEL_PING_INTERVAL_MS,
   TUNNEL_PING_MAX_MS,
@@ -848,12 +852,12 @@ export default function APIPageClient({ machineId }) {
     });
   };
 
-  const [baseUrl, setBaseUrl] = useState("/v1");
+  const [baseUrl, setBaseUrl] = useState("");
 
   // Hydration fix: Only access window on client side
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setBaseUrl(`${window.location.origin}/v1`);
+      setBaseUrl(window.location.origin);
     }
   }, []);
 
@@ -866,7 +870,13 @@ export default function APIPageClient({ machineId }) {
     );
   }
 
-  const currentEndpoint = baseUrl;
+  const localOpenAIEndpoint = toOpenAIBaseUrl(baseUrl);
+  const localAnthropicEndpoint = toAnthropicBaseUrl(baseUrl);
+  const tunnelReady =
+    tunnelEnabled && !tunnelLoading && tunnelReachable;
+  const tunnelRoot = toAnthropicBaseUrl(tunnelPublicUrl || tunnelUrl);
+  const tailscaleReady = tsEnabled && !tsLoading && tsReachable;
+  const tailscaleRoot = toAnthropicBaseUrl(tsUrl);
 
   return (
     <div className="flex flex-col gap-8">
@@ -879,11 +889,20 @@ export default function APIPageClient({ machineId }) {
 
         {/* Endpoint rows */}
         <div className="flex flex-col gap-2">
-          {/* Local */}
+          {/* Local protocol endpoints */}
           <EndpointRow
-            label="Local"
-            url={currentEndpoint}
-            copyId="local_url"
+            label="OpenAI"
+            badge="Local"
+            url={localOpenAIEndpoint}
+            copyId="local_openai_url"
+            copied={copied}
+            onCopy={copy}
+          />
+          <EndpointRow
+            label="Anthropic"
+            badge="Local"
+            url={localAnthropicEndpoint}
+            copyId="local_anthropic_url"
             copied={copied}
             onCopy={copy}
           />
@@ -891,28 +910,37 @@ export default function APIPageClient({ machineId }) {
           <div className="flex items-center gap-2">
             <span
               className={`text-xs font-mono px-1.5 py-0.5 rounded shrink-0 min-w-[88px] text-center ${
-                tunnelEnabled
+                tunnelReady
+                  ? "bg-surface-2 text-text-muted"
+                  : tunnelEnabled
                   ? "bg-primary/10 text-primary"
                   : "bg-surface-2 text-text-muted"
               }`}
             >
-              Tunnel
+              {tunnelReady ? "OpenAI" : "Tunnel"}
             </span>
-            {tunnelEnabled && !tunnelLoading && tunnelReachable ? (
+            {tunnelReady && (
+              <span className="min-w-[72px] shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-center font-mono text-xs text-primary">
+                Tunnel
+              </span>
+            )}
+            {tunnelReady ? (
               <>
                 <Input
-                  value={`${tunnelPublicUrl || tunnelUrl}/v1`}
+                  value={toOpenAIBaseUrl(tunnelRoot)}
                   readOnly
                   className="flex-1 font-mono text-sm"
                 />
                 <button
                   onClick={() =>
-                    copy(`${tunnelPublicUrl || tunnelUrl}/v1`, "tunnel_url")
+                    copy(toOpenAIBaseUrl(tunnelRoot), "tunnel_openai_url")
                   }
                   className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded text-text-muted hover:text-primary transition-colors shrink-0"
                 >
                   <span className="material-symbols-outlined text-[18px]">
-                    {copied === "tunnel_url" ? "check" : "content_copy"}
+                    {copied === "tunnel_openai_url"
+                      ? "check"
+                      : "content_copy"}
                   </span>
                 </button>
                 <button
@@ -1027,30 +1055,51 @@ export default function APIPageClient({ machineId }) {
               </Button>
             )}
           </div>
+          {tunnelReady && (
+            <EndpointRow
+              label="Anthropic"
+              badge="Tunnel"
+              url={tunnelRoot}
+              copyId="tunnel_anthropic_url"
+              copied={copied}
+              onCopy={copy}
+            />
+          )}
           {/* Tailscale */}
           <div className="flex items-center gap-2">
             <span
               className={`text-xs font-mono px-1.5 py-0.5 rounded shrink-0 min-w-[88px] text-center ${
-                tsEnabled
+                tailscaleReady
+                  ? "bg-surface-2 text-text-muted"
+                  : tsEnabled
                   ? "bg-primary/10 text-primary"
                   : "bg-surface-2 text-text-muted"
               }`}
             >
-              Tailscale
+              {tailscaleReady ? "OpenAI" : "Tailscale"}
             </span>
-            {tsEnabled && !tsLoading && tsReachable ? (
+            {tailscaleReady && (
+              <span className="min-w-[72px] shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-center font-mono text-xs text-primary">
+                Tailscale
+              </span>
+            )}
+            {tailscaleReady ? (
               <>
                 <Input
-                  value={`${tsUrl}/v1`}
+                  value={toOpenAIBaseUrl(tailscaleRoot)}
                   readOnly
                   className="flex-1 font-mono text-sm"
                 />
                 <button
-                  onClick={() => copy(`${tsUrl}/v1`, "ts_url")}
+                  onClick={() =>
+                    copy(toOpenAIBaseUrl(tailscaleRoot), "tailscale_openai_url")
+                  }
                   className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded text-text-muted hover:text-primary transition-colors shrink-0"
                 >
                   <span className="material-symbols-outlined text-[18px]">
-                    {copied === "ts_url" ? "check" : "content_copy"}
+                    {copied === "tailscale_openai_url"
+                      ? "check"
+                      : "content_copy"}
                   </span>
                 </button>
                 <button
@@ -1153,6 +1202,16 @@ export default function APIPageClient({ machineId }) {
               </Button>
             )}
           </div>
+          {tailscaleReady && (
+            <EndpointRow
+              label="Anthropic"
+              badge="Tailscale"
+              url={tailscaleRoot}
+              copyId="tailscale_anthropic_url"
+              copied={copied}
+              onCopy={copy}
+            />
+          )}
         </div>
 
         {/* Pre-enable security gate banner */}
