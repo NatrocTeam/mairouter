@@ -10,14 +10,14 @@ Run 9Router in a container. Published image: [`decolua/9router`](https://hub.doc
 
 ```bash
 docker run -d \
-  -p 20128:20128 \
+  -p 12890:12890 \
   -v "$HOME/.9router:/app/data" \
   -e DATA_DIR=/app/data \
   --name 9router \
   decolua/9router:latest
 ```
 
-App listens on port `20128`. Open: http://localhost:20128
+App listens on port `12890`. Open: http://localhost:12890
 
 ## Manage container
 
@@ -54,10 +54,10 @@ Container path: `/app/data/db/data.sqlite`
 
 ```bash
 docker run -d \
-  -p 20128:20128 \
+  -p 12890:12890 \
   -v "$HOME/.9router:/app/data" \
   -e DATA_DIR=/app/data \
-  -e PORT=20128 \
+  -e PORT=12890 \
   -e HOSTNAME=0.0.0.0 \
   -e DEBUG=true \
   --name 9router \
@@ -73,7 +73,7 @@ services:
   9router:
     image: decolua/9router:latest
     ports:
-      - "20128:20128"
+      - "12890:12890"
     volumes:
       - "$HOME/.9router:/app/data"
     environment:
@@ -109,7 +109,7 @@ docker rm -f 9router
 ```bash
 cd app && docker build -t 9router .
 
-docker run --rm -p 20128:20128 \
+docker run --rm -p 12890:12890 \
   -v "$HOME/.9router:/app/data" \
   -e DATA_DIR=/app/data \
   9router
@@ -118,6 +118,7 @@ docker run --rm -p 20128:20128 \
 ## Publish (automatic via CI)
 
 Push a git tag `v*` → GitHub Actions builds multi-platform (amd64+arm64) and pushes to:
+
 - `ghcr.io/decolua/9router:v{version}` + `:latest`
 - `decolua/9router:v{version}` + `:latest`
 

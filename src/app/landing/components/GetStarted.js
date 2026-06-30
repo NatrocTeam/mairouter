@@ -54,7 +54,7 @@ export default function GetStarted() {
                 <div>
                   <h4 className="font-bold text-lg">Route Requests</h4>
                   <p className="text-sm text-gray-500 mt-1">
-                    Point your CLI tools to http://localhost:20128
+                    Point your CLI tools to http://localhost:12890
                   </p>
                 </div>
               </div>
@@ -92,11 +92,11 @@ export default function GetStarted() {
                   mairouter...
                   <br />
                   <span className="text-[#f97815]">&gt;</span> Server running on{" "}
-                  <span className="text-blue-400">http://localhost:20128</span>
+                  <span className="text-blue-400">http://localhost:12890</span>
                   <br />
                   <span className="text-[#f97815]">&gt;</span> Dashboard:{" "}
                   <span className="text-blue-400">
-                    http://localhost:20128/dashboard
+                    http://localhost:12890/dashboard
                   </span>
                   <br />
                   <span className="text-green-400">&gt;</span> Ready to route! ✓

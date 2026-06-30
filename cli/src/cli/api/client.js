@@ -9,7 +9,7 @@ const { machineIdSync } = require("node-machine-id");
 // Default configuration
 const DEFAULT_CONFIG = {
   host: "localhost",
-  port: 20128,
+  port: 12890,
   protocol: "http:",
 };
 
@@ -240,7 +240,7 @@ async function getOAuthAuthUrl(provider) {
   const redirectUri =
     provider === "codex"
       ? "http://localhost:1455/auth/callback"
-      : "http://localhost:20128/callback";
+      : "http://localhost:12890/callback";
   return makeRequest(
     "GET",
     `/api/oauth/${provider}/authorize?redirect_uri=${encodeURIComponent(redirectUri)}`,
