@@ -1,6 +1,6 @@
 {
   "name": "mairouter",
-  "version": "1.0.0-alpha",
+  "version": "1.0.0-alpha.1",
   "description": "mairouter CLI - Start and manage mairouter server",
   "bin": {
     "mairouter": "./cli.js"

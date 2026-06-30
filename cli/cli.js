@@ -615,9 +615,6 @@ if (!fs.existsSync(serverPath)) {
   process.exit(1);
 }
 
-// Preload script that sets a unique process.title (Issue #2117).
-const preloadPath = path.join(__dirname, "preload-server-title.js");
-
 // Check for updates FIRST, then start server
 checkForUpdate().then((latestVersion) => {
   killAllAppProcesses(port)
@@ -710,7 +707,7 @@ function startServer(latestVersion) {
     crashLog = [];
     const child = spawn(
       RUNTIME,
-      ["--require", preloadPath, "--max-old-space-size=6144", serverPath],
+      ["--max-old-space-size=6144", serverPath],
       {
         cwd: standaloneDir,
         stdio: showLog ? "inherit" : ["ignore", "ignore", "pipe"],
