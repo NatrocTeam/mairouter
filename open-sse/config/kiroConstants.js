@@ -3,7 +3,7 @@
  *
  * Mirrors the behaviour of `internal/translator/kiro/common/constants.go` and
  * `internal/translator/kiro/claude/kiro_claude_request.go` from the
- * CLIProxyAPIPlus reference implementation, scoped down to what 9router needs:
+ * CLIProxyAPIPlus reference implementation, scoped down to what mairouter needs:
  *
  *   - `-agentic` model suffix detection + chunked-write system prompt
  *   - reasoning / thinking trigger detection (Anthropic-Beta header,
@@ -11,7 +11,7 @@
  *   - the `<thinking_mode>enabled</thinking_mode>` system-prompt injection
  *     that turns Kiro reasoning on
  *
- * Kiro upstream does not advertise `-agentic` model IDs; they are a 9router
+ * Kiro upstream does not advertise `-agentic` model IDs; they are a mairouter
  * fiction. The suffix is stripped before the request leaves this process.
  */
 
@@ -25,7 +25,8 @@ export const KIRO_THINKING_SUFFIX = "-thinking";
 // Used when an account cannot resolve its own profileArn. Builder ID and social
 // (Google/GitHub) sign-ins map to different shared profiles.
 export const KIRO_DEFAULT_PROFILE_ARNS = {
-  "builder-id": "arn:aws:codewhisperer:us-east-1:638616132270:profile/AAAACCCCXXXX",
+  "builder-id":
+    "arn:aws:codewhisperer:us-east-1:638616132270:profile/AAAACCCCXXXX",
   social: "arn:aws:codewhisperer:us-east-1:699475941385:profile/EHGA3GRVQMUK",
 };
 
@@ -35,7 +36,9 @@ export const KIRO_DEFAULT_PROFILE_ARN = KIRO_DEFAULT_PROFILE_ARNS["builder-id"];
 /** Resolve the shared default profileArn for a given auth method. */
 export function resolveDefaultProfileArn(authMethod) {
   const social = authMethod === "google" || authMethod === "github";
-  return social ? KIRO_DEFAULT_PROFILE_ARNS.social : KIRO_DEFAULT_PROFILE_ARNS["builder-id"];
+  return social
+    ? KIRO_DEFAULT_PROFILE_ARNS.social
+    : KIRO_DEFAULT_PROFILE_ARNS["builder-id"];
 }
 
 export const KIRO_THINKING_BUDGET_DEFAULT = 16000;
@@ -110,13 +113,17 @@ export function resolveKiroThinkingBudget(body, headers, model) {
   if (cfg) {
     if (cfg.mode === "none") return null;
     if (cfg.mode === "budget") return cfg.budget;
-    if (cfg.mode === "level") return effortToBudget(cfg.level) ?? KIRO_THINKING_BUDGET_DEFAULT;
+    if (cfg.mode === "level")
+      return effortToBudget(cfg.level) ?? KIRO_THINKING_BUDGET_DEFAULT;
     return KIRO_THINKING_BUDGET_DEFAULT;
   }
 
   if (headers) {
     const beta = pickHeader(headers, "anthropic-beta");
-    if (typeof beta === "string" && beta.toLowerCase().includes("interleaved-thinking")) {
+    if (
+      typeof beta === "string" &&
+      beta.toLowerCase().includes("interleaved-thinking")
+    ) {
       return KIRO_THINKING_BUDGET_DEFAULT;
     }
   }
@@ -125,7 +132,8 @@ export function resolveKiroThinkingBudget(body, headers, model) {
 
   if (typeof model === "string" && model) {
     const m = model.toLowerCase();
-    if (m.includes("thinking") || m.includes("-reason")) return KIRO_THINKING_BUDGET_DEFAULT;
+    if (m.includes("thinking") || m.includes("-reason"))
+      return KIRO_THINKING_BUDGET_DEFAULT;
   }
 
   return null;
@@ -145,7 +153,7 @@ export function isThinkingEnabled(body, headers, model) {
 }
 
 /**
- * Detect whether a model id refers to a 9router synthetic agentic variant.
+ * Detect whether a model id refers to a mairouter synthetic agentic variant.
  * Agentic variants share the same upstream model as the base; the only
  * difference is the chunked-write system prompt this module injects.
  *
@@ -168,7 +176,7 @@ export function stripAgenticSuffix(model) {
 }
 
 /**
- * Detect whether a model id is a 9router synthetic thinking variant
+ * Detect whether a model id is a mairouter synthetic thinking variant
  * (e.g. `claude-sonnet-4.5-thinking`). Same upstream model as the base; the
  * only difference is `<thinking_mode>enabled</thinking_mode>` injection.
  *
@@ -195,7 +203,7 @@ export function stripThinkingSuffix(model) {
 }
 
 /**
- * Resolve a 9router model id to the real upstream Kiro model id, plus flags
+ * Resolve a mairouter model id to the real upstream Kiro model id, plus flags
  * describing which behaviours the suffixes implied.
  *
  *   resolveKiroModel("claude-sonnet-4.5-thinking-agentic")
@@ -231,8 +239,13 @@ export function resolveKiroModel(model) {
  *
  * @param {number} [budget=KIRO_THINKING_BUDGET_DEFAULT]
  */
-export function buildThinkingSystemPrefix(budget = KIRO_THINKING_BUDGET_DEFAULT) {
-  const safeBudget = Math.max(1, Math.min(32000, Number(budget) || KIRO_THINKING_BUDGET_DEFAULT));
+export function buildThinkingSystemPrefix(
+  budget = KIRO_THINKING_BUDGET_DEFAULT,
+) {
+  const safeBudget = Math.max(
+    1,
+    Math.min(32000, Number(budget) || KIRO_THINKING_BUDGET_DEFAULT),
+  );
   return `<thinking_mode>enabled</thinking_mode>\n<max_thinking_length>${safeBudget}</max_thinking_length>`;
 }
 
@@ -265,13 +278,16 @@ function containsThinkingModeTag(body) {
       }
     }
   }
-  if (typeof body?.system === "string" && containsTagInText(body.system)) return true;
+  if (typeof body?.system === "string" && containsTagInText(body.system))
+    return true;
   return false;
 }
 
 function containsTagInText(text) {
   if (!text) return false;
   if (!text.includes("<thinking_mode>")) return false;
-  return text.includes("<thinking_mode>enabled</thinking_mode>")
-    || text.includes("<thinking_mode>interleaved</thinking_mode>");
+  return (
+    text.includes("<thinking_mode>enabled</thinking_mode>") ||
+    text.includes("<thinking_mode>interleaved</thinking_mode>")
+  );
 }

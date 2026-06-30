@@ -15,7 +15,7 @@ const appDir = path.resolve(cliDir, "..");
 const cliMitmDir = path.join(cliDir, "app", "src", "mitm");
 // Bundle everything — no externals. This keeps MITM runtime self-contained so
 // it can be copied to DATA_DIR/runtime/ and spawned from there (escapes
-// node_modules file locks that block `npm i -g 9router@latest` on Windows).
+// node_modules file locks that block `npm i -g mairouter@latest` on Windows).
 const EXTERNALS = [];
 const ENTRIES = ["server.js"];
 
@@ -27,8 +27,14 @@ async function buildEntry(entry) {
     name: "build-plugin",
     setup(build) {
       // Stub .git file scanned by esbuild
-      build.onResolve({ filter: /\.git/ }, args => ({ path: args.path, namespace: "git-stub" }));
-      build.onLoad({ filter: /.*/, namespace: "git-stub" }, () => ({ contents: "module.exports={}", loader: "js" }));
+      build.onResolve({ filter: /\.git/ }, (args) => ({
+        path: args.path,
+        namespace: "git-stub",
+      }));
+      build.onLoad({ filter: /.*/, namespace: "git-stub" }, () => ({
+        contents: "module.exports={}",
+        loader: "js",
+      }));
     },
   };
 
@@ -53,7 +59,10 @@ async function buildEntry(entry) {
 }
 
 async function run() {
-  const flags = Object.entries(BUILD_CONFIG).filter(([, v]) => v).map(([k]) => k).join(", ");
+  const flags = Object.entries(BUILD_CONFIG)
+    .filter(([, v]) => v)
+    .map(([k]) => k)
+    .join(", ");
   console.log(`⚙️  Config: ${flags}`);
 
   for (const entry of ENTRIES) await buildEntry(entry);
@@ -61,10 +70,17 @@ async function run() {
   if (BUILD_CONFIG.cleanPlainFiles) {
     const keep = new Set(ENTRIES);
     for (const name of fs.readdirSync(cliMitmDir)) {
-      if (!keep.has(name)) fs.rmSync(path.join(cliMitmDir, name), { recursive: true, force: true });
+      if (!keep.has(name))
+        fs.rmSync(path.join(cliMitmDir, name), {
+          recursive: true,
+          force: true,
+        });
     }
     console.log("✅ Removed plain MITM files from CLI bundle");
   }
 }
 
-run().catch((e) => { console.error(e); process.exit(1); });
+run().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

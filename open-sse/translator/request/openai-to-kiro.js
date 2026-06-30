@@ -11,7 +11,7 @@ import {
   resolveKiroThinkingBudget,
   buildThinkingSystemPrefix,
   KIRO_AGENTIC_SYSTEM_PROMPT,
-  resolveDefaultProfileArn
+  resolveDefaultProfileArn,
 } from "../../config/kiroConstants.js";
 import { parseDataUri } from "../concerns/image.js";
 import { DEFAULT_IMAGE_MIME } from "../schema/index.js";
@@ -31,8 +31,10 @@ function toolCallToText(name, input) {
 /** Render a tool result (string or content-block array) as a text line. */
 function toolResultToText(content) {
   const text = Array.isArray(content)
-    ? content.map(c => (typeof c === "string" ? c : c.text || "")).join("\n")
-    : (typeof content === "string" ? content : "");
+    ? content.map((c) => (typeof c === "string" ? c : c.text || "")).join("\n")
+    : typeof content === "string"
+      ? content
+      : "";
   return `[Tool result: ${text}]`;
 }
 
@@ -80,16 +82,19 @@ function flattenToolInteractions(messages) {
       for (const tc of msg.tool_calls || []) {
         parts.push(toolCallToText(tc.function?.name, tc.function?.arguments));
       }
-      out.push({ role: ROLE.ASSISTANT, content: parts.filter(Boolean).join("\n") });
+      out.push({
+        role: ROLE.ASSISTANT,
+        content: parts.filter(Boolean).join("\n"),
+      });
       continue;
     }
 
     // User messages: replace tool_result blocks with text, keep text + images.
     if (msg.role === ROLE.USER && Array.isArray(msg.content)) {
-      const newContent = msg.content.map(c =>
+      const newContent = msg.content.map((c) =>
         c.type === CLAUDE_BLOCK.TOOL_RESULT
           ? { type: OPENAI_BLOCK.TEXT, text: toolResultToText(c.content) }
-          : c
+          : c,
       );
       out.push({ ...msg, content: newContent });
       continue;
@@ -164,7 +169,11 @@ function reconcileOrphanedToolResults(history, currentMessage) {
  */
 function safeJSONParse(str, fallback) {
   if (typeof str !== "string") return str ?? fallback;
-  try { return JSON.parse(str); } catch { return fallback; }
+  try {
+    return JSON.parse(str);
+  } catch {
+    return fallback;
+  }
 }
 
 /**
@@ -200,8 +209,8 @@ function convertMessages(messages, tools, model) {
       const userMsg = {
         userInputMessage: {
           content: content,
-          modelId: ""
-        }
+          modelId: "",
+        },
       };
 
       // Attach images if present (Kiro API supports images field)
@@ -211,7 +220,7 @@ function convertMessages(messages, tools, model) {
 
       if (pendingToolResults.length > 0) {
         userMsg.userInputMessage.userInputMessageContext = {
-          toolResults: pendingToolResults
+          toolResults: pendingToolResults,
         };
       }
 
@@ -223,28 +232,32 @@ function convertMessages(messages, tools, model) {
         if (!userMsg.userInputMessage.userInputMessageContext) {
           userMsg.userInputMessage.userInputMessageContext = {};
         }
-        userMsg.userInputMessage.userInputMessageContext.tools = tools.map(t => {
-          const name = t.function?.name || t.name;
-          let description = t.function?.description || t.description || "";
+        userMsg.userInputMessage.userInputMessageContext.tools = tools.map(
+          (t) => {
+            const name = t.function?.name || t.name;
+            let description = t.function?.description || t.description || "";
 
-          if (!description.trim()) {
-            description = `Tool: ${name}`;
-          }
-
-          const schema = t.function?.parameters || t.parameters || t.input_schema || {};
-          // Normalize schema: Kiro requires required[] and proper type/properties
-          const normalizedSchema = Object.keys(schema).length === 0
-            ? { type: "object", properties: {}, required: [] }
-            : { ...schema, required: schema.required ?? [] };
-
-          return {
-            toolSpecification: {
-              name,
-              description,
-              inputSchema: { json: normalizedSchema }
+            if (!description.trim()) {
+              description = `Tool: ${name}`;
             }
-          };
-        });
+
+            const schema =
+              t.function?.parameters || t.parameters || t.input_schema || {};
+            // Normalize schema: Kiro requires required[] and proper type/properties
+            const normalizedSchema =
+              Object.keys(schema).length === 0
+                ? { type: "object", properties: {}, required: [] }
+                : { ...schema, required: schema.required ?? [] };
+
+            return {
+              toolSpecification: {
+                name,
+                description,
+                inputSchema: { json: normalizedSchema },
+              },
+            };
+          },
+        );
         toolsInjectedToFirstUserMsg = true;
       }
 
@@ -257,8 +270,8 @@ function convertMessages(messages, tools, model) {
       const content = pendingAssistantContent.join("\n\n").trim() || "...";
       const assistantMsg = {
         assistantResponseMessage: {
-          content: content
-        }
+          content: content,
+        },
       };
       history.push(assistantMsg);
       pendingAssistantContent = [];
@@ -297,7 +310,10 @@ function convertMessages(messages, tools, model) {
             if (parsed) {
               const format = parsed.mimeType.split("/")[1] || parsed.mimeType;
               pendingImages.push({ format, source: { bytes: parsed.base64 } });
-            } else if (url.startsWith("http://") || url.startsWith("https://")) {
+            } else if (
+              url.startsWith("http://") ||
+              url.startsWith("https://")
+            ) {
               // Kiro only supports base64 — fallback to URL text
               textParts.push(`[Image: ${url}]`);
             }
@@ -313,17 +329,21 @@ function convertMessages(messages, tools, model) {
         content = textParts.join("\n");
 
         // Check for tool_result blocks
-        const toolResultBlocks = msg.content.filter(c => c.type === CLAUDE_BLOCK.TOOL_RESULT);
+        const toolResultBlocks = msg.content.filter(
+          (c) => c.type === CLAUDE_BLOCK.TOOL_RESULT,
+        );
         if (toolResultBlocks.length > 0) {
-          toolResultBlocks.forEach(block => {
+          toolResultBlocks.forEach((block) => {
             const text = Array.isArray(block.content)
-              ? block.content.map(c => c.text || "").join("\n")
-              : (typeof block.content === "string" ? block.content : "");
+              ? block.content.map((c) => c.text || "").join("\n")
+              : typeof block.content === "string"
+                ? block.content
+                : "";
 
             pendingToolResults.push({
               toolUseId: block.tool_use_id,
               status: "success",
-              content: [{ text: text }]
+              content: [{ text: text }],
             });
           });
         }
@@ -335,7 +355,7 @@ function convertMessages(messages, tools, model) {
         pendingToolResults.push({
           toolUseId: msg.tool_call_id,
           status: "success",
-          content: [{ text: toolContent }]
+          content: [{ text: toolContent }],
         });
       } else if (content) {
         pendingUserContent.push(content);
@@ -346,10 +366,17 @@ function convertMessages(messages, tools, model) {
       let toolUses = [];
 
       if (Array.isArray(msg.content)) {
-        const textBlocks = msg.content.filter(c => c.type === OPENAI_BLOCK.TEXT);
-        textContent = textBlocks.map(b => b.text).join("\n").trim();
+        const textBlocks = msg.content.filter(
+          (c) => c.type === OPENAI_BLOCK.TEXT,
+        );
+        textContent = textBlocks
+          .map((b) => b.text)
+          .join("\n")
+          .trim();
 
-        const toolUseBlocks = msg.content.filter(c => c.type === CLAUDE_BLOCK.TOOL_USE);
+        const toolUseBlocks = msg.content.filter(
+          (c) => c.type === CLAUDE_BLOCK.TOOL_USE,
+        );
         toolUses = toolUseBlocks;
       } else if (typeof msg.content === "string") {
         textContent = msg.content.trim();
@@ -370,18 +397,18 @@ function convertMessages(messages, tools, model) {
 
         const lastMsg = history[history.length - 1];
         if (lastMsg?.assistantResponseMessage) {
-          lastMsg.assistantResponseMessage.toolUses = toolUses.map(tc => {
+          lastMsg.assistantResponseMessage.toolUses = toolUses.map((tc) => {
             if (tc.function) {
               return {
                 toolUseId: tc.id || uuidv4(),
                 name: tc.function.name,
-                input: safeJSONParse(tc.function.arguments, {})
+                input: safeJSONParse(tc.function.arguments, {}),
               };
             } else {
               return {
                 toolUseId: tc.id || uuidv4(),
                 name: tc.name,
-                input: tc.input || {}
+                input: tc.input || {},
               };
             }
           });
@@ -406,15 +433,18 @@ function convertMessages(messages, tools, model) {
   }
 
   // Grab tools from first history item BEFORE cleanup removes them
-  const firstHistoryTools = history[0]?.userInputMessage?.userInputMessageContext?.tools;
+  const firstHistoryTools =
+    history[0]?.userInputMessage?.userInputMessageContext?.tools;
 
   // Clean up history for Kiro API compatibility
-  history.forEach(item => {
+  history.forEach((item) => {
     if (item.userInputMessage?.userInputMessageContext?.tools) {
       delete item.userInputMessage.userInputMessageContext.tools;
     }
-    if (item.userInputMessage?.userInputMessageContext &&
-        Object.keys(item.userInputMessage.userInputMessageContext).length === 0) {
+    if (
+      item.userInputMessage?.userInputMessageContext &&
+      Object.keys(item.userInputMessage.userInputMessageContext).length === 0
+    ) {
       delete item.userInputMessage.userInputMessageContext;
     }
     if (item.userInputMessage && !item.userInputMessage.modelId) {
@@ -428,11 +458,14 @@ function convertMessages(messages, tools, model) {
   const mergedHistory = [];
   for (let i = 0; i < history.length; i++) {
     const current = history[i];
-    if (current.userInputMessage &&
-        mergedHistory.length > 0 &&
-        mergedHistory[mergedHistory.length - 1].userInputMessage) {
+    if (
+      current.userInputMessage &&
+      mergedHistory.length > 0 &&
+      mergedHistory[mergedHistory.length - 1].userInputMessage
+    ) {
       const prev = mergedHistory[mergedHistory.length - 1];
-      prev.userInputMessage.content += "\n\n" + current.userInputMessage.content;
+      prev.userInputMessage.content +=
+        "\n\n" + current.userInputMessage.content;
       // Merge context: combine toolResults, images, etc.
       const prevCtx = prev.userInputMessage.userInputMessageContext;
       const curCtx = current.userInputMessage.userInputMessageContext;
@@ -441,7 +474,10 @@ function convertMessages(messages, tools, model) {
           prev.userInputMessage.userInputMessageContext = curCtx;
         } else {
           if (curCtx.toolResults?.length > 0) {
-            prevCtx.toolResults = [...(prevCtx.toolResults || []), ...curCtx.toolResults];
+            prevCtx.toolResults = [
+              ...(prevCtx.toolResults || []),
+              ...curCtx.toolResults,
+            ];
           }
           if (curCtx.tools?.length > 0) {
             prevCtx.tools = [...(prevCtx.tools || []), ...curCtx.tools];
@@ -461,7 +497,7 @@ function convertMessages(messages, tools, model) {
       userInputMessage: {
         content: "",
         modelId: model,
-      }
+      },
     };
   }
 
@@ -484,12 +520,15 @@ function convertMessages(messages, tools, model) {
   // collapsed all tool content to text upstream, so there is nothing to carry).
   const resolvedTools = firstHistoryTools;
 
-  if (resolvedTools?.length > 0 &&
-      !currentMessage.userInputMessage.userInputMessageContext?.tools) {
+  if (
+    resolvedTools?.length > 0 &&
+    !currentMessage.userInputMessage.userInputMessageContext?.tools
+  ) {
     if (!currentMessage.userInputMessage.userInputMessageContext) {
       currentMessage.userInputMessage.userInputMessageContext = {};
     }
-    currentMessage.userInputMessage.userInputMessageContext.tools = resolvedTools;
+    currentMessage.userInputMessage.userInputMessageContext.tools =
+      resolvedTools;
   }
 
   return { history: mergedHistory, currentMessage };
@@ -498,7 +537,7 @@ function convertMessages(messages, tools, model) {
 /**
  * Build Kiro payload from OpenAI format
  *
- * Two 9router-specific behaviours implemented here:
+ * Two mairouter-specific behaviours implemented here:
  *
  * 1. `-agentic` model suffix. Synthetic variant — same upstream model, but we
  *    inject a chunked-write system prompt to keep large file writes under
@@ -520,9 +559,17 @@ export function openaiToKiroRequest(model, body, stream, credentials) {
   const topP = body.top_p;
 
   const { upstream: upstreamModel, agentic } = resolveKiroModel(model);
-  const thinkingBudget = resolveKiroThinkingBudget(body, credentials?.rawHeaders, model);
+  const thinkingBudget = resolveKiroThinkingBudget(
+    body,
+    credentials?.rawHeaders,
+    model,
+  );
 
-  const { history, currentMessage } = convertMessages(messages, tools, upstreamModel);
+  const { history, currentMessage } = convertMessages(
+    messages,
+    tools,
+    upstreamModel,
+  );
 
   // API-key (headless) auth uses a raw CodeWhisperer credential whose profile is
   // account-specific. Injecting the shared builder-id/social *default* placeholder
@@ -531,9 +578,11 @@ export function openaiToKiroRequest(model, body, stream, credentials) {
   // profileArn that was actually resolved for this connection — never the default.
   // OAuth/social keep the default fallback (their tokens accept it).
   const authMethod = credentials?.providerSpecificData?.authMethod;
-  const profileArn = authMethod === "api_key"
-    ? (credentials?.providerSpecificData?.profileArn || "")
-    : (credentials?.providerSpecificData?.profileArn || resolveDefaultProfileArn(authMethod));
+  const profileArn =
+    authMethod === "api_key"
+      ? credentials?.providerSpecificData?.profileArn || ""
+      : credentials?.providerSpecificData?.profileArn ||
+        resolveDefaultProfileArn(authMethod);
 
   let finalContent = currentMessage?.userInputMessage?.content || "";
 
@@ -555,22 +604,28 @@ export function openaiToKiroRequest(model, body, stream, credentials) {
   const payload = {
     conversationState: {
       chatTriggerType: "MANUAL",
-      conversationId: resolveSessionId({ headers: credentials?.rawHeaders, body, connectionId: credentials?.connectionId, scope: "kiro" }),
+      conversationId: resolveSessionId({
+        headers: credentials?.rawHeaders,
+        body,
+        connectionId: credentials?.connectionId,
+        scope: "kiro",
+      }),
       currentMessage: {
         userInputMessage: {
           content: finalContent,
           modelId: upstreamModel,
           origin: "AI_EDITOR",
           ...(currentMessage?.userInputMessage?.images?.length > 0 && {
-            images: currentMessage.userInputMessage.images
+            images: currentMessage.userInputMessage.images,
           }),
           ...(currentMessage?.userInputMessage?.userInputMessageContext && {
-            userInputMessageContext: currentMessage.userInputMessage.userInputMessageContext
-          })
-        }
+            userInputMessageContext:
+              currentMessage.userInputMessage.userInputMessageContext,
+          }),
+        },
       },
-      history: history
-    }
+      history: history,
+    },
   };
 
   if (profileArn) {
@@ -580,14 +635,15 @@ export function openaiToKiroRequest(model, body, stream, credentials) {
   if (maxTokens || temperature !== undefined || topP !== undefined) {
     payload.inferenceConfig = {};
     if (maxTokens) payload.inferenceConfig.maxTokens = maxTokens;
-    if (temperature !== undefined) payload.inferenceConfig.temperature = temperature;
+    if (temperature !== undefined)
+      payload.inferenceConfig.temperature = temperature;
     if (topP !== undefined) payload.inferenceConfig.topP = topP;
   }
 
   // Tag payload so the executor can route the upstream model id correctly.
   Object.defineProperty(payload, "_kiroUpstreamModel", {
     value: upstreamModel,
-    enumerable: false
+    enumerable: false,
   });
 
   return payload;

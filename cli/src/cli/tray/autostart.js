@@ -3,8 +3,8 @@ const path = require("path");
 const os = require("os");
 const { execSync } = require("child_process");
 
-const APP_NAME = "9router";
-const APP_LABEL = "com.9router.autostart";
+const APP_NAME = "mairouter";
+const APP_LABEL = "com.mairouter.autostart";
 
 /**
  * Resolve the absolute path to this package's cli.js.
@@ -12,7 +12,7 @@ const APP_LABEL = "com.9router.autostart";
  * Order of preference:
  *   1. Explicit `cliPath` argument — cleanest, used when called from running
  *      cli.js with `__filename`.
- *   2. `process.argv[1]` if it's our cli.js — true when 9router is currently
+ *   2. `process.argv[1]` if it's our cli.js — true when mairouter is currently
  *      running and the tray menu fires this code path.
  *   3. Compute relative to this file's own location. autostart.js lives at
  *      `<pkg>/src/cli/tray/autostart.js`, so cli.js is three levels up.
@@ -86,22 +86,40 @@ function isAutoStartEnabled() {
 
   try {
     if (platform === "darwin") {
-      const plistPath = path.join(os.homedir(), "Library", "LaunchAgents", `${APP_LABEL}.plist`);
+      const plistPath = path.join(
+        os.homedir(),
+        "Library",
+        "LaunchAgents",
+        `${APP_LABEL}.plist`,
+      );
       if (!fs.existsSync(plistPath)) return false;
       try {
         execSync(`launchctl list ${APP_LABEL}`, {
           stdio: ["ignore", "ignore", "ignore"],
-          timeout: 3000
+          timeout: 3000,
         });
         return true;
       } catch (e) {
         return false;
       }
     } else if (platform === "win32") {
-      const startupPath = path.join(process.env.APPDATA || "", "Microsoft", "Windows", "Start Menu", "Programs", "Startup", `${APP_NAME}.vbs`);
+      const startupPath = path.join(
+        process.env.APPDATA || "",
+        "Microsoft",
+        "Windows",
+        "Start Menu",
+        "Programs",
+        "Startup",
+        `${APP_NAME}.vbs`,
+      );
       return fs.existsSync(startupPath);
     } else if (platform === "linux") {
-      const desktopPath = path.join(os.homedir(), ".config", "autostart", `${APP_NAME}.desktop`);
+      const desktopPath = path.join(
+        os.homedir(),
+        ".config",
+        "autostart",
+        `${APP_NAME}.desktop`,
+      );
       return fs.existsSync(desktopPath);
     }
   } catch (e) {}
@@ -115,7 +133,7 @@ function isAutoStartEnabled() {
  * launchd is managing under our agent label.
  *
  * `launchctl unload <plist>` (and `load`) for an Aqua user-domain agent sends
- * SIGTERM to the running process. When the running 9router cli.js was itself
+ * SIGTERM to the running process. When the running mairouter cli.js was itself
  * spawned by the autostart launchd agent (i.e. user enabled autostart at
  * some point, then rebooted, then clicked the tray icon's "Disable
  * Auto-start" menu item), an unload would kill the very process executing
@@ -129,7 +147,7 @@ function isAgentSelfMacOS() {
     const output = execSync(`launchctl list ${APP_LABEL}`, {
       encoding: "utf8",
       stdio: ["ignore", "pipe", "ignore"],
-      timeout: 3000
+      timeout: 3000,
     });
     const match = output.match(/"PID"\s*=\s*(\d+)/);
     return !!(match && parseInt(match[1], 10) === process.pid);
@@ -182,9 +200,9 @@ function enableMacOS(cliPath) {
     <key>KeepAlive</key>
     <false/>
     <key>StandardOutPath</key>
-    <string>/tmp/9router.log</string>
+    <string>/tmp/mairouter.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/9router.error.log</string>
+    <string>/tmp/mairouter.error.log</string>
 </dict>
 </plist>`;
 
@@ -215,7 +233,12 @@ function enableMacOS(cliPath) {
 }
 
 function disableMacOS() {
-  const plistPath = path.join(os.homedir(), "Library", "LaunchAgents", `${APP_LABEL}.plist`);
+  const plistPath = path.join(
+    os.homedir(),
+    "Library",
+    "LaunchAgents",
+    `${APP_LABEL}.plist`,
+  );
 
   // Don't kill ourselves: when the current process is the running agent,
   // `launchctl unload` would send SIGTERM and the user clicking
@@ -237,7 +260,14 @@ function disableMacOS() {
 // ============ Windows ============
 
 function enableWindows(cliPath) {
-  const startupDir = path.join(process.env.APPDATA || "", "Microsoft", "Windows", "Start Menu", "Programs", "Startup");
+  const startupDir = path.join(
+    process.env.APPDATA || "",
+    "Microsoft",
+    "Windows",
+    "Start Menu",
+    "Programs",
+    "Startup",
+  );
   const vbsPath = path.join(startupDir, `${APP_NAME}.vbs`);
 
   if (!fs.existsSync(startupDir)) return false;
@@ -247,7 +277,7 @@ function enableWindows(cliPath) {
   if (!routerScript) return false;
 
   // Run node + cli.js directly, hidden window. Avoids the fragile
-  // `9router.cmd` lookup that depended on the npm prefix path.
+  // `mairouter.cmd` lookup that depended on the npm prefix path.
   const vbsContent = `Set WshShell = CreateObject("WScript.Shell")
 WshShell.Run """${nodePath}"" ""${routerScript}"" --tray --skip-update", 0, False
 `;
@@ -256,7 +286,15 @@ WshShell.Run """${nodePath}"" ""${routerScript}"" --tray --skip-update", 0, Fals
 }
 
 function disableWindows() {
-  const vbsPath = path.join(process.env.APPDATA || "", "Microsoft", "Windows", "Start Menu", "Programs", "Startup", `${APP_NAME}.vbs`);
+  const vbsPath = path.join(
+    process.env.APPDATA || "",
+    "Microsoft",
+    "Windows",
+    "Start Menu",
+    "Programs",
+    "Startup",
+    `${APP_NAME}.vbs`,
+  );
   if (fs.existsSync(vbsPath)) {
     fs.unlinkSync(vbsPath);
   }
@@ -270,8 +308,11 @@ function enableLinux(cliPath) {
   const desktopPath = path.join(autostartDir, `${APP_NAME}.desktop`);
 
   if (!fs.existsSync(autostartDir)) {
-    try { fs.mkdirSync(autostartDir, { recursive: true }); }
-    catch (e) { return false; }
+    try {
+      fs.mkdirSync(autostartDir, { recursive: true });
+    } catch (e) {
+      return false;
+    }
   }
 
   const nodePath = process.execPath;
@@ -280,8 +321,8 @@ function enableLinux(cliPath) {
 
   const desktopContent = `[Desktop Entry]
 Type=Application
-Name=9Router
-Comment=9Router API Proxy
+Name=mairouter
+Comment=mairouter API Proxy
 Exec=${nodePath} ${routerScript} --tray --skip-update
 Hidden=false
 NoDisplay=false
@@ -292,7 +333,12 @@ X-GNOME-Autostart-enabled=true
 }
 
 function disableLinux() {
-  const desktopPath = path.join(os.homedir(), ".config", "autostart", `${APP_NAME}.desktop`);
+  const desktopPath = path.join(
+    os.homedir(),
+    ".config",
+    "autostart",
+    `${APP_NAME}.desktop`,
+  );
   if (fs.existsSync(desktopPath)) {
     fs.unlinkSync(desktopPath);
   }
@@ -302,5 +348,5 @@ function disableLinux() {
 module.exports = {
   enableAutoStart,
   disableAutoStart,
-  isAutoStartEnabled
+  isAutoStartEnabled,
 };

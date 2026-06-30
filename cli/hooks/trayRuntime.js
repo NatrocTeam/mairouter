@@ -9,34 +9,45 @@
 const { spawnSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
-const { getRuntimeDir, getRuntimeNodeModules, runNpmInstall, summarizeNpmError } = require("./sqliteRuntime");
+const {
+  getRuntimeDir,
+  getRuntimeNodeModules,
+  runNpmInstall,
+  summarizeNpmError,
+} = require("./sqliteRuntime");
 
 const SYSTRAY_PKG = "systray2";
 const SYSTRAY_VERSION = "2.1.4";
 const LEGACY_SYSTRAY_PKG = "systray";
 
 function hasSystray() {
-  return fs.existsSync(path.join(getRuntimeNodeModules(), SYSTRAY_PKG, "package.json"));
+  return fs.existsSync(
+    path.join(getRuntimeNodeModules(), SYSTRAY_PKG, "package.json"),
+  );
 }
 
 // Remove the legacy `systray` package from all known locations.
 // On Windows it was an AV false-positive risk; on macOS/Linux its bundled
 // binary is broken on modern OS versions.
 function cleanupLegacySystray({ silent = false } = {}) {
-  // 1) Runtime dir: ~/.9router/runtime/node_modules/systray (or %APPDATA% on Win)
-  // 2) npm global nested: <npm_prefix>/node_modules/9router/node_modules/systray
+  // 1) Runtime dir: ~/.mairouter/runtime/node_modules/systray (or %APPDATA% on Win)
+  // 2) npm global nested: <npm_prefix>/node_modules/mairouter/node_modules/systray
   //    __dirname here = <pkg root>/hooks → up 1 = pkg root
   const targets = [
     path.join(getRuntimeNodeModules(), LEGACY_SYSTRAY_PKG),
-    path.join(__dirname, "..", "node_modules", LEGACY_SYSTRAY_PKG)
+    path.join(__dirname, "..", "node_modules", LEGACY_SYSTRAY_PKG),
   ];
   for (const dir of targets) {
     if (fs.existsSync(dir)) {
       try {
         fs.rmSync(dir, { recursive: true, force: true });
-        if (!silent) console.log(`[9router][runtime] removed legacy systray: ${dir}`);
+        if (!silent)
+          console.log(`[mairouter][runtime] removed legacy systray: ${dir}`);
       } catch (e) {
-        if (!silent) console.warn(`[9router][runtime] failed to remove ${dir}: ${e.message}`);
+        if (!silent)
+          console.warn(
+            `[mairouter][runtime] failed to remove ${dir}: ${e.message}`,
+          );
       }
     }
   }
@@ -47,13 +58,22 @@ function cleanupLegacySystray({ silent = false } = {}) {
 // best-effort so the tray actually starts.
 function chmodSystrayBin({ silent = false } = {}) {
   if (process.platform === "win32") return;
-  const binName = process.platform === "darwin" ? "tray_darwin_release" : "tray_linux_release";
-  const binPath = path.join(getRuntimeNodeModules(), SYSTRAY_PKG, "traybin", binName);
+  const binName =
+    process.platform === "darwin"
+      ? "tray_darwin_release"
+      : "tray_linux_release";
+  const binPath = path.join(
+    getRuntimeNodeModules(),
+    SYSTRAY_PKG,
+    "traybin",
+    binName,
+  );
   if (!fs.existsSync(binPath)) return;
   try {
     fs.chmodSync(binPath, 0o755);
   } catch (e) {
-    if (!silent) console.warn(`[9router][runtime] chmod tray bin failed: ${e.message}`);
+    if (!silent)
+      console.warn(`[mairouter][runtime] chmod tray bin failed: ${e.message}`);
   }
 }
 
@@ -62,11 +82,18 @@ function ensureRuntimeDir() {
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
   const pkgPath = path.join(dir, "package.json");
   if (!fs.existsSync(pkgPath)) {
-    fs.writeFileSync(pkgPath, JSON.stringify({
-      name: "9router-runtime",
-      version: "1.0.0",
-      private: true
-    }, null, 2));
+    fs.writeFileSync(
+      pkgPath,
+      JSON.stringify(
+        {
+          name: "mairouter-runtime",
+          version: "1.0.0",
+          private: true,
+        },
+        null,
+        2,
+      ),
+    );
   }
   return dir;
 }
@@ -74,7 +101,12 @@ function ensureRuntimeDir() {
 function npmInstall(pkgs, { silent = false } = {}) {
   const cwd = ensureRuntimeDir();
   if (!silent) console.log("⏳ Installing system tray (first run)...");
-  const res = runNpmInstall({ cwd, pkgs, extraArgs: ["--no-save"], timeout: 120000 });
+  const res = runNpmInstall({
+    cwd,
+    pkgs,
+    extraArgs: ["--no-save"],
+    timeout: 120000,
+  });
   if (!res.ok && !silent) {
     const reason = summarizeNpmError(res.stderr);
     console.warn("⚠️  System tray install failed — tray disabled");

@@ -14,21 +14,25 @@ const buildDistDir = path.join(appDir, buildDistDirName);
 
 // Exclude patterns for files/folders we don't want to copy
 const EXCLUDE_PATTERNS = [
-  "@img",           // Sharp image processing (not needed with unoptimized images)
-  "sharp",          // Sharp core lib (not needed with unoptimized images)
-  "detect-libc",    // Sharp dependency
-  ".env",           // Environment files
+  "@img", // Sharp image processing (not needed with unoptimized images)
+  "sharp", // Sharp core lib (not needed with unoptimized images)
+  "detect-libc", // Sharp dependency
+  ".env", // Environment files
   ".env.local",
   ".env.*.local",
-  "*.log",          // Log files
-  "tmp",            // Temp files
-  ".DS_Store",      // macOS files
+  "*.log", // Log files
+  "tmp", // Temp files
+  ".DS_Store", // macOS files
 ];
 
 function shouldExclude(name) {
-  return EXCLUDE_PATTERNS.some(pattern => {
+  return EXCLUDE_PATTERNS.some((pattern) => {
     if (pattern.includes("*")) {
-      const regex = new RegExp("^" + pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*") + "$");
+      const regex = new RegExp(
+        "^" +
+          pattern.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*") +
+          "$",
+      );
       return regex.test(name);
     }
     return name === pattern;
@@ -40,7 +44,7 @@ function copyRecursive(src, dest) {
     console.warn(`Warning: Source ${src} does not exist`);
     return;
   }
-  
+
   if (!fs.existsSync(dest)) {
     fs.mkdirSync(dest, { recursive: true });
   }
@@ -81,15 +85,19 @@ function copyRecursive(src, dest) {
   }
 }
 
-console.log("📦 Building 9Router CLI package with Next.js...\n");
+console.log("📦 Building mairouter CLI package with Next.js...\n");
 
 fs.mkdirSync(buildHomeDir, { recursive: true });
-fs.mkdirSync(path.join(buildHomeDir, "AppData", "Roaming"), { recursive: true });
+fs.mkdirSync(path.join(buildHomeDir, "AppData", "Roaming"), {
+  recursive: true,
+});
 fs.mkdirSync(path.join(buildHomeDir, "AppData", "Local"), { recursive: true });
 
 // Step 0: Sync version from app/cli/package.json to app/package.json
 console.log("0️⃣  Syncing version to app/package.json...");
-const cliPkg = JSON.parse(fs.readFileSync(path.join(cliDir, "package.json"), "utf8"));
+const cliPkg = JSON.parse(
+  fs.readFileSync(path.join(cliDir, "package.json"), "utf8"),
+);
 const appPkgPath = path.join(appDir, "package.json");
 const appPkg = JSON.parse(fs.readFileSync(appPkgPath, "utf8"));
 if (appPkg.version !== cliPkg.version) {
@@ -114,7 +122,7 @@ try {
       LOCALAPPDATA: path.join(buildHomeDir, "AppData", "Local"),
       NEXT_DIST_DIR: buildDistDirName,
       NEXT_TRACING_ROOT_MODE: "workspace",
-    }
+    },
   });
   console.log("✅ Next.js build completed\n");
 } catch (error) {
@@ -135,12 +143,17 @@ console.log("✅ Cleaned\n");
 console.log("3️⃣  Copying Next.js standalone build to app/cli/app...");
 const standaloneRoot = path.join(appDir, ".next", "standalone");
 const standaloneRootResolved = path.join(buildDistDir, "standalone");
-let standaloneRootToUse = fs.existsSync(standaloneRootResolved) ? standaloneRootResolved : standaloneRoot;
+let standaloneRootToUse = fs.existsSync(standaloneRootResolved)
+  ? standaloneRootResolved
+  : standaloneRoot;
 // Next.js 16 nests standalone output under the project name when NEXT_TRACING_ROOT_MODE=workspace
-// e.g. .next-cli-build/standalone/9router/server.js
+// e.g. .next-cli-build/standalone/mairouter/server.js
 const pkgName = path.basename(appDir);
 const nestedRoot = path.join(standaloneRootToUse, pkgName);
-if (fs.existsSync(path.join(nestedRoot, "server.js")) && !fs.existsSync(path.join(standaloneRootToUse, "server.js"))) {
+if (
+  fs.existsSync(path.join(nestedRoot, "server.js")) &&
+  !fs.existsSync(path.join(standaloneRootToUse, "server.js"))
+) {
   console.log(`ℹ️  Detected nested standalone output: ${pkgName}/`);
   standaloneRootToUse = nestedRoot;
 }
@@ -149,14 +162,19 @@ const standaloneApp = fs.existsSync(path.join(standaloneRootToUse, "server.js"))
   : path.join(standaloneRootToUse, "app");
 if (!fs.existsSync(standaloneApp)) {
   console.error("❌ Next.js standalone build not found under .next/standalone");
-  console.error("Expected either .next/standalone/server.js or .next/standalone/app/");
+  console.error(
+    "Expected either .next/standalone/server.js or .next/standalone/app/",
+  );
   process.exit(1);
 }
 copyRecursive(standaloneApp, cliAppDir);
 
 // Older nested-app layout stores traced node_modules at standalone root.
 const standaloneNodeModules = path.join(standaloneRootToUse, "node_modules");
-if (standaloneApp !== standaloneRootToUse && fs.existsSync(standaloneNodeModules)) {
+if (
+  standaloneApp !== standaloneRootToUse &&
+  fs.existsSync(standaloneNodeModules)
+) {
   copyRecursive(standaloneNodeModules, path.join(cliAppDir, "node_modules"));
 }
 console.log("✅ Copied standalone build\n");
@@ -167,11 +185,13 @@ if (fs.existsSync(customServerSrc)) {
   fs.copyFileSync(customServerSrc, path.join(cliAppDir, "custom-server.js"));
   console.log("✅ Copied custom-server.js\n");
 } else {
-  console.warn("⚠️  custom-server.js not found — server will run without real-IP injection\n");
+  console.warn(
+    "⚠️  custom-server.js not found — server will run without real-IP injection\n",
+  );
 }
 
 // Step 3b: Ensure sql.js (pure JS fallback) bundled in app/cli/app/node_modules.
-// Strip better-sqlite3 (native) — it lives in ~/.9router/runtime to avoid
+// Strip better-sqlite3 (native) — it lives in ~/.mairouter/runtime to avoid
 // Windows EBUSY during global CLI updates. node:sqlite (Node ≥22.5) is also
 // available as a no-install middle tier.
 console.log("3️⃣ b Configuring SQLite drivers...");
@@ -187,7 +207,9 @@ function ensureModuleInBundle(pkg) {
   ];
   const src = candidates.find((p) => fs.existsSync(p));
   if (!src) {
-    console.warn(`⚠️  ${pkg} not found locally — bundle will rely on node:sqlite or runtime install`);
+    console.warn(
+      `⚠️  ${pkg} not found locally — bundle will rely on node:sqlite or runtime install`,
+    );
     return;
   }
   fs.mkdirSync(path.dirname(dest), { recursive: true });
@@ -198,7 +220,7 @@ ensureModuleInBundle("sql.js");
 const betterDir = path.join(cliAppDir, "node_modules", "better-sqlite3");
 if (fs.existsSync(betterDir)) {
   fs.rmSync(betterDir, { recursive: true, force: true });
-  console.log("✅ Stripped better-sqlite3 (lives in ~/.9router/runtime)");
+  console.log("✅ Stripped better-sqlite3 (lives in ~/.mairouter/runtime)");
 }
 console.log("");
 
@@ -208,7 +230,10 @@ const staticSrc = path.join(appDir, ".next", "static");
 const staticSrcResolved = path.join(buildDistDir, "static");
 const staticDest = path.join(cliAppDir, buildDistDirName, "static");
 if (fs.existsSync(staticSrcResolved) || fs.existsSync(staticSrc)) {
-  copyRecursive(fs.existsSync(staticSrcResolved) ? staticSrcResolved : staticSrc, staticDest);
+  copyRecursive(
+    fs.existsSync(staticSrcResolved) ? staticSrcResolved : staticSrc,
+    staticDest,
+  );
   console.log("✅ Copied static files\n");
 } else {
   console.log("⏭️  No static files found\n");
@@ -228,10 +253,24 @@ if (fs.existsSync(publicSrc)) {
 // Step 6: Copy vendor-chunks (required for production)
 console.log("6️⃣  Copying vendor-chunks...");
 const vendorChunksSrc = path.join(appDir, ".next", "server", "vendor-chunks");
-const vendorChunksSrcResolved = path.join(buildDistDir, "server", "vendor-chunks");
-const vendorChunksDest = path.join(cliAppDir, buildDistDirName, "server", "vendor-chunks");
+const vendorChunksSrcResolved = path.join(
+  buildDistDir,
+  "server",
+  "vendor-chunks",
+);
+const vendorChunksDest = path.join(
+  cliAppDir,
+  buildDistDirName,
+  "server",
+  "vendor-chunks",
+);
 if (fs.existsSync(vendorChunksSrcResolved) || fs.existsSync(vendorChunksSrc)) {
-  copyRecursive(fs.existsSync(vendorChunksSrcResolved) ? vendorChunksSrcResolved : vendorChunksSrc, vendorChunksDest);
+  copyRecursive(
+    fs.existsSync(vendorChunksSrcResolved)
+      ? vendorChunksSrcResolved
+      : vendorChunksSrc,
+    vendorChunksDest,
+  );
   console.log("✅ Copied vendor-chunks\n");
 } else {
   console.log("⏭️  No vendor-chunks found\n");
