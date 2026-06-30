@@ -1,6 +1,3 @@
-import { platform, arch } from "os";
-import { ANTIGRAVITY_OAUTH_CLIENT } from "../shared.js";
-
 export default {
   id: "antigravity",
   priority: 20,
@@ -29,22 +26,25 @@ export default {
       "User-Agent": "antigravity/1.107.0 darwin/arm64",
     },
     retry: {
-      "429": {
+      429: {
         attempts: 3,
       },
-      "500": {
+      500: {
         attempts: 3,
       },
-      "503": {
+      503: {
         attempts: 3,
       },
     },
     usage: {
-      quotaApiUrl: "https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels",
-      loadProjectApiUrl: "https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist",
+      quotaApiUrl:
+        "https://cloudcode-pa.googleapis.com/v1internal:fetchAvailableModels",
+      loadProjectApiUrl:
+        "https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist",
       tokenUrl: "https://oauth2.googleapis.com/token",
     },
-    clientId: "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com",
+    clientId:
+      "1071006060591-tmhssin2h21lcre235vtolojh4g403ep.apps.googleusercontent.com",
     clientSecret: "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",
   },
   models: [
@@ -58,7 +58,13 @@ export default {
     { id: "gpt-oss-120b-medium", name: "GPT-OSS 120B (Medium)" },
     { id: "gemini-3-flash", name: "Gemini 3 Flash", thinking: false },
     // Image generation models
-    { id: "gemini-3.1-flash-image", name: "Gemini 3.1 Flash (Image)", kind: "image", imageGen: true, capabilities: ["textToImage"] },
+    {
+      id: "gemini-3.1-flash-image",
+      name: "Gemini 3.1 Flash (Image)",
+      kind: "image",
+      imageGen: true,
+      capabilities: ["textToImage"],
+    },
   ],
   oauth: {
     authorizeUrl: "https://accounts.google.com/o/oauth2/v2/auth",
@@ -73,8 +79,10 @@ export default {
     ],
     apiEndpoint: "https://cloudcode-pa.googleapis.com",
     apiVersion: "v1internal",
-    loadCodeAssistEndpoint: "https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist",
-    onboardUserEndpoint: "https://cloudcode-pa.googleapis.com/v1internal:onboardUser",
+    loadCodeAssistEndpoint:
+      "https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist",
+    onboardUserEndpoint:
+      "https://cloudcode-pa.googleapis.com/v1internal:onboardUser",
     loadCodeAssistUserAgent: "google-api-nodejs-client/9.15.1",
     loadCodeAssistApiClient: "google-cloud-sdk vscode_cloudshelleditor/0.1",
     refreshLeadMs: 300000,

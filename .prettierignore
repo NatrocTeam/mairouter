@@ -1,0 +1,14 @@
+.next/**
+.next-cli-build/**
+out/**
+build/**
+next-env.d.ts
+coverage/**
+product/**
+.vercel/**
+cli/.build-home/**
+cli/app/**
+cli/node_modules/**
+node_modules/**
+.claude/**
+tests/node_modules/**

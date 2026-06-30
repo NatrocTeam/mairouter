@@ -1,5 +1,3 @@
-import { CLAUDE_API_HEADERS } from "../shared.js";
-
 export default {
   id: "anthropic",
   priority: 30,
@@ -33,5 +31,5 @@ export default {
     { id: "claude-sonnet-4-5-20250929", name: "Claude Sonnet 4.5" },
     { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
   ],
-  serviceKinds: ["llm","imageToText"],
+  serviceKinds: ["llm", "imageToText"],
 };
