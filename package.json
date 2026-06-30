@@ -17,7 +17,7 @@
     "install:test": "cd tests && npm install",
     "install:cli": "cd cli && npm install",
     "install:all": "npm install && npm run install:test && npm run install:cli",
-    "clean": "rimraf .next"
+    "clean": "rimraf .next .next-cli-build tests/node_modules tests/package-lock.json cli/.build-home cli/app cli/node_modules cli/package-lock.json package-lock.json node_modules"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
