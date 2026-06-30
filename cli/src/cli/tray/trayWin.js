@@ -43,7 +43,7 @@ function initWinTray(options) {
       ],
       { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] }
     );
-  } catch (err) {
+  } catch {
     return null;
   }
 
@@ -54,7 +54,9 @@ function initWinTray(options) {
       if (evt.type === "click" && clickHandler) {
         clickHandler(evt.index);
       }
-    } catch (e) {}
+    } catch {
+      // Ignore non-JSON output; only parsed click events are actionable.
+    }
   });
 
   psProcess.on("error", () => {});
@@ -75,10 +77,16 @@ function initWinTray(options) {
     kill() {
       try {
         sendCommand({ action: "kill" });
-      } catch (e) {}
+      } catch {
+        // stdin may already be closed; the timed process kill remains available.
+      }
       setTimeout(() => {
         if (psProcess && !psProcess.killed) {
-          try { psProcess.kill(); } catch (e) {}
+          try {
+            psProcess.kill();
+          } catch {
+            // The PowerShell tray process may already have exited.
+          }
         }
         psProcess = null;
       }, 300);

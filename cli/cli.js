@@ -57,12 +57,16 @@ const args = process.argv.slice(2);
 // better-sqlite3 is optional. Logs to stderr only on failure.
 try {
   ensureSqliteRuntime({ silent: true });
-} catch {}
+} catch {
+  // Best-effort startup repair; the server can report runtime failures later.
+}
 
 // Self-heal tray runtime (systray for macOS/Linux only). Windows skipped.
 try {
   ensureTrayRuntime({ silent: true });
-} catch {}
+} catch {
+  // Tray support is optional, so startup continues without it.
+}
 
 // Configuration constants
 const APP_NAME = pkg.name; // Use from package.json
@@ -85,12 +89,6 @@ function getLanIp() {
 function getDisplayHost() {
   return host === DEFAULT_HOST ? "localhost" : host;
 }
-const MAX_PORT_ATTEMPTS = 10;
-// Identifiers for killAllAppProcesses - only kill mairouter specifically
-const PROCESS_IDENTIFIERS = [
-  "mairouter", // Only package name - avoid killing other apps
-];
-
 // Parse arguments
 let port = DEFAULT_PORT;
 let host = DEFAULT_HOST;
@@ -179,11 +177,17 @@ function killByPidFile(pidFile) {
       } else {
         process.kill(pid, "SIGKILL");
       }
-    } catch {}
+    } catch {
+      // The target process may already have exited.
+    }
     try {
       fs.unlinkSync(pidFile);
-    } catch {}
-  } catch {}
+    } catch {
+      // PID-file cleanup is best-effort.
+    }
+  } catch {
+    // Missing or unreadable PID files do not block shutdown.
+  }
 }
 
 // Kill tunnel processes (cloudflared/tailscale) by their PID files
@@ -232,7 +236,9 @@ function killCloudflaredByAppPort(appPort) {
         }
       });
     }
-  } catch {}
+  } catch {
+    // Process discovery is best-effort across supported platforms.
+  }
   return pids;
 }
 
@@ -283,7 +289,7 @@ function killAllAppProcesses(appPort) {
               }
             }
           });
-        } catch (e) {
+        } catch {
           // No processes found or error - continue
         }
       } else {
@@ -313,7 +319,7 @@ function killAllAppProcesses(appPort) {
               }
             }
           });
-        } catch (e) {
+        } catch {
           // No processes found or error - continue
         }
       }
@@ -335,7 +341,7 @@ function killAllAppProcesses(appPort) {
                 timeout: 3000,
               });
             }
-          } catch (err) {
+          } catch {
             // Process already dead or can't kill - continue
           }
         });
@@ -345,7 +351,7 @@ function killAllAppProcesses(appPort) {
       } else {
         resolve();
       }
-    } catch (err) {
+    } catch {
       // Silent fail - continue anyway
       resolve();
     }
@@ -392,7 +398,9 @@ function killProxyByPidFile() {
           windowsHide: true,
           timeout: 2000,
         });
-      } catch {}
+      } catch {
+        // Continue to the force-kill fallback below.
+      }
       if (!waitForExit(pid, 1500)) {
         try {
           execSync(`taskkill /F /T /PID ${pid}`, {
@@ -400,7 +408,9 @@ function killProxyByPidFile() {
             windowsHide: true,
             timeout: 3000,
           });
-        } catch {}
+        } catch {
+          // Continue to the PowerShell fallback below.
+        }
       }
       // Last-resort: PowerShell Stop-Process (sometimes succeeds where taskkill fails on admin processes)
       if (!waitForExit(pid, 500)) {
@@ -409,7 +419,9 @@ function killProxyByPidFile() {
             `powershell -NonInteractive -WindowStyle Hidden -Command "Stop-Process -Id ${pid} -Force"`,
             { stdio: "ignore", windowsHide: true, timeout: 3000 },
           );
-        } catch {}
+        } catch {
+          // The process may already have exited.
+        }
       }
     } else {
       // SIGTERM via cached sudo token first
@@ -421,7 +433,9 @@ function killProxyByPidFile() {
       } catch {
         try {
           process.kill(pid, "SIGTERM");
-        } catch {}
+        } catch {
+          // The process may already have exited.
+        }
       }
       if (!waitForExit(pid, 1500)) {
         try {
@@ -432,14 +446,20 @@ function killProxyByPidFile() {
         } catch {
           try {
             process.kill(pid, "SIGKILL");
-          } catch {}
+          } catch {
+            // The process may already have exited.
+          }
         }
       }
     }
     try {
       fs.unlinkSync(pidFile);
-    } catch {}
-  } catch {}
+    } catch {
+      // PID-file cleanup is best-effort.
+    }
+  } catch {
+    // Missing or unreadable PID files do not block shutdown.
+  }
 }
 
 // Kill any process on specific port
@@ -469,7 +489,7 @@ function killProcessOnPort(port) {
               timeout: 3000,
             });
           }
-        } catch (e) {
+        } catch {
           // Port is free or error
         }
       } else {
@@ -486,14 +506,14 @@ function killProcessOnPort(port) {
               timeout: 3000,
             });
           }
-        } catch (e) {
+        } catch {
           // Port is free or error
         }
       }
 
       // Wait for port to be released
       setTimeout(() => resolve(), 500);
-    } catch (err) {
+    } catch {
       // Silent fail - continue anyway
       resolve();
     }
@@ -566,7 +586,7 @@ function checkForUpdate() {
             } else {
               done(null);
             }
-          } catch (e) {
+          } catch {
             done(null);
           }
         });
@@ -643,7 +663,7 @@ async function showInterfaceMenu(latestVersion) {
     serverUrl = tunnelEnabled
       ? endpoint.replace(/\/v1$/, "")
       : `http://${displayHost}:${port}`;
-  } catch (e) {
+  } catch {
     serverUrl = `http://${displayHost}:${port}`;
   }
 
@@ -743,7 +763,9 @@ function startServer(latestVersion) {
       try {
         const { killTray } = require("./src/cli/tray/tray");
         killTray();
-      } catch (e) {}
+      } catch {
+        // Tray support is optional during shutdown.
+      }
       // Kill MIT server (privileged process) via PID file
       killProxyByPidFile();
       // Kill cloudflared/tailscale via PID file (only this app's tunnel)
@@ -754,7 +776,9 @@ function startServer(latestVersion) {
       }
       // Also try to kill process group
       process.kill(-server.pid, "SIGKILL");
-    } catch (e) {}
+    } catch {
+      // Shutdown is best-effort because the child may already have exited.
+    }
   }
 
   // Suppress all errors during shutdown (systray lib throws JSON parse errors)
@@ -799,7 +823,7 @@ function startServer(latestVersion) {
         },
         onOpenDashboard: () => openBrowser(url),
       });
-    } catch (err) {
+    } catch {
       // Tray not available - continue without it
     }
   };
@@ -826,6 +850,10 @@ function startServer(latestVersion) {
 
   // Wait for server to be ready, then show interface menu loop + tray
   setTimeout(async () => {
+    if (!noBrowser && !isRestrictedEnvironment()) {
+      openBrowser(url);
+    }
+
     // Start tray icon alongside TUI
     initTrayIcon();
 
@@ -863,7 +891,9 @@ function startServer(latestVersion) {
           try {
             const { enableAutoStart } = require("./src/cli/tray/autostart");
             enableAutoStart(__filename);
-          } catch (e) {}
+          } catch {
+            // Auto-start support is optional.
+          }
 
           if (process.platform === "darwin") {
             // macOS: keep current process alive — spawning a detached child puts

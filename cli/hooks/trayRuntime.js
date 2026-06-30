@@ -6,7 +6,6 @@
 // We use the maintained `systray2` fork. The original `systray@1.0.5` package
 // bundles a 2017 x86_64 Go binary whose Mach-O headers are rejected by modern
 // dyld (macOS 14+), so the tray silently fails to register on Apple Silicon.
-const { spawnSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
 const {

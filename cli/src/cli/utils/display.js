@@ -1,5 +1,3 @@
-const { formatNumber } = require("./format");
-
 // ANSI color codes
 const COLORS = {
   reset: "\x1b[0m",

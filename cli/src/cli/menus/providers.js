@@ -1,7 +1,6 @@
 const api = require("../api/client");
 const { prompt, confirm, pause } = require("../utils/input");
 const { clearScreen, showStatus, showHeader } = require("../utils/display");
-const { formatDate, getRelativeTime } = require("../utils/format");
 const { showMenuWithBack } = require("../utils/menuHelper");
 const { copyToClipboard } = require("../utils/clipboard");
 
@@ -125,15 +124,6 @@ const APIKEY_PROVIDERS = {
 };
 
 const ALL_PROVIDERS = { ...OAUTH_PROVIDERS, ...APIKEY_PROVIDERS };
-
-/**
- * Get auth type for provider
- * @param {string} providerId - Provider ID
- * @returns {string} "oauth" or "apikey"
- */
-function getAuthType(providerId) {
-  return OAUTH_PROVIDERS[providerId] ? "oauth" : "apikey";
-}
 
 /**
  * Count connections by provider
@@ -545,7 +535,7 @@ async function handleAddOAuthConnection(providerId) {
       await pause();
       return;
     }
-  } catch (err) {
+  } catch {
     showStatus("Invalid URL format", "error");
     await pause();
     return;

@@ -41,7 +41,9 @@ function loadRawMachineId() {
   try {
     const raw = fs.readFileSync(MACHINE_ID_FILE, "utf8").trim();
     if (raw) return raw;
-  } catch {}
+  } catch {
+    // Fall back to node-machine-id when the shared machine-id file is unavailable.
+  }
   try {
     return machineIdSync();
   } catch {
@@ -55,12 +57,16 @@ function loadCliSecret() {
   try {
     cachedCliSecret = fs.readFileSync(CLI_SECRET_FILE, "utf8").trim();
     if (cachedCliSecret) return cachedCliSecret;
-  } catch {}
+  } catch {
+    // Generate a new secret when no persisted secret can be read.
+  }
   cachedCliSecret = crypto.randomBytes(32).toString("hex");
   try {
     fs.mkdirSync(AUTH_DIR, { recursive: true });
     fs.writeFileSync(CLI_SECRET_FILE, cachedCliSecret, { mode: 0o600 });
-  } catch {}
+  } catch {
+    // Keep the in-memory secret when persistence is unavailable.
+  }
   return cachedCliSecret;
 }
 

@@ -54,7 +54,7 @@ function enableAutoStart(cliPath) {
     if (platform === "darwin") return enableMacOS(cliPath);
     if (platform === "win32") return enableWindows(cliPath);
     if (platform === "linux") return enableLinux(cliPath);
-  } catch (err) {
+  } catch {
     // Silent fail — autostart is optional
   }
   return false;
@@ -70,7 +70,9 @@ function disableAutoStart() {
     if (platform === "darwin") return disableMacOS();
     if (platform === "win32") return disableWindows();
     if (platform === "linux") return disableLinux();
-  } catch (err) {}
+  } catch {
+    // Autostart is optional; report disable failures through the false return.
+  }
   return false;
 }
 
@@ -99,7 +101,7 @@ function isAutoStartEnabled() {
           timeout: 3000,
         });
         return true;
-      } catch (e) {
+      } catch {
         return false;
       }
     } else if (platform === "win32") {
@@ -122,7 +124,9 @@ function isAutoStartEnabled() {
       );
       return fs.existsSync(desktopPath);
     }
-  } catch (e) {}
+  } catch {
+    // Treat filesystem or platform probe failures as autostart disabled.
+  }
   return false;
 }
 
@@ -151,7 +155,7 @@ function isAgentSelfMacOS() {
     });
     const match = output.match(/"PID"\s*=\s*(\d+)/);
     return !!(match && parseInt(match[1], 10) === process.pid);
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -222,10 +226,12 @@ function enableMacOS(cliPath) {
   // replacing an existing plist.
   try {
     execSync(`launchctl unload "${plistPath}"`, { stdio: "ignore" });
-  } catch (e) {}
+  } catch {
+    // The agent may not be loaded yet; continue with the load attempt.
+  }
   try {
     execSync(`launchctl load -w "${plistPath}"`, { stdio: "ignore" });
-  } catch (e) {
+  } catch {
     // Even if load fails, the plist is on disk and will be picked up at next
     // login; report success based on the file write.
   }
@@ -248,7 +254,9 @@ function disableMacOS() {
   if (!isAgentSelfMacOS()) {
     try {
       execSync(`launchctl unload "${plistPath}"`, { stdio: "ignore" });
-    } catch (e) {}
+    } catch {
+      // The agent may already be unloaded; removing the plist still disables it.
+    }
   }
 
   if (fs.existsSync(plistPath)) {
@@ -310,7 +318,7 @@ function enableLinux(cliPath) {
   if (!fs.existsSync(autostartDir)) {
     try {
       fs.mkdirSync(autostartDir, { recursive: true });
-    } catch (e) {
+    } catch {
       return false;
     }
   }

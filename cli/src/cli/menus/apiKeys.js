@@ -1,56 +1,10 @@
 const api = require("../api/client");
 const { prompt, confirm, pause } = require("../utils/input");
-const { clearScreen, showStatus, showHeader } = require("../utils/display");
-const { maskKey, formatDate, getRelativeTime } = require("../utils/format");
+const { clearScreen, showStatus } = require("../utils/display");
+const { maskKey, formatDate } = require("../utils/format");
 const { showMenuWithBack } = require("../utils/menuHelper");
 const { copyToClipboard } = require("../utils/clipboard");
 const { getEndpoint } = require("../utils/endpoint");
-
-/**
- * Display API keys list with formatted output
- * @param {Array} keys - Array of API key objects
- * @param {number} port - Server port
- */
-function displayApiKeys(keys, port) {
-  console.log("┌─────────────────────────────────────────────────────────┐");
-  console.log("│  🔑 API Keys Management                                 │");
-  console.log("├─────────────────────────────────────────────────────────┤");
-  // Note: This function is legacy, endpoint shown in menu header instead
-  console.log("│                                                          │");
-  
-  if (keys.length === 0) {
-    console.log("│  No API keys found.                                     │");
-  } else {
-    console.log(`│  Your API Keys (${keys.length}):${" ".repeat(42 - String(keys.length).length)}│`);
-    
-    keys.forEach((key, index) => {
-      console.log("│                                                          │");
-      console.log(`│  ${index + 1}. ${key.name}${" ".repeat(52 - String(index + 1).length - key.name.length)}│`);
-      
-      const maskedKey = maskKey(key.key);
-      console.log(`│     Key: ${maskedKey}${" ".repeat(47 - maskedKey.length)}│`);
-      
-      const created = formatDate(key.createdAt);
-      console.log(`│     Created: ${created}${" ".repeat(43 - created.length)}│`);
-      
-      if (key.lastUsedAt) {
-        const lastUsed = getRelativeTime(key.lastUsedAt);
-        console.log(`│     Last used: ${lastUsed}${" ".repeat(41 - lastUsed.length)}│`);
-      } else {
-        console.log("│     Last used: Never                                    │");
-      }
-    });
-  }
-  
-  console.log("│                                                          │");
-  console.log("│  Actions:                                               │");
-  console.log("│  1. Create New API Key                                  │");
-  console.log("│  2. View Full Key (by number)                           │");
-  console.log("│  3. Copy Key to Clipboard (by number)                   │");
-  console.log("│  4. Delete Key (by number)                              │");
-  console.log("│  0. ← Back to Main Menu                                 │");
-  console.log("└─────────────────────────────────────────────────────────┘");
-}
 
 /**
  * Handle creating new API key
@@ -93,27 +47,6 @@ async function handleCreateKey() {
   
   await pause();
   return true;
-}
-
-/**
- * Handle viewing full API key
- * @param {Object} key - API key object
- */
-async function handleViewFullKey(key) {
-  console.log("\n🔍 Full API Key");
-  console.log("─".repeat(30));
-  console.log(`Name: ${key.name}`);
-  console.log(`Key: ${key.key}`);
-  console.log(`ID: ${key.id}`);
-  console.log(`Created: ${formatDate(key.createdAt)}`);
-  
-  if (key.lastUsedAt) {
-    console.log(`Last used: ${getRelativeTime(key.lastUsedAt)}`);
-  } else {
-    console.log("Last used: Never");
-  }
-  
-  await pause();
 }
 
 /**

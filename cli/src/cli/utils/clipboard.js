@@ -22,7 +22,7 @@ function copyToClipboard(text) {
       }
     }
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 }

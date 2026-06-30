@@ -16,7 +16,9 @@ function getIconBase64() {
     if (fs.existsSync(iconPath)) {
       return fs.readFileSync(iconPath).toString("base64");
     }
-  } catch (e) {}
+  } catch {
+    // Use the embedded fallback icon when the file cannot be read.
+  }
   // Fallback: minimal green dot icon (PNG)
   return "iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAABGdBTUEAALGPC/xhBQAAAAlwSFlzAAALEwAACxMBAJqcGAAAAHpJREFUOE9jYBgFgwEwMjIy/Gdg+P8fyP4PxP8ZGBgEcBnGyMjIsICBgSEAhyH/gfgBUNN8XJoZsdkCVL8Ah+b/QPwbqvkBMvk/AwMDAzYX/GdgYAhAN+A/SICRWAMYGfFEJSMjzriEiwDR/xmIa2RkZCSqnZERb3QCAAo3KxzxbKe1AAAAAElFTkSuQmCC";
 }
@@ -83,7 +85,7 @@ function getAutostartEnabled() {
   try {
     const { isAutoStartEnabled } = require("./autostart");
     return isAutoStartEnabled();
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -103,7 +105,9 @@ function handleClick(index, options, onAutostartToggle) {
       if (enabled) disableAutoStart();
       else enableAutoStart();
       onAutostartToggle(!enabled);
-    } catch (e) {}
+    } catch {
+      // Keep the tray running when optional autostart integration fails.
+    }
   } else if (index === MENU_INDEX.QUIT) {
     console.log("\n👋 Shutting down...");
     if (onQuit) onQuit();
@@ -139,7 +143,7 @@ function initWindowsTray(options) {
 
     isWinTray = true;
     return trayInstance;
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -158,7 +162,9 @@ function resolveSystray() {
   try {
     const { getRuntimeNodeModules } = require("../../../hooks/sqliteRuntime");
     runtimeDir = getRuntimeNodeModules();
-  } catch (e) {}
+  } catch {
+    // Continue with the standard module-resolution fallbacks below.
+  }
 
   // 1) systray2 in runtime dir (where ensureTrayRuntime installs it)
   if (runtimeDir) {
@@ -167,23 +173,31 @@ function resolveSystray() {
         mod: require(path.join(runtimeDir, "systray2")).default,
         isV2: true,
       };
-    } catch (e) {}
+    } catch {
+      // Try resolving systray2 from the package or NODE_PATH next.
+    }
   }
   // 2) systray2 resolvable from the package's own node_modules / NODE_PATH
   try {
     return { mod: require("systray2").default, isV2: true };
-  } catch (e) {}
+  } catch {
+    // Try the legacy systray fallback next.
+  }
   // 3) Legacy systray fallback (unlikely to render on modern macOS)
   try {
     return { mod: require("systray").default, isV2: false };
-  } catch (e) {}
+  } catch {
+    // Try the legacy runtime-directory fallback next.
+  }
   if (runtimeDir) {
     try {
       return {
         mod: require(path.join(runtimeDir, "systray")).default,
         isV2: false,
       };
-    } catch (e) {}
+    } catch {
+      // No compatible tray module is available in the runtime directory.
+    }
   }
   return null;
 }
@@ -214,7 +228,9 @@ function chmodTrayBin(pkgName) {
     for (const p of candidates) {
       if (fs.existsSync(p)) fs.chmodSync(p, 0o755);
     }
-  } catch (e) {}
+  } catch {
+    // chmod is best-effort; tray initialization reports executable failures.
+  }
 }
 
 function initUnixTray(options) {
@@ -292,7 +308,9 @@ function killTray() {
   if (wasWin) {
     try {
       instance.kill();
-    } catch (e) {}
+    } catch {
+      // The Windows tray process may already have stopped.
+    }
     return Promise.resolve();
   }
 
@@ -302,7 +320,9 @@ function killTray() {
     proc =
       instance._process ||
       (typeof instance.process === "function" ? instance.process() : null);
-  } catch (e) {}
+  } catch {
+    // Continue without a child-process handle and use the library kill API.
+  }
 
   // Graceful shutdown: send {type:"exit"} via IPC so the Go binary can call
   // systray.Quit() and release NSStatusItem. SIGKILL leaves a ghost icon on
@@ -310,12 +330,16 @@ function killTray() {
   const gracefulQuit = () => {
     try {
       instance.kill(true);
-    } catch (e) {}
+    } catch {
+      // The tray instance may already have completed graceful shutdown.
+    }
   };
   const closeIpc = () => {
     try {
       instance.kill(false);
-    } catch (e) {}
+    } catch {
+      // The IPC channel may already be closed.
+    }
   };
 
   if (!proc || !proc.pid) {
@@ -341,13 +365,17 @@ function killTray() {
       try {
         process.kill(proc.pid, 0);
         proc.kill("SIGTERM");
-      } catch (e) {}
+      } catch {
+        // The tray process may already have exited.
+      }
     }, 800);
     setTimeout(() => {
       try {
         process.kill(proc.pid, 0);
         proc.kill("SIGKILL");
-      } catch (e) {}
+      } catch {
+        // The tray process may already have exited.
+      }
     }, 1600);
 
     // Fallback poll in case "exit" never fires (detached child, pipe closed)

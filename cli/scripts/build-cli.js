@@ -76,11 +76,15 @@ function copyRecursive(src, dest) {
         } else {
           fs.copyFileSync(real, destPath);
         }
-      } catch {}
+      } catch {
+        // Skip symlink targets that cannot be resolved or copied.
+      }
     } else {
       try {
         fs.copyFileSync(srcPath, destPath);
-      } catch {}
+      } catch {
+        // Skip files that cannot be copied into the bundle.
+      }
     }
   }
 }
@@ -125,7 +129,7 @@ try {
     },
   });
   console.log("✅ Next.js build completed\n");
-} catch (error) {
+} catch {
   console.error("❌ Next.js build failed");
   process.exit(1);
 }
@@ -303,7 +307,7 @@ console.log("8️⃣  Building MITM server...");
 try {
   execSync("node scripts/buildMitm.js", { stdio: "inherit", cwd: cliDir });
   console.log("✅ MITM server build completed\n");
-} catch (error) {
+} catch {
   console.error("❌ MITM build failed");
   process.exit(1);
 }
@@ -315,6 +319,6 @@ try {
   const { execSync: exec } = require("child_process");
   const size = exec(`du -sh "${cliAppDir}"`, { encoding: "utf8" }).trim();
   console.log(`📊 Package size: ${size.split("\t")[0]}`);
-} catch (e) {
+} catch {
   // Silent fail on size check
 }

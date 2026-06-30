@@ -29,18 +29,28 @@ function primeRawOnce() {
     process.stdin.setEncoding("utf8");
     process.stdin.resume();
     rawPrimed = true;
-  } catch {}
+  } catch {
+    // Leave rawPrimed false so line-oriented prompts remain usable.
+  }
 }
 
 function suspendRawFor(fn) {
   // Temporarily drop raw mode so readline.question can buffer line input.
   const wasPrimed = rawPrimed;
   if (wasPrimed && process.stdin.isTTY) {
-    try { process.stdin.setRawMode(false); } catch {}
+    try {
+      process.stdin.setRawMode(false);
+    } catch {
+      // Continue with the prompt when raw mode cannot be suspended.
+    }
   }
   return fn().finally(() => {
     if (wasPrimed && process.stdin.isTTY) {
-      try { process.stdin.setRawMode(true); } catch {}
+      try {
+        process.stdin.setRawMode(true);
+      } catch {
+        // Raw-mode restoration is best-effort after the prompt completes.
+      }
       process.stdin.resume();
     }
   });
