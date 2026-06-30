@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "mairouter web dashboard",
   "private": true,
+  "author": "NatrocTeam",
+  "contributors": [
+    "Mairouter contributors"
+  ],
+  "license": "MIT",
   "scripts": {
     "dev": "next dev --webpack --port 20127",
     "start": "next start",

@@ -40,6 +40,10 @@
     "ai",
     "api"
   ],
+  "author": "NatrocTeam",
+  "contributors": [
+    "Mairouter contributors"
+  ],
   "license": "MIT",
   "devDependencies": {
     "esbuild": "^0.25.12",
