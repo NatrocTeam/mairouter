@@ -1,6 +1,6 @@
 services:
   mairouter:
-    image: decolua/mairouter:latest
+    image: ghcr.io/NatrocTeam/mairouter:latest
     container_name: mairouter
     restart: always
     ports:
