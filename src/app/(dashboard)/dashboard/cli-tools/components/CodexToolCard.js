@@ -26,13 +26,13 @@ export default function CodexToolCard({
   tailscaleEnabled,
   tailscaleUrl,
 }) {
-  const [codexStatus, setCodexStatus] = useState(initialStatus || null);
+  const [codexStatus, setCodexStatus] = useState(() => initialStatus || null);
   const [checkingCodex, setCheckingCodex] = useState(false);
   const [applying, setApplying] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
+  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
   const [selectedModel, setSelectedModel] = useState("");
   const [subagentModel, setSubagentModel] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -40,24 +40,6 @@ export default function CodexToolCard({
   const [modelAliases, setModelAliases] = useState({});
   const [showManualConfigModal, setShowManualConfigModal] = useState(false);
   const [customBaseUrl, setCustomBaseUrl] = useState("");
-
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
-    }
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setCodexStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !codexStatus) {
-      checkCodexStatus();
-      fetchModelAliases();
-    }
-    if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
 
   const fetchModelAliases = async () => {
     try {
@@ -69,10 +51,33 @@ export default function CodexToolCard({
     }
   };
 
+  const checkCodexStatus = async () => {
+    setCheckingCodex(true);
+    try {
+      const res = await fetch("/api/cli-tools/codex-settings");
+      const data = await res.json();
+      setCodexStatus(data);
+    } catch (error) {
+      setCodexStatus({ installed: false, error: error.message });
+    } finally {
+      setCheckingCodex(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isExpanded && !codexStatus) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      checkCodexStatus();
+      fetchModelAliases();
+    }
+    if (isExpanded) fetchModelAliases();
+  }, [isExpanded, codexStatus]);
+
   // Parse model and subagent settings from config content
   useEffect(() => {
     if (codexStatus?.config) {
       const modelMatch = codexStatus.config.match(/^model\s*=\s*"([^"]+)"/m);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (modelMatch) setSelectedModel(modelMatch[1]);
 
       // Parse subagent settings
@@ -102,19 +107,6 @@ export default function CodexToolCard({
   };
 
   const getDisplayUrl = () => customBaseUrl || `${baseUrl}/v1`;
-
-  const checkCodexStatus = async () => {
-    setCheckingCodex(true);
-    try {
-      const res = await fetch("/api/cli-tools/codex-settings");
-      const data = await res.json();
-      setCodexStatus(data);
-    } catch (error) {
-      setCodexStatus({ installed: false, error: error.message });
-    } finally {
-      setCheckingCodex(false);
-    }
-  };
 
   const handleApplySettings = async () => {
     setApplying(true);

@@ -82,14 +82,10 @@ export default function BaseUrlSelect({
   cloudUrl = "",
   withV1 = true,
 }) {
-  const [savedPresets, setSavedPresets] = useState([]);
+  const [savedPresets, setSavedPresets] = useState(() => readSavedPresets());
   const [mode, setMode] = useState("");
   const [customInput, setCustomInput] = useState("");
   const initializedRef = useRef(false);
-
-  useEffect(() => {
-    setSavedPresets(readSavedPresets());
-  }, []);
 
   const options = useMemo(
     () =>
@@ -124,12 +120,15 @@ export default function BaseUrlSelect({
     initializedRef.current = true;
     const first = options.find((o) => o.value !== CUSTOM_VALUE);
     if (first) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMode(first.value);
       onChange(first.url);
     } else {
       setMode(CUSTOM_VALUE);
     }
-  }, [options, onChange]);
+    // Run once on mount — options/onChange are stable references
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSelect = (e) => {
     const next = e.target.value;
@@ -139,7 +138,9 @@ export default function BaseUrlSelect({
       let defaultName = trimmed;
       try {
         defaultName = new URL(trimmed).host;
-      } catch {}
+      } catch {
+        // Not a valid URL — use trimmed string as default name
+      }
       const name = window.prompt("Save endpoint as:", defaultName);
       if (!name?.trim()) return;
       const updated = [

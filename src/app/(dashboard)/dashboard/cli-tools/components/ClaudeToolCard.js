@@ -33,7 +33,7 @@ export default function ClaudeToolCard({
   tailscaleEnabled,
   tailscaleUrl,
 }) {
-  const [claudeStatus, setClaudeStatus] = useState(initialStatus || null);
+  const [claudeStatus, setClaudeStatus] = useState(() => initialStatus || null);
   const [checkingClaude, setCheckingClaude] = useState(false);
   const [applying, setApplying] = useState(false);
   const [restoring, setRestoring] = useState(false);
@@ -41,7 +41,7 @@ export default function ClaudeToolCard({
   const [showInstallGuide, setShowInstallGuide] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [currentEditingAlias, setCurrentEditingAlias] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
+  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
   const [modelAliases, setModelAliases] = useState({});
   const [showManualConfigModal, setShowManualConfigModal] = useState(false);
   const [customBaseUrl, setCustomBaseUrl] = useState("");
@@ -65,23 +65,37 @@ export default function ClaudeToolCard({
 
   const configStatus = getConfigStatus();
 
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
+  const fetchModelAliases = async () => {
+    try {
+      const res = await fetch("/api/models/alias");
+      const data = await res.json();
+      if (res.ok) setModelAliases(data.aliases || {});
+    } catch (error) {
+      console.log("Error fetching model aliases:", error);
     }
-  }, [apiKeys, selectedApiKey]);
+  };
 
-  useEffect(() => {
-    if (initialStatus) setClaudeStatus(initialStatus);
-  }, [initialStatus]);
+  const checkClaudeStatus = async () => {
+    setCheckingClaude(true);
+    try {
+      const res = await fetch("/api/cli-tools/claude-settings");
+      const data = await res.json();
+      setClaudeStatus(data);
+    } catch (error) {
+      setClaudeStatus({ installed: false, error: error.message });
+    } finally {
+      setCheckingClaude(false);
+    }
+  };
 
   useEffect(() => {
     if (isExpanded && !claudeStatus) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       checkClaudeStatus();
       fetchModelAliases();
     }
     if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
+  }, [isExpanded, claudeStatus]);
 
   useEffect(() => {
     fetch("/api/settings")
@@ -102,16 +116,6 @@ export default function ClaudeToolCard({
     }).catch(() => {});
   };
 
-  const fetchModelAliases = async () => {
-    try {
-      const res = await fetch("/api/models/alias");
-      const data = await res.json();
-      if (res.ok) setModelAliases(data.aliases || {});
-    } catch (error) {
-      console.log("Error fetching model aliases:", error);
-    }
-  };
-
   useEffect(() => {
     if (claudeStatus?.installed && !hasInitializedModels.current) {
       hasInitializedModels.current = true;
@@ -129,23 +133,11 @@ export default function ClaudeToolCard({
       // Only set selectedApiKey if it exists in apiKeys list
       const tokenFromFile = env.ANTHROPIC_AUTH_TOKEN;
       if (tokenFromFile && apiKeys?.some((k) => k.key === tokenFromFile)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedApiKey(tokenFromFile);
       }
     }
   }, [claudeStatus, apiKeys, tool.defaultModels, onModelMappingChange]);
-
-  const checkClaudeStatus = async () => {
-    setCheckingClaude(true);
-    try {
-      const res = await fetch("/api/cli-tools/claude-settings");
-      const data = await res.json();
-      setClaudeStatus(data);
-    } catch (error) {
-      setClaudeStatus({ installed: false, error: error.message });
-    } finally {
-      setCheckingClaude(false);
-    }
-  };
 
   const getEffectiveBaseUrl = () => {
     const url = customBaseUrl || baseUrl;

@@ -15,46 +15,24 @@ export default function AntigravityToolCard({
   tool,
   isExpanded,
   onToggle,
-  baseUrl,
+  baseUrl: _baseUrl,
   apiKeys,
   activeProviders,
   hasActiveProviders,
   cloudEnabled,
   initialStatus,
 }) {
-  const [status, setStatus] = useState(initialStatus || null);
+  const [status, setStatus] = useState(() => initialStatus || null);
   const [loading, setLoading] = useState(false);
   const [startingStep, setStartingStep] = useState(null); // "cert" | "server" | "dns" | null
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [sudoPassword, setSudoPassword] = useState("");
-  const [selectedApiKey, setSelectedApiKey] = useState("");
+  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
   const [message, setMessage] = useState(null);
   const [modelMappings, setModelMappings] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [currentEditingAlias, setCurrentEditingAlias] = useState(null);
   const [modelAliases, setModelAliases] = useState({});
-
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
-    }
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !status) {
-      fetchStatus();
-      loadSavedMappings();
-      fetchModelAliases();
-    }
-    if (isExpanded) {
-      loadSavedMappings();
-      fetchModelAliases();
-    }
-  }, [isExpanded]);
 
   const loadSavedMappings = async () => {
     try {
@@ -96,6 +74,19 @@ export default function AntigravityToolCard({
       setStatus({ running: false });
     }
   };
+
+  useEffect(() => {
+    if (isExpanded && !status) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchStatus();
+      loadSavedMappings();
+      fetchModelAliases();
+    }
+    if (isExpanded) {
+      loadSavedMappings();
+      fetchModelAliases();
+    }
+  }, [isExpanded, status]);
 
   // MITM elevation is decided by the server OS, not by this browser's OS.
   const serverIsWindows = status?.isWin === true;
