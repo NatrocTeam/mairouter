@@ -26,9 +26,13 @@ function resolveAudioContentType(file) {
 
 async function upstreamError(res) {
   let txt = "";
-  try { txt = await res.text(); } catch {}
+  try { txt = await res.text(); } catch {
+    // Fall back to a status-based message when the upstream body cannot be read.
+  }
   let msg = txt || `Upstream error (${res.status})`;
-  try { const j = JSON.parse(txt); msg = j?.error?.message || j?.error || j?.message || msg; } catch {}
+  try { const j = JSON.parse(txt); msg = j?.error?.message || j?.error || j?.message || msg; } catch {
+    // Keep the plain-text upstream message when the body is not JSON.
+  }
   return createErrorResult(res.status, typeof msg === "string" ? msg : JSON.stringify(msg));
 }
 

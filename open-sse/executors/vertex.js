@@ -63,7 +63,7 @@ export class VertexExecutor extends BaseExecutor {
     super(providerId, PROVIDERS[providerId] || {});
   }
 
-  buildUrl(model, stream, urlIndex = 0, credentials = null) {
+  buildUrl(model, stream, _urlIndex = 0, credentials = null) {
     const saJson = parseVertexSaJson(credentials?.apiKey);
     const adcJson = parseVertexAdcJson(credentials?.apiKey);
     const usesOAuth = !!saJson || !!adcJson || !!credentials?.accessToken;

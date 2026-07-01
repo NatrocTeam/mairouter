@@ -70,7 +70,6 @@ export function createSSEStream(options = {}) {
   // Track Responses API event framing for same-format passthrough (codex)
   let currentOpenAIResponsesEvent = null;
   let openAIResponsesTerminalSeen = false;
-  let openAIResponsesDoneSent = false;
   let streamDoneSent = false;  // track duplicate [DONE] across transform + flush
 
   return new TransformStream({
@@ -221,7 +220,6 @@ export function createSSEStream(options = {}) {
           // fail to parse the OpenAI sentinel on Claude-format translated streams.
           // message_stop already signals end-of-response; stream close handles it.
           streamDoneSent = true;
-          if (keepsOpenAIResponsesFormat) openAIResponsesDoneSent = true;
           continue;
         }
 

@@ -8,7 +8,6 @@ import zlib from "zlib";
 
 const DEBUG = process.env.CURSOR_PROTOBUF_DEBUG === "1";
 const log = (tag, ...args) => DEBUG && console.log(`[PROTOBUF:${tag}]`, ...args);
-const textDecoder = new TextDecoder();
 
 const PROTOBUF_SCHEMA_VERSION = "1.1.3";
 
@@ -21,7 +20,6 @@ const ROLE = { USER: 1, ASSISTANT: 2 };
 const UNIFIED_MODE = { CHAT: 1, AGENT: 2 };
 
 const THINKING_LEVEL = { UNSPECIFIED: 0, MEDIUM: 1, HIGH: 2 };
-const CLIENT_SIDE_TOOL_V2 = { MCP: 19 };
 const CLIENT_SIDE_TOOL_V2_MCP = 19;
 
 const FIELD = {
@@ -371,7 +369,7 @@ export function encodeToolResult(toolResult) {
   );
 }
 
-export function encodeMessage(content, role, messageId, chatModeEnum = null, isLast = false, hasTools = false, toolResults = [], serverBubbleId = null) {
+export function encodeMessage(content, role, messageId, _chatModeEnum = null, isLast = false, hasTools = false, toolResults = [], serverBubbleId = null) {
   const hasToolResults = toolResults.length > 0;
   return concatArrays(
     encodeField(FIELD.MSG_CONTENT, WIRE_TYPE.LEN, content),

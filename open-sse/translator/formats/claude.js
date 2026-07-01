@@ -1,7 +1,6 @@
 // Claude helper functions for translator
 import { DEFAULT_THINKING_CLAUDE_SIGNATURE } from "../../config/defaultThinkingSignature.js";
 import { ROLE, CLAUDE_BLOCK } from "../schema/index.js";
-import { adjustMaxTokens } from "./maxTokens.js";
 import { applyCloaking } from "../../utils/claudeCloaking.js";
 import { resolveSessionId } from "../../utils/sessionManager.js";
 import { isValidClaudeSignature } from "../../utils/claudeSignature.js";
@@ -174,7 +173,8 @@ export function prepareClaudeRequest(body, provider = null, apiKey = null, conne
   // 1. System: remove all cache_control, add only to last block with ttl 1h
   if (body.system && Array.isArray(body.system)) {
     body.system = body.system.map((block, i) => {
-      const { cache_control, ...rest } = block;
+      const rest = { ...block };
+      delete rest.cache_control;
       if (i === body.system.length - 1) {
         return { ...rest, cache_control: { type: "ephemeral", ttl: "1h" } };
       }
@@ -293,13 +293,15 @@ export function prepareClaudeRequest(body, provider = null, apiKey = null, conne
               input_schema: tool.function.parameters,
             };
           }
-          const { type, ...rest } = tool;
+          const rest = { ...tool };
+          delete rest.type;
           return rest;
         });
     }
 
     body.tools = body.tools.map((tool, i) => {
-      const { cache_control, ...rest } = tool;
+      const rest = { ...tool };
+      delete rest.cache_control;
       if (i === body.tools.length - 1) {
         return { ...rest, cache_control: { type: "ephemeral", ttl: "1h" } };
       }

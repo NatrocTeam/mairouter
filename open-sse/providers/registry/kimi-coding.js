@@ -1,4 +1,4 @@
-import { CLAUDE_API_HEADERS, KIMI_CODING_BASE_URL } from "../shared.js";
+import { CLAUDE_API_HEADERS } from "../shared.js";
 
 export default {
   id: "kimi-coding",

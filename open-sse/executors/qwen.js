@@ -75,7 +75,7 @@ export class QwenExecutor extends DefaultExecutor {
 
   // Qwen tokens are bound to a resource_url returned at OAuth time.
   // Using portal.qwen.ai when the token is issued for another shard returns 401/403.
-  buildUrl(model, stream, urlIndex = 0, credentials = null) {
+  buildUrl(model, stream, _urlIndex = 0, credentials = null) {
     const resourceUrl = credentials?.providerSpecificData?.resourceUrl;
     const host = resourceUrl ? resourceUrl.replace(/^https?:\/\//, "").replace(/\/$/, "") : "portal.qwen.ai";
     return `https://${host}/v1/chat/completions`;
@@ -85,7 +85,7 @@ export class QwenExecutor extends DefaultExecutor {
     return buildQwenUpstreamHeaders(credentials, stream);
   }
 
-  transformRequest(model, body, stream, credentials) {
+  transformRequest(model, body, stream, _credentials) {
     let next = body && typeof body === "object" ? { ...body } : body;
     if (stream && next?.messages && !next.stream_options && !next.thinking && !next.enable_thinking && next.stream !== false) {
       next.stream_options = { include_usage: true };

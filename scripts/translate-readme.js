@@ -101,7 +101,7 @@ ${readmeContent}`;
               process.stdout.write(`\r[${targetLang}] Received ${translatedContent.length} chars...`);
             }
           }
-        } catch (e) {
+        } catch {
           // Skip invalid JSON
         }
       }

@@ -80,11 +80,11 @@ export class IFlowExecutor extends BaseExecutor {
    * Build URL for iFlow API
    * @param {string} model - Model name
    * @param {boolean} stream - Whether streaming is enabled
-   * @param {number} urlIndex - URL index for fallback
-   * @param {object} credentials - Provider credentials
+   * @param {number} _urlIndex - URL index for fallback
+   * @param {object} _credentials - Provider credentials
    * @returns {string} API URL
    */
-  buildUrl(model, stream, urlIndex = 0, credentials = null) {
+  buildUrl(model, stream, _urlIndex = 0, _credentials = null) {
     return this.config.baseUrl;
   }
 
@@ -93,10 +93,10 @@ export class IFlowExecutor extends BaseExecutor {
    * @param {string} model - Model name
    * @param {object} body - Request body
    * @param {boolean} stream - Whether streaming is enabled
-   * @param {object} credentials - Provider credentials
+   * @param {object} _credentials - Provider credentials
    * @returns {object} Transformed body
    */
-  transformRequest(model, body, stream, credentials) {
+  transformRequest(model, body, stream, _credentials) {
     // Inject stream_options for streaming requests to get usage data
     if (stream && body.messages && !body.stream_options) {
       body.stream_options = { include_usage: true };

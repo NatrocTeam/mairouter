@@ -513,7 +513,9 @@ export async function handleFusionChat({ body, models, handleSingleModel, log, c
   log.info("FUSION", `Combo "${comboName}" | panel=${panel.length} [${panel.join(", ")}] | judge=${judge} | quorum=${minPanel}`);
 
   // 1. Fan out to the panel in parallel: non-streaming, tools stripped (we want prose).
-  const { tools, tool_choice, ...rest } = body;
+  const rest = { ...body };
+  delete rest.tools;
+  delete rest.tool_choice;
   const panelBody = { ...rest, stream: false };
 
   // Flatten tool turns to prose so panel models keep context without emitting tool_calls.

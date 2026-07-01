@@ -11,7 +11,6 @@
 import { readFileSync, writeFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
-import { createRequire } from "node:module";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const REGISTRY_DIR = __dirname; // script lives in registry/
@@ -28,9 +27,6 @@ const CFG_KIND = {
   musicConfig:        "music",
 };
 
-// Fields in *Config that are NOT models (keep on config)
-const MODEL_ONLY_KEY = "models";
-
 // Top-level registry fields that are NOT media-config (don't flatten these from media)
 // serviceKinds + *Config + searchViaChat + mediaConfig + passthroughModels are media fields
 // Everything else is already top-level
@@ -43,7 +39,7 @@ const MEDIA_WHITELIST = new Set([
   "mediaPriority", "hiddenKinds",
 ]);
 
-function migrateEntry(entry, filename) {
+function migrateEntry(entry) {
   const out = {};
 
   // 1. Top-level identity/transport fields (preserve order)
@@ -61,8 +57,6 @@ function migrateEntry(entry, filename) {
     const kind = m.kind ?? (type && type !== "llm" ? type : undefined);
     return kind ? { ...rest, kind } : rest;
   });
-  const existingIds = new Set(existingModels.map(m => m.id));
-
   // 3. Extract models from *Config.models (merge into models[])
   const mediaModels = [];
   const media = entry.media || {};
@@ -90,7 +84,8 @@ function migrateEntry(entry, filename) {
     if (!MEDIA_WHITELIST.has(k)) continue;
     if (CFG_KIND[k]) {
       // Strip .models from config, keep rest
-      const { models: _m, ...cfgRest } = (v || {});
+      const cfgRest = { ...(v || {}) };
+      delete cfgRest.models;
       if (Object.keys(cfgRest).length > 0) out[k] = cfgRest;
     } else {
       out[k] = v;
@@ -257,7 +252,7 @@ for (const file of files) {
     continue;
   }
 
-  const migrated = migrateEntry(entry, file);
+  const migrated = migrateEntry(entry);
   const output = formatEntry(migrated, importSrc);
 
   if (DRY) {

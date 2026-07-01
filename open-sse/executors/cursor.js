@@ -3,7 +3,6 @@ import { PROVIDERS } from "../config/providers.js";
 import { HTTP_STATUS } from "../config/runtimeConfig.js";
 import {
   generateCursorBody,
-  parseConnectRPCFrame,
   extractTextFromResponse
 } from "../utils/cursorProtobuf.js";
 import { buildCursorHeaders } from "../utils/cursorChecksum.js";
@@ -65,7 +64,9 @@ function decompressPayload(payload, flags) {
         debugLog(`[DECOMPRESS] Detected JSON error, skipping decompression`);
         return payload;
       }
-    } catch {}
+    } catch {
+      // Ignore JSON prefix inspection failures; decompression continues below.
+    }
   }
 
   if (
@@ -253,7 +254,7 @@ export class CursorExecutor extends BaseExecutor {
     });
   }
 
-  async execute({ model, body, stream, credentials, signal, log, proxyOptions = null }) {
+  async execute({ model, body, stream, credentials, signal, log: _log, proxyOptions = null }) {
     const url = this.buildUrl();
     const headers = this.buildHeaders(credentials);
     const transformedBody = this.transformRequest(model, body, stream, credentials);
@@ -335,7 +336,9 @@ export class CursorExecutor extends BaseExecutor {
             }
             return createErrorResponse(JSON.parse(text));
           }
-        } catch {}
+        } catch {
+          // Ignore invalid JSON-like frames and continue with protobuf decoding.
+        }
       }
 
       const result = extractTextFromResponse(new Uint8Array(payload));
@@ -491,7 +494,9 @@ export class CursorExecutor extends BaseExecutor {
             }
             return createErrorResponse(JSON.parse(text));
           }
-        } catch {}
+        } catch {
+          // Ignore invalid JSON-like frames and continue with protobuf decoding.
+        }
       }
 
       const result = extractTextFromResponse(new Uint8Array(payload));
@@ -528,7 +533,6 @@ export class CursorExecutor extends BaseExecutor {
         if (toolCallsMap.has(tc.id)) {
           // Accumulate arguments for existing tool call
           const existing = toolCallsMap.get(tc.id);
-          const oldArgsLen = existing.function.arguments.length;
           existing.function.arguments += tc.function.arguments;
           existing.isLast = tc.isLast;
 

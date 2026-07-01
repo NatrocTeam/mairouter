@@ -27,7 +27,13 @@ function extractContent(content) {
 
 function sanitizeToolResultText(text) {
   // Strip non-printable control chars that can produce backend request errors
-  return text.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
+  return text
+    .split("")
+    .filter(char => {
+      const code = char.charCodeAt(0);
+      return !((code >= 0 && code <= 8) || code === 11 || code === 12 || (code >= 14 && code <= 31) || code === 127);
+    })
+    .join("");
 }
 
 function escapeXml(text) {
@@ -132,7 +138,8 @@ function convertMessages(messages) {
       if (msg.role === ROLE.ASSISTANT && msg.tool_calls && msg.tool_calls.length > 0) {
         const assistantMsg = { role: ROLE.ASSISTANT, content: content || "" };
         assistantMsg.tool_calls = msg.tool_calls.map(tc => {
-          const { index, ...rest } = tc || {};
+          const rest = { ...(tc || {}) };
+          delete rest.index;
           return rest;
         });
         result.push(assistantMsg);
@@ -169,11 +176,16 @@ function convertMessages(messages) {
   return result;
 }
 
-export function openaiToCursorRequest(model, body, stream, credentials) {
+export function openaiToCursorRequest(model, body, _stream, _credentials) {
   const messages = convertMessages(body.messages || []);
 
   // Strip fields irrelevant to Cursor (OpenAI/Anthropic-specific)
-  const { user, metadata, tool_choice, stream_options, system, ...rest } = body;
+  const rest = { ...body };
+  delete rest.user;
+  delete rest.metadata;
+  delete rest.tool_choice;
+  delete rest.stream_options;
+  delete rest.system;
 
   return {
     ...rest,

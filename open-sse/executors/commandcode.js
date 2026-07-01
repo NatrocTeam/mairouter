@@ -20,7 +20,7 @@ export class CommandCodeExecutor extends BaseExecutor {
     super("commandcode", PROVIDERS.commandcode);
   }
 
-  transformRequest(model, body, stream, credentials) {
+  transformRequest(model, body, _stream, _credentials) {
     body.stream = true;
     return body;
   }

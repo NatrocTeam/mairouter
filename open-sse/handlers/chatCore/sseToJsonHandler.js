@@ -7,7 +7,7 @@ import { buildRequestDetail, extractRequestConfig, saveUsageStats } from "./requ
 
 // Responses-API providers (e.g. codex) may emit SSE without content-type + use Responses output shape
 const isResponsesProvider = (p) => PROVIDERS[p]?.format === FORMATS.OPENAI_RESPONSES;
-import { saveRequestDetail, appendRequestLog } from "@/lib/usageDb.js";
+import { saveRequestDetail } from "@/lib/usageDb.js";
 
 function textFromResponsesMessageItem(item) {
   if (!item?.content || !Array.isArray(item.content)) return "";
@@ -126,7 +126,7 @@ export async function handleForcedSSEToJson({ providerResponse, sourceFormat, pr
       appendLog({ tokens: usage, status: "200 OK" });
       saveUsageStats({ provider, model, tokens: usage, connectionId, apiKey, endpoint: clientRawRequest?.endpoint });
 
-      const { msgItem, textContent } = pickAssistantMessageForChatCompletion(jsonResponse.output);
+      const { textContent } = pickAssistantMessageForChatCompletion(jsonResponse.output);
       const totalLatency = Date.now() - requestStartTime;
 
       saveRequestDetail(buildRequestDetail({

@@ -155,6 +155,16 @@ function convertClaudeMessage(msg) {
           parts.push({ type: OPENAI_BLOCK.TEXT, text: block.text });
           break;
 
+        case CLAUDE_BLOCK.THINKING:
+          // Convert thinking content to text — the opaque cryptographic
+          // signature is dropped because no non-Anthropic format can carry it.
+          parts.push({ type: OPENAI_BLOCK.TEXT, text: block.thinking || "" });
+          break;
+
+        case CLAUDE_BLOCK.REDACTED_THINKING:
+          parts.push({ type: OPENAI_BLOCK.TEXT, text: "[Redacted thinking block]" });
+          break;
+
         case CLAUDE_BLOCK.IMAGE:
           if (block.source?.type === "base64") {
             parts.push({
@@ -182,7 +192,7 @@ function convertClaudeMessage(msg) {
           });
           break;
 
-        case CLAUDE_BLOCK.TOOL_RESULT:
+        case CLAUDE_BLOCK.TOOL_RESULT: {
           let resultContent = "";
           if (typeof block.content === "string") {
             resultContent = block.content;
@@ -192,13 +202,20 @@ function convertClaudeMessage(msg) {
               .map(c => c.text)
               .join("\n");
           }
-          
+
+          // Prefix error results so downstream providers see the failure
+          // even though OpenAI's tool-message contract has no is_error flag.
+          if (block.is_error) {
+            resultContent = resultContent ? `[Tool Error]\n${resultContent}` : "[Tool Error]";
+          }
+
           toolResults.push({
             role: ROLE.TOOL,
             tool_call_id: block.tool_use_id,
             content: resultContent
           });
           break;
+        }
       }
     }
 

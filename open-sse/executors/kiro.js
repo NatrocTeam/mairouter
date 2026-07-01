@@ -15,7 +15,7 @@ export class KiroExecutor extends BaseExecutor {
     super("kiro", PROVIDERS.kiro);
   }
 
-  buildHeaders(credentials, stream = true) {
+  buildHeaders(credentials, _stream = true) {
     const headers = {
       ...this.config.headers,
       "Amz-Sdk-Request": "attempt=1; max=3",
@@ -76,7 +76,7 @@ export class KiroExecutor extends BaseExecutor {
     return baseUrls[urlIndex] || baseUrls[0] || this.config.baseUrl;
   }
 
-  transformRequest(model, body, stream, credentials) {
+  transformRequest(model, body, _stream, _credentials) {
     return body;
   }
 

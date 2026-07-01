@@ -45,7 +45,7 @@ export function cleanupNow() {
             continue;
         }
         if (now - item.startedAt > PENDING_TTL_MS) {
-            try { item.controller.abort(); } catch (_) { /* ignore */ }
+            try { item.controller.abort(); } catch { /* ignore */ }
             pendingFetches.delete(id);
         }
     }
@@ -140,7 +140,7 @@ export function removeConnection(connectionId) {
     projectIdCache.delete(connectionId);
     const pending = pendingFetches.get(connectionId);
     if (pending) {
-        try { pending.controller.abort(); } catch (_) { /* ignore */ }
+        try { pending.controller.abort(); } catch { /* ignore */ }
         pendingFetches.delete(connectionId);
     }
 }

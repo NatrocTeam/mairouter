@@ -27,7 +27,7 @@ export async function getQwenUsage(accessToken, providerSpecificData) {
 
     // Qwen may have usage endpoint at resource URL
     return { message: "Qwen connected. Usage tracked per request." };
-  } catch (error) {
+  } catch {
     return { message: "Unable to fetch Qwen usage." };
   }
 }
@@ -35,13 +35,9 @@ export async function getQwenUsage(accessToken, providerSpecificData) {
 /**
  * iFlow Usage
  */
-export async function getIflowUsage(accessToken) {
-  try {
-    // iFlow may have usage endpoint
-    return { message: "iFlow connected. Usage tracked per request." };
-  } catch (error) {
-    return { message: "Unable to fetch iFlow usage." };
-  }
+export async function getIflowUsage(_accessToken) {
+  // iFlow may have usage endpoint
+  return { message: "iFlow connected. Usage tracked per request." };
 }
 
 /**
@@ -61,7 +57,7 @@ export async function getOllamaUsage(accessToken, providerSpecificData) {
       message: "Ollama Cloud uses a free tier with light usage limits (resets every 5h & 7d). For detailed usage tracking, visit ollama.com/settings/keys.",
       quotas: [],
     };
-  } catch (error) {
+  } catch {
     return { message: "Unable to fetch Ollama Cloud usage." };
   }
 }

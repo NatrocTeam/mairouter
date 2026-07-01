@@ -23,7 +23,9 @@ function sanitizeHeaders(headers) {
   if (!headers) return headers;
   const out = {};
   for (const [k, v] of Object.entries(headers)) {
-    out[k] = typeof v === "string" ? v.replace(/[^\x00-\xFF]/g, "").trim() : v;
+    out[k] = typeof v === "string"
+      ? v.split("").filter((char) => char.charCodeAt(0) <= 0xFF).join("").trim()
+      : v;
   }
   return out;
 }

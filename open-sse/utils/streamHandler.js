@@ -15,7 +15,7 @@ function getTimeString() {
  * @param {string} options.provider - Provider name
  * @param {string} options.model - Model name
  */
-export function createStreamController({ onDisconnect, onError, log, provider, model } = {}) {
+export function createStreamController({ onDisconnect, onError, log: _log, provider, model } = {}) {
   const abortController = new AbortController();
   const startTime = Date.now();
   let disconnected = false;
@@ -159,7 +159,7 @@ export function createDisconnectAwareStream(transformStream, streamController, o
           } else {
             controller.error(error);
           }
-        } catch (e) { /* already closed or cancelled */ }
+        } catch { /* already closed or cancelled */ }
       }
     },
 

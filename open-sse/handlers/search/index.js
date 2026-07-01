@@ -14,11 +14,19 @@ import { handleChatSearch } from "./chatSearch.js";
 const GLOBAL_TIMEOUT_MS = 15000;
 const NON_RETRIABLE = new Set([400, 401, 403, 404]);
 
-const CONTROL_CHAR_RE = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/;
+function hasInvalidControlCharacter(value) {
+  for (let i = 0; i < value.length; i++) {
+    const code = value.charCodeAt(i);
+    if (code <= 0x08 || code === 0x0B || code === 0x0C || (code >= 0x0E && code <= 0x1F) || code === 0x7F) {
+      return true;
+    }
+  }
+  return false;
+}
 
 /** Normalize and validate query string. */
 function sanitizeQuery(query) {
-  if (CONTROL_CHAR_RE.test(query)) return { error: "Query contains invalid control characters" };
+  if (hasInvalidControlCharacter(query)) return { error: "Query contains invalid control characters" };
   const clean = query.normalize("NFKC").trim().replace(/\s+/g, " ");
   if (!clean) return { error: "Query is empty after normalization" };
   return { clean };
@@ -29,7 +37,9 @@ function sanitizeHeaders(headers) {
   if (!headers) return headers;
   const out = {};
   for (const [k, v] of Object.entries(headers)) {
-    out[k] = typeof v === "string" ? v.replace(/[^\x00-\xFF]/g, "").trim() : v;
+    out[k] = typeof v === "string"
+      ? v.split("").filter((char) => char.charCodeAt(0) <= 0xFF).join("").trim()
+      : v;
   }
   return out;
 }

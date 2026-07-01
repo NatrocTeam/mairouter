@@ -17,7 +17,7 @@ export class GithubExecutor extends BaseExecutor {
     this.knownCodexModels = new Set();
   }
 
-  buildUrl(model, stream, urlIndex = 0) {
+  buildUrl(model, stream, _urlIndex = 0) {
     return this.config.baseUrl;
   }
 
@@ -110,7 +110,7 @@ export class GithubExecutor extends BaseExecutor {
     return /gpt-5|o[134]-/i.test(model);
   }
 
-  transformRequest(model, body, stream, credentials) {
+  transformRequest(model, body, _stream, _credentials) {
     const transformed = { ...body };
     if (this.requiresMaxCompletionTokens(model) && transformed.max_tokens !== undefined) {
       transformed.max_completion_tokens = transformed.max_tokens;

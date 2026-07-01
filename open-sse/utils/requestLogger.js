@@ -181,7 +181,7 @@ export async function createRequestLogger(sourceFormat, targetFormat, model) {
       try {
         const filePath = path.join(sessionPath, "5_res_provider.txt");
         fs.appendFileSync(filePath, chunk);
-      } catch (err) {
+      } catch {
         // Ignore append errors
       }
     },
@@ -192,7 +192,7 @@ export async function createRequestLogger(sourceFormat, targetFormat, model) {
       try {
         const filePath = path.join(sessionPath, "6_res_openai.txt");
         fs.appendFileSync(filePath, chunk);
-      } catch (err) {
+      } catch {
         // Ignore append errors
       }
     },
@@ -211,7 +211,7 @@ export async function createRequestLogger(sourceFormat, targetFormat, model) {
       try {
         const filePath = path.join(sessionPath, "7_res_client.txt");
         fs.appendFileSync(filePath, chunk);
-      } catch (err) {
+      } catch {
         // Ignore append errors
       }
     },

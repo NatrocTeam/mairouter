@@ -30,10 +30,7 @@ import { PROVIDERS } from "../config/providers.js";
 import { proxyAwareFetch } from "../utils/proxyFetch.js";
 import { SSE_DONE } from "../utils/sseConstants.js";
 import { FETCH_CONNECT_TIMEOUT_MS } from "../config/runtimeConfig.js";
-import {
-  QODER_CHAT_URL_ENCODED,
-  QODER_MODEL_MAP,
-} from "../shared/qoder/constants.js";
+import { QODER_CHAT_URL_ENCODED } from "../shared/qoder/constants.js";
 import { getQoderModelConfig, resolveQoderModels } from "../services/qoderModels.js";
 
 /**
@@ -112,7 +109,9 @@ function stableChatRecordId(model, messages, tools, maxTokens) {
   }
   if (tools) {
     h.update("\0");
-    try { h.update(JSON.stringify(tools)); } catch {}
+    try { h.update(JSON.stringify(tools)); } catch {
+      // Ignore non-serializable tool schemas; the remaining request fields still produce a stable ID.
+    }
   }
   h.update(`\0mt=${maxTokens}`);
   return h.digest("hex").slice(0, 16);
@@ -335,7 +334,7 @@ export class QoderExecutor extends BaseExecutor {
   //   - body encoded with QoderEncodeBody before signing
   //   - COSY headers built from the *encoded* body bytes
   //   - response stream re-wrapped from {statusCodeValue, body} to OpenAI SSE
-  async execute({ model, body, stream, credentials, signal, log, proxyOptions = null }) {
+  async execute({ model, body, stream: _stream, credentials, signal, log, proxyOptions = null }) {
     const url = this.buildUrl();
 
     const psd = credentials?.providerSpecificData || {};

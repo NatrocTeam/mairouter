@@ -19,7 +19,6 @@ const displayBody = displaySrc
   .replace(/^export const /gm, "const ")
   .replace(/^export function /gm, "function ")
   .replace(/^const RISK_NOTICE\s*=.*$/m, ""); // remove redeclaration
-// eslint-disable-next-line no-new-func
 const getDisplay = new Function("RISK_NOTICE", `${displayBody}; return PROVIDER_DISPLAY;`);
 const DISPLAY = getDisplay(RISK_NOTICE);
 
@@ -38,25 +37,6 @@ const CATEGORIES = {
   apikey: /export const APIKEY_PROVIDERS\s*=\s*\{([\s\S]*?)\n\};/,
   webCookie: /export const WEB_COOKIE_PROVIDERS\s*=\s*\{([\s\S]*?)\n\};/,
 };
-
-// Extract provider ids + uiAlias + extra fields per category
-// Parse dòng dạng: "  openai: { ...D("openai"), id: "openai", alias: "openai", ... }"
-const ENTRY_RE = /^\s{2}["']?([\w-]+)["']?\s*:\s*\{[^}]*?id:\s*["']([\w-]+)["'][^}]*?alias:\s*["']([\w-]+)["']([\s\S]*?)(?=\n\s{2}["']?[\w-]|\n\};)/gm;
-
-// Extra fields cần lấy từ providers.js (không lấy display, id, alias vì đã có nguồn khác)
-const EXTRA_FIELDS = [
-  "thinkingConfig",
-  "regions",
-  "defaultRegion",
-  "hasProviderSpecificData",
-  "authType",
-  "authHint",
-  "passthroughModels",
-  "noAuth",
-  "hiddenKinds",
-  "hasOAuth",
-  "authModes",
-];
 
 // THINKING_CONFIG values để inline
 const THINKING_CONFIG = {
@@ -96,7 +76,9 @@ for (const [cat, re] of Object.entries(CATEGORIES)) {
     // authModes
     const authModesM = line.match(/authModes:\s*(\[[^\]]+\])/);
     if (authModesM) {
-      try { extra.authModes = JSON.parse(authModesM[1].replace(/'/g, '"')); } catch {}
+      try { extra.authModes = JSON.parse(authModesM[1].replace(/'/g, '"')); } catch {
+        // Ignore malformed optional metadata and leave authModes unset.
+      }
     }
 
     // authType (webCookie)
@@ -116,13 +98,17 @@ for (const [cat, re] of Object.entries(CATEGORIES)) {
     // hiddenKinds
     const hiddenKindsM = line.match(/hiddenKinds:\s*(\[[^\]]+\])/);
     if (hiddenKindsM) {
-      try { extra.hiddenKinds = JSON.parse(hiddenKindsM[1].replace(/'/g, '"')); } catch {}
+      try { extra.hiddenKinds = JSON.parse(hiddenKindsM[1].replace(/'/g, '"')); } catch {
+        // Ignore malformed optional metadata and leave hiddenKinds unset.
+      }
     }
 
     // regions (xiaomi-tokenplan)
     const regionsM = line.match(/regions:\s*(\[[\s\S]*?\])/);
     if (regionsM) {
-      try { extra.regions = JSON.parse(regionsM[1].replace(/'/g, '"')); } catch {}
+      try { extra.regions = JSON.parse(regionsM[1].replace(/'/g, '"')); } catch {
+        // Ignore malformed optional metadata and leave regions unset.
+      }
     }
     const defRegionM = line.match(/defaultRegion:\s*["']([\w-]+)["']/);
     if (defRegionM) extra.defaultRegion = defRegionM[1];

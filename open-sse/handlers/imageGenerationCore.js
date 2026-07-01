@@ -63,7 +63,9 @@ export async function handleImageGenerationCore({
         const first = finalBody.data?.[0];
         let b64 = first?.b64_json;
         if (!b64 && first?.url) {
-          try { b64 = await urlToBase64(first.url); } catch {}
+          try { b64 = await urlToBase64(first.url); } catch {
+            // Keep the URL-based JSON response when binary download fails.
+          }
         }
         if (b64) {
           const buf = Buffer.from(b64, "base64");
@@ -199,7 +201,9 @@ export async function handleImageGenerationCore({
     const first = finalBody.data?.[0];
     let b64 = first?.b64_json;
     if (!b64 && first?.url) {
-      try { b64 = await urlToBase64(first.url); } catch {}
+      try { b64 = await urlToBase64(first.url); } catch {
+        // Keep the URL-based JSON response when binary download fails.
+      }
     }
     if (b64) {
       const buf = Buffer.from(b64, "base64");

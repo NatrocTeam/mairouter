@@ -56,7 +56,7 @@ export function openaiToClaudeRequest(model, body, stream) {
 
     for (const msg of nonSystemMessages) {
       const newRole = (msg.role === ROLE.USER || msg.role === ROLE.TOOL) ? ROLE.USER : ROLE.ASSISTANT;
-      const blocks = getContentBlocksFromMessage(msg, toolNameMap);
+      const blocks = getContentBlocksFromMessage(msg);
       const hasToolUse = blocks.some(b => b.type === CLAUDE_BLOCK.TOOL_USE);
       const hasToolResult = blocks.some(b => b.type === CLAUDE_BLOCK.TOOL_RESULT);
 
@@ -186,7 +186,7 @@ Respond ONLY with the JSON object, no other text.`);
 }
 
 // Get content blocks from single message
-function getContentBlocksFromMessage(msg, toolNameMap = new Map()) {
+function getContentBlocksFromMessage(msg) {
   const blocks = [];
 
   if (msg.role === ROLE.TOOL) {
@@ -261,7 +261,8 @@ function getContentBlocksFromMessage(msg, toolNameMap = new Map()) {
         } else if (part.type === CLAUDE_BLOCK.THINKING || part.type === CLAUDE_BLOCK.REDACTED_THINKING) {
           // Only pass through already-native Anthropic blocks. Never synthesize
           // these from unsigned OpenAI reasoning fields.
-          const { cache_control, ...thinkingBlock } = part;
+          const thinkingBlock = { ...part };
+          delete thinkingBlock.cache_control;
           blocks.push(thinkingBlock);
         }
       }

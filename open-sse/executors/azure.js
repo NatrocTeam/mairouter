@@ -5,7 +5,7 @@ export class AzureExecutor extends DefaultExecutor {
     super("azure");
   }
 
-  buildUrl(model, stream, urlIndex = 0, credentials = null) {
+  buildUrl(model, stream, _urlIndex = 0, credentials = null) {
     const azureEndpoint = credentials?.providerSpecificData?.azureEndpoint
       || process.env.AZURE_ENDPOINT
       || "https://api.openai.com";
@@ -51,7 +51,7 @@ export class AzureExecutor extends DefaultExecutor {
     return headers;
   }
 
-  transformRequest(model, body, stream, credentials) {
+  transformRequest(model, body, _stream, _credentials) {
     return body;
   }
 }

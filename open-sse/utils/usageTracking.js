@@ -246,7 +246,7 @@ export function estimateInputTokens(body) {
 
     // Estimate: ~4 chars per token (rough average across all tokenizers)
     return Math.ceil(totalChars / 4);
-  } catch (err) {
+  } catch {
     // Fallback if stringify fails
     return 0;
   }
@@ -302,7 +302,7 @@ export function estimateUsage(body, contentLength, targetFormat = FORMATS.OPENAI
 /**
  * Log usage with cache info (green color)
  */
-export function logUsage(provider, usage, model = null, connectionId = null, apiKey = null) {
+export function logUsage(provider, usage, _model = null, connectionId = null, _apiKey = null) {
   if (!usage || typeof usage !== "object") return;
 
   const p = provider?.toUpperCase() || "UNKNOWN";

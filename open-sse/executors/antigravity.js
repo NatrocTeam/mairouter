@@ -10,7 +10,7 @@ import { cleanJSONSchemaForAntigravity } from "../translator/formats/gemini.js";
 // Sanitize function name: Gemini requires [a-zA-Z_][a-zA-Z0-9_.:\-]{0,63}
 function sanitizeFunctionName(name) {
   if (!name) return "_unknown";
-  let s = name.replace(/[^a-zA-Z0-9_.:\-]/g, "_");
+  let s = name.replace(/[^a-zA-Z0-9_.:-]/g, "_");
   if (!/^[a-zA-Z_]/.test(s)) s = "_" + s;
   return s.substring(0, 64);
 }
@@ -208,7 +208,9 @@ export class AntigravityExecutor extends BaseExecutor {
     }
 
     // Strip tools/toolConfig (handled separately) and blacklisted fields that Google rejects
-    const { tools: _originalTools, toolConfig: _originalToolConfig, ...requestWithoutTools } = body.request || {};
+    const requestWithoutTools = { ...(body.request || {}) };
+    delete requestWithoutTools.tools;
+    delete requestWithoutTools.toolConfig;
     stripBlacklisted(requestWithoutTools);
     const generationConfig = { ...(requestWithoutTools.generationConfig || {}) };
     if (generationConfig.maxOutputTokens > MAX_ANTIGRAVITY_OUTPUT_TOKENS) {

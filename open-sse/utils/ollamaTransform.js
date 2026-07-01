@@ -64,7 +64,7 @@ export function transformToOllama(response, model) {
               controller.enqueue(new TextEncoder().encode(ollamaEnd));
             }
           }
-        } catch (e) {
+        } catch {
           // Silently ignore parse errors
         }
       }

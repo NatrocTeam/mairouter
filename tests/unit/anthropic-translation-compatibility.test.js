@@ -32,8 +32,6 @@ describe("Anthropic cross-provider translation compatibility", () => {
   });
 
   it.each([
-    ["thinking", { type: "thinking", thinking: "summary", signature: "opaque" }],
-    ["redacted_thinking", { type: "redacted_thinking", data: "opaque" }],
     ["document", { type: "document", source: { type: "base64", media_type: "application/pdf", data: "PDF" } }],
     ["server_tool_use", { type: "server_tool_use", id: "srv_1", name: "web_search", input: {} }],
   ])("rejects unsupported %s blocks with a typed error", (type, block) => {
@@ -49,7 +47,7 @@ describe("Anthropic cross-provider translation compatibility", () => {
     );
   });
 
-  it("rejects error tool results without leaking their content into the error", () => {
+  it("allows tool results with is_error flag (translator now prefixes with [Tool Error])", () => {
     const secretContent = "sensitive tool output";
     const body = { messages: [{ role: "user", content: [{
       type: "tool_result",
@@ -58,16 +56,11 @@ describe("Anthropic cross-provider translation compatibility", () => {
       content: secretContent,
     }] }] };
 
-    let caught;
-    try {
-      assertClaudeTranslationIsLossless(body, FORMATS.OPENAI);
-    } catch (error) {
-      caught = error;
-    }
+    expect(() => assertClaudeTranslationIsLossless(body, FORMATS.OPENAI)).not.toThrow();
 
-    expect(caught).toBeInstanceOf(TranslationCompatibilityError);
-    expect(caught.message).not.toContain(secretContent);
-    expect(caught.path).toBe("messages[0].content[0]");
+    // Also verify the translator prefixes the content
+    const translated = claudeToOpenAIRequest("test-model", body, false);
+    expect(translated.messages[0].content).toContain("[Tool Error]\n" + secretContent);
   });
 
   it.each(["image", "document", "search_result"])(
@@ -136,5 +129,57 @@ describe("Anthropic cross-provider translation compatibility", () => {
     ] }] };
 
     expect(() => assertClaudeTranslationIsLossless(body, FORMATS.OPENAI)).toThrowError(expected);
+  });
+
+  it("allows thinking blocks in history (translator converts to text)", () => {
+    const body = { messages: [
+      { role: "assistant", content: [
+        { type: "text", text: "I'll think about it" },
+        { type: "thinking", thinking: "let me reason step by step...", signature: "opaque-sig" },
+      ]},
+    ]};
+
+    expect(() => assertClaudeTranslationIsLossless(body, FORMATS.OPENAI)).not.toThrow();
+
+    const translated = claudeToOpenAIRequest("test-model", body, false);
+    expect(translated.messages[0].content).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ text: expect.stringContaining("let me reason step by step...") }),
+      ]),
+    );
+  });
+
+  it("allows redacted_thinking blocks in history (translator converts to placeholder text)", () => {
+    const body = { messages: [
+      { role: "assistant", content: [
+        { type: "text", text: "conclusion" },
+        { type: "redacted_thinking", data: "redacted-data" },
+      ]},
+    ]};
+
+    expect(() => assertClaudeTranslationIsLossless(body, FORMATS.OPENAI)).not.toThrow();
+
+    const translated = claudeToOpenAIRequest("test-model", body, false);
+    expect(translated.messages[0].content).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ text: "[Redacted thinking block]" }),
+      ]),
+    );
+  });
+
+  it("still rejects other unsupported blocks (document, server_tool_use)", () => {
+    const documentBody = { messages: [{ role: "assistant", content: [
+      { type: "document", source: { type: "base64", media_type: "application/pdf", data: "PDF" } },
+    ] }] };
+    const serverToolBody = { messages: [{ role: "assistant", content: [
+      { type: "server_tool_use", id: "srv_1", name: "web_search", input: {} },
+    ] }] };
+
+    expect(() => assertClaudeTranslationIsLossless(documentBody, FORMATS.OPENAI)).toThrowError(
+      expect.objectContaining({ name: "TranslationCompatibilityError" }),
+    );
+    expect(() => assertClaudeTranslationIsLossless(serverToolBody, FORMATS.OPENAI)).toThrowError(
+      expect.objectContaining({ name: "TranslationCompatibilityError" }),
+    );
   });
 });

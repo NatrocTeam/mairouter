@@ -115,7 +115,7 @@ export class DefaultExecutor extends BaseExecutor {
     return { ...body, messages, response_format: { type: "json_object" } };
   }
 
-  buildUrl(model, stream, urlIndex = 0, credentials = null) {
+  buildUrl(model, stream, _urlIndex = 0, credentials = null) {
     // Runtime transport (multi-endpoint providers): use the sourceFormat-matched endpoint
     const rt = credentials?.runtimeTransport;
     if (rt?.baseUrl) {
@@ -318,7 +318,7 @@ export class DefaultExecutor extends BaseExecutor {
     return { accessToken: tokens.access_token, refreshToken: tokens.refresh_token || refreshToken, expiresIn: tokens.expires_in };
   }
 
-  async refreshKilocode(refreshToken, proxyOptions = null) {
+  async refreshKilocode(refreshToken, _proxyOptions = null) {
     // Kilocode uses device code flow, no refresh token support
     return null;
   }

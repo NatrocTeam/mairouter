@@ -33,14 +33,18 @@ export function filterToOpenAIFormat(body) {
         // Only keep valid OpenAI content types
         if (VALID_OPENAI_CONTENT_TYPES.includes(block.type)) {
           // Remove signature field if exists
-          const { signature, cache_control, ...cleanBlock } = block;
+          const cleanBlock = { ...block };
+          delete cleanBlock.signature;
+          delete cleanBlock.cache_control;
           filteredContent.push(cleanBlock);
         } else if (block.type === CLAUDE_BLOCK.TOOL_USE) {
           // Convert tool_use to tool_calls format (handled separately)
           continue;
         } else if (block.type === CLAUDE_BLOCK.TOOL_RESULT) {
           // Keep tool_result but clean it
-          const { signature, cache_control, ...cleanBlock } = block;
+          const cleanBlock = { ...block };
+          delete cleanBlock.signature;
+          delete cleanBlock.cache_control;
           filteredContent.push(cleanBlock);
         }
       }

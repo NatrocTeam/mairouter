@@ -10,7 +10,7 @@ import { FORMATS } from "../formats.js";
  * Since CursorExecutor.transformProtobufToSSE/JSON already emits OpenAI chunks,
  * this is a passthrough translator (similar to Kiro pattern)
  */
-export function cursorToOpenAIResponse(chunk, state) {
+export function cursorToOpenAIResponse(chunk, _state) {
   if (!chunk) return null;
 
   // If chunk is already in OpenAI format (from executor transform), return as-is

@@ -11,7 +11,7 @@ export function compressMessages(body, enabled) {
 
   // Kiro format: conversationState.history + conversationState.currentMessage
   if (body.conversationState) {
-    return compressKiroFormat(body, enabled);
+    return compressKiroFormat(body);
   }
 
   // Support both OpenAI/Claude "messages" and OpenAI Responses "input"
@@ -88,7 +88,7 @@ export function compressMessages(body, enabled) {
 }
 
 // Compress Kiro format: conversationState.history[].userInputMessage.userInputMessageContext.toolResults[].content[].text
-function compressKiroFormat(body, enabled) {
+function compressKiroFormat(body) {
   const stats = { bytesBefore: 0, bytesAfter: 0, hits: [] };
   try {
     const state = body.conversationState;

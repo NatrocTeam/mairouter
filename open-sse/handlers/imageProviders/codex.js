@@ -90,7 +90,9 @@ async function parseStream(response, log, callbacks = {}) {
           if (callbacks.onPartialImage && data?.partial_image_b64) {
             callbacks.onPartialImage({ b64_json: data.partial_image_b64, index: data.partial_image_index });
           }
-        } catch {}
+        } catch {
+          // Ignore malformed partial-image events and continue reading the stream.
+        }
       }
 
       if (eventName === "response.output_item.done" && dataStr) {
@@ -100,7 +102,9 @@ async function parseStream(response, log, callbacks = {}) {
           if (item?.type === "image_generation_call" && item.result) {
             imageB64 = item.result;
           }
-        } catch {}
+        } catch {
+          // Ignore malformed completion events; missing-image handling runs after the stream.
+        }
       }
     }
   }

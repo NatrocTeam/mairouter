@@ -6,7 +6,7 @@ export class OllamaLocalExecutor extends DefaultExecutor {
     super("ollama-local");
   }
 
-  buildUrl(model, stream, urlIndex = 0, credentials = null) {
+  buildUrl(model, stream, _urlIndex = 0, credentials = null) {
     return `${resolveOllamaLocalHost(credentials)}/api/chat`;
   }
 }

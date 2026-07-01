@@ -241,7 +241,6 @@ function mergeChunksToResponse(chunks, sourceFormat) {
     const messageStop = chunks.find(c => c.type === "message_stop");
     if (messageStop) {
       // Reconstruct complete message from chunks
-      const contentDelta = chunks.find(c => c.type === "content_block_delta");
       const messageDelta = chunks.find(c => c.type === "message_delta");
       const messageStart = chunks.find(c => c.type === "message_start");
 
