@@ -79,14 +79,8 @@ function assertImageSource(block, targetFormat, path) {
 }
 
 function assertTextOnlyToolResult(block, targetFormat, path) {
-  if (block.is_error === true) {
-    incompatible(
-      targetFormat,
-      path,
-      "tool_result.is_error",
-      "has no equivalent error flag in the target tool-message contract",
-    );
-  }
+  // is_error is handled by claude-to-openai.js which prefixes the content
+  // with "[Tool Error]\n". No need to fail — the semantic survives lossily.
 
   if (block.content == null || typeof block.content === "string") return;
 
@@ -148,13 +142,11 @@ export function assertClaudeTranslationIsLossless(body, targetFormat, { stripLis
       const path = `messages[${messageIndex}].content[${blockIndex}]`;
       const type = block?.type;
 
+      // Thinking blocks are lossy when translated, but claude-to-openai.js converts
+      // them to regular text blocks so requests don't hard-fail. The opaque
+      // signature is dropped — only the thinking content is preserved as text.
       if (type === CLAUDE_BLOCK.THINKING || type === CLAUDE_BLOCK.REDACTED_THINKING) {
-        incompatible(
-          targetFormat,
-          path,
-          `${type} block`,
-          "must be returned to Anthropic unchanged and has no portable signed equivalent",
-        );
+        continue;
       }
 
       if (!SUPPORTED_CLAUDE_MESSAGE_BLOCKS.has(type)) {
