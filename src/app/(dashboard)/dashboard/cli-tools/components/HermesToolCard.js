@@ -18,7 +18,7 @@ export default function HermesToolCard({
   tool,
   isExpanded,
   onToggle,
-  baseUrl,
+  baseUrl: _baseUrl,
   hasActiveProviders,
   apiKeys,
   activeProviders,
@@ -34,7 +34,7 @@ export default function HermesToolCard({
   const [applying, setApplying] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
+  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
   const [selectedModel, setSelectedModel] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [modelAliases, setModelAliases] = useState({});
@@ -53,24 +53,6 @@ export default function HermesToolCard({
 
   const configStatus = getConfigStatus();
 
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
-    }
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setHermesStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !hermesStatus) {
-      checkStatus();
-      fetchModelAliases();
-    }
-    if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
-
   const fetchModelAliases = async () => {
     try {
       const res = await fetch("/api/models/alias");
@@ -80,14 +62,6 @@ export default function HermesToolCard({
       console.log("Error fetching model aliases:", error);
     }
   };
-
-  useEffect(() => {
-    if (hermesStatus?.installed && !hasInitializedModel.current) {
-      hasInitializedModel.current = true;
-      const cfg = hermesStatus.settings?.model;
-      if (cfg?.default) setSelectedModel(cfg.default);
-    }
-  }, [hermesStatus]);
 
   const checkStatus = async () => {
     setChecking(true);
@@ -101,6 +75,25 @@ export default function HermesToolCard({
       setChecking(false);
     }
   };
+
+  // Effect polls status on expand — adding hermesStatus dep would cause re-fetch loop
+  useEffect(() => {
+    if (isExpanded && !hermesStatus) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      checkStatus();
+      fetchModelAliases();
+    }
+    if (isExpanded) fetchModelAliases();
+  }, [isExpanded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (hermesStatus?.installed && !hasInitializedModel.current) {
+      hasInitializedModel.current = true;
+      const cfg = hermesStatus.settings?.model;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (cfg?.default) setSelectedModel(cfg.default);
+    }
+  }, [hermesStatus]);
 
   const normalizeLocalhost = (url) =>
     url.replace("://localhost", "://127.0.0.1");

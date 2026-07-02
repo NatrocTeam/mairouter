@@ -29,7 +29,7 @@ import EndpointRow from "./components/EndpointRow";
 import StatusAlert from "./components/StatusAlert";
 import Tooltip from "./components/Tooltip";
 import SecurityWarning from "./components/SecurityWarning";
-export default function APIPageClient({ machineId }) {
+export default function APIPageClient({ machineId: _machineId }) {
   const [keys, setKeys] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -90,13 +90,11 @@ export default function APIPageClient({ machineId }) {
   const [visibleKeys, setVisibleKeys] = useState(new Set());
 
   // Client-side local/remote detection (UI hint only, not a security gate)
-  const [isRemoteHost, setIsRemoteHost] = useState(false);
-  useEffect(() => {
+  const [isRemoteHost, _setIsRemoteHost] = useState(() => {
     if (typeof window !== "undefined")
-      setIsRemoteHost(
-        !["localhost", "127.0.0.1", "::1"].includes(window.location.hostname),
-      );
-  }, []);
+      return !["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+    return false;
+  });
 
   const { copied, copy } = useCopyToClipboard();
 
@@ -111,96 +109,6 @@ export default function APIPageClient({ machineId }) {
     if (tsLogRef.current)
       tsLogRef.current.scrollTop = tsLogRef.current.scrollHeight;
   }, [tsInstallLog]);
-
-  useEffect(() => {
-    fetchData();
-    loadSettings();
-  }, []);
-
-  // Status poll: only while degraded (not yet reachable). Stop once healthy to avoid spam.
-  // Visibility re-check: refresh once when tab becomes visible.
-  useEffect(() => {
-    const anyEnabled = tunnelEnabled || tsEnabled;
-    if (!anyEnabled) return;
-    const tunnelHealthy = !tunnelEnabled || tunnelReachable;
-    const tsHealthy = !tsEnabled || tsReachable;
-    const allHealthy = tunnelHealthy && tsHealthy;
-    const onVisible = () => {
-      if (!document.hidden) syncTunnelStatus();
-    };
-    document.addEventListener("visibilitychange", onVisible);
-    if (allHealthy)
-      return () => document.removeEventListener("visibilitychange", onVisible);
-    const timer = setInterval(() => {
-      if (!document.hidden) syncTunnelStatus();
-    }, STATUS_POLL_FAST_MS);
-    return () => {
-      clearInterval(timer);
-      document.removeEventListener("visibilitychange", onVisible);
-    };
-  }, [tunnelEnabled, tsEnabled, tunnelReachable, tsReachable]);
-
-  // Browser-side periodic ping: probes tunnel/tailscale URLs directly so UI stays
-  // "reachable" even when backend DNS (1.1.1.1) hiccups on *.ts.net or *.trycloudflare.com.
-  // Adaptive: slow when healthy, fast when degraded; pause when tab hidden.
-  useEffect(() => {
-    const probeBoth = async () => {
-      if (document.hidden) return;
-      if (tunnelEnabled && (tunnelUrl || tunnelPublicUrl)) {
-        const ok = await clientPingAny(tunnelPublicUrl, tunnelUrl);
-        tunnelClientReachableRef.current = ok;
-        if (ok) {
-          tunnelMissRef.current = 0;
-          setTunnelReachable(true);
-          if (!tunnelEverReachableRef.current) {
-            tunnelEverReachableRef.current = true;
-            setTunnelEverReachable(true);
-          }
-        } else {
-          tunnelMissRef.current += 1;
-          if (tunnelMissRef.current >= REACHABLE_MISS_THRESHOLD)
-            setTunnelReachable(false);
-        }
-      } else {
-        tunnelClientReachableRef.current = false;
-      }
-      if (tsEnabled && tsUrl) {
-        const ok = await clientPingUrl(tsUrl);
-        tsClientReachableRef.current = ok;
-        if (ok) {
-          tsMissRef.current = 0;
-          setTsReachable(true);
-          if (!tsEverReachableRef.current) {
-            tsEverReachableRef.current = true;
-            setTsEverReachable(true);
-          }
-        } else {
-          tsMissRef.current += 1;
-          if (tsMissRef.current >= REACHABLE_MISS_THRESHOLD)
-            setTsReachable(false);
-        }
-      } else {
-        tsClientReachableRef.current = false;
-      }
-    };
-    const anyEnabled =
-      (tunnelEnabled && (tunnelUrl || tunnelPublicUrl)) || (tsEnabled && tsUrl);
-    if (!anyEnabled) return;
-    probeBoth();
-    const tunnelHealthy = !tunnelEnabled || tunnelReachable;
-    const tsHealthy = !tsEnabled || tsReachable;
-    if (tunnelHealthy && tsHealthy) return;
-    const id = setInterval(probeBoth, CLIENT_PING_FAST_MS);
-    return () => clearInterval(id);
-  }, [
-    tunnelEnabled,
-    tunnelUrl,
-    tunnelPublicUrl,
-    tsEnabled,
-    tsUrl,
-    tunnelReachable,
-    tsReachable,
-  ]);
 
   // Client-side reachable only (server no longer probes; watchdog handles backend health).
   // Miss-debounce: only flip to false after N consecutive misses.
@@ -315,6 +223,113 @@ export default function APIPageClient({ machineId }) {
     }
   };
 
+  const fetchData = async () => {
+    try {
+      const keysRes = await fetch("/api/keys");
+      const keysData = await keysRes.json();
+      if (keysRes.ok) {
+        setKeys(keysData.keys || []);
+      }
+    } catch (error) {
+      console.log("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mount-only initialization — fetchData/loadSettings are stable and only needed once
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData();
+    loadSettings();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Status poll: only while degraded (not yet reachable). Stop once healthy to avoid spam.
+  // Visibility re-check: refresh once when tab becomes visible.
+  // syncTunnelStatus omitted — dep would cause effect to re-create timer on every render
+  useEffect(() => {
+    const anyEnabled = tunnelEnabled || tsEnabled;
+    if (!anyEnabled) return;
+    const tunnelHealthy = !tunnelEnabled || tunnelReachable;
+    const tsHealthy = !tsEnabled || tsReachable;
+    const allHealthy = tunnelHealthy && tsHealthy;
+    const onVisible = () => {
+      if (!document.hidden) syncTunnelStatus();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    if (allHealthy)
+      return () => document.removeEventListener("visibilitychange", onVisible);
+    const timer = setInterval(() => {
+      if (!document.hidden) syncTunnelStatus();
+    }, STATUS_POLL_FAST_MS);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [tunnelEnabled, tsEnabled, tunnelReachable, tsReachable]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Browser-side periodic ping: probes tunnel/tailscale URLs directly so UI stays
+  // "reachable" even when backend DNS (1.1.1.1) hiccups on *.ts.net or *.trycloudflare.com.
+  // Adaptive: slow when healthy, fast when degraded; pause when tab hidden.
+  useEffect(() => {
+    const probeBoth = async () => {
+      if (document.hidden) return;
+      if (tunnelEnabled && (tunnelUrl || tunnelPublicUrl)) {
+        const ok = await clientPingAny(tunnelPublicUrl, tunnelUrl);
+        tunnelClientReachableRef.current = ok;
+        if (ok) {
+          tunnelMissRef.current = 0;
+          setTunnelReachable(true);
+          if (!tunnelEverReachableRef.current) {
+            tunnelEverReachableRef.current = true;
+            setTunnelEverReachable(true);
+          }
+        } else {
+          tunnelMissRef.current += 1;
+          if (tunnelMissRef.current >= REACHABLE_MISS_THRESHOLD)
+            setTunnelReachable(false);
+        }
+      } else {
+        tunnelClientReachableRef.current = false;
+      }
+      if (tsEnabled && tsUrl) {
+        const ok = await clientPingUrl(tsUrl);
+        tsClientReachableRef.current = ok;
+        if (ok) {
+          tsMissRef.current = 0;
+          setTsReachable(true);
+          if (!tsEverReachableRef.current) {
+            tsEverReachableRef.current = true;
+            setTsEverReachable(true);
+          }
+        } else {
+          tsMissRef.current += 1;
+          if (tsMissRef.current >= REACHABLE_MISS_THRESHOLD)
+            setTsReachable(false);
+        }
+      } else {
+        tsClientReachableRef.current = false;
+      }
+    };
+    const anyEnabled =
+      (tunnelEnabled && (tunnelUrl || tunnelPublicUrl)) || (tsEnabled && tsUrl);
+    if (!anyEnabled) return;
+    probeBoth();
+    const tunnelHealthy = !tunnelEnabled || tunnelReachable;
+    const tsHealthy = !tsEnabled || tsReachable;
+    if (tunnelHealthy && tsHealthy) return;
+    const id = setInterval(probeBoth, CLIENT_PING_FAST_MS);
+    return () => clearInterval(id);
+  }, [
+    tunnelEnabled,
+    tunnelUrl,
+    tunnelPublicUrl,
+    tsEnabled,
+    tsUrl,
+    tunnelReachable,
+    tsReachable,
+  ]);
+
   const handleTunnelDashboardAccess = async (value) => {
     try {
       const res = await fetch("/api/settings", {
@@ -338,20 +353,6 @@ export default function APIPageClient({ machineId }) {
       if (res.ok) setRequireApiKey(value);
     } catch (error) {
       console.log("Error updating requireApiKey:", error);
-    }
-  };
-
-  const fetchData = async () => {
-    try {
-      const keysRes = await fetch("/api/keys");
-      const keysData = await keysRes.json();
-      if (keysRes.ok) {
-        setKeys(keysData.keys || []);
-      }
-    } catch (error) {
-      console.log("Error fetching data:", error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -852,14 +853,10 @@ export default function APIPageClient({ machineId }) {
     });
   };
 
-  const [baseUrl, setBaseUrl] = useState("");
-
-  // Hydration fix: Only access window on client side
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setBaseUrl(window.location.origin);
-    }
-  }, []);
+  const [baseUrl, _setBaseUrl] = useState(() => {
+    if (typeof window !== "undefined") return window.location.origin;
+    return "";
+  });
 
   if (loading) {
     return (

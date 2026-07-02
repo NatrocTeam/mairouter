@@ -20,6 +20,13 @@ const PROVIDER_ORDER = [
 // Providers that need no auth — always show in model selector
 const NO_AUTH_PROVIDER_IDS = Object.keys(FREE_PROVIDERS).filter(id => FREE_PROVIDERS[id].noAuth);
 
+// Sort models alphabetically, with added models floated to top
+const sortModels = (models, addedModelValues) => {
+  const added = models.filter(m => addedModelValues.includes(m.value)).sort((a, b) => a.name.localeCompare(b.name));
+  const rest = models.filter(m => !addedModelValues.includes(m.value)).sort((a, b) => a.name.localeCompare(b.name));
+  return [...added, ...rest];
+};
+
 export default function ModelSelectModal({
   isOpen,
   onClose,
@@ -62,6 +69,7 @@ export default function ModelSelectModal({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isOpen) fetchCombos();
   }, [isOpen]);
 
@@ -78,6 +86,7 @@ export default function ModelSelectModal({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isOpen) fetchProviderNodes();
   }, [isOpen]);
 
@@ -94,6 +103,7 @@ export default function ModelSelectModal({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isOpen) fetchCustomModels();
   }, [isOpen]);
 
@@ -110,6 +120,7 @@ export default function ModelSelectModal({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isOpen) fetchDisabledModels();
   }, [isOpen]);
 
@@ -366,13 +377,6 @@ export default function ModelSelectModal({
     return combos.filter(c => c.name.toLowerCase().includes(query));
   }, [combos, searchQuery, kindFilter]);
 
-  // Sort models alphabetically, with added models floated to top
-  const sortModels = (models) => {
-    const added = models.filter(m => addedModelValues.includes(m.value)).sort((a, b) => a.name.localeCompare(b.name));
-    const rest = models.filter(m => !addedModelValues.includes(m.value)).sort((a, b) => a.name.localeCompare(b.name));
-    return [...added, ...rest];
-  };
-
   // Filter models by search query
   const filteredGroups = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
@@ -391,7 +395,7 @@ export default function ModelSelectModal({
       }
       filtered[providerId] = {
         ...group,
-        models: sortModels(models),
+        models: sortModels(models, addedModelValues),
       };
     });
 

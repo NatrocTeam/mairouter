@@ -1,10 +1,10 @@
-const { exec, spawn, execSync } = require("child_process");
+const { exec: _exec, spawn, execSync } = require("child_process");
 const fs = require("fs");
 const path = require("path");
-const os = require("os");
+const _os = require("os");
 const { log, err } = require("../logger");
 const { TOOL_HOSTS } = require("../../shared/constants/mitmToolHosts.js");
-const { runElevatedPowerShell, isAdmin } = require("../winElevated.js");
+const { runElevatedPowerShell, isAdmin: _isAdmin } = require("../winElevated.js");
 
 /**
  * Atomic-ish write for Windows hosts file with rollback on failure.
@@ -125,7 +125,7 @@ function execWithPassword(command, password) {
 /**
  * Trim trailing blank lines/whitespace, ensure file ends with exactly one newline.
  */
-function normalizeHostsContent(content) {
+function _normalizeHostsContent(content) {
   const eol = IS_WIN ? "\r\n" : "\n";
   return content.replace(/[\r\n\s]+$/g, "") + eol;
 }

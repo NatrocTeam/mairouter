@@ -70,6 +70,7 @@ export function GenericExampleCard({ providerId, kind }) {
   const { copied: copiedRes, copy: copyRes } = useCopyToClipboard();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalEndpoint(window.location.origin);
     fetch("/api/keys")
       .then((r) => r.json())
@@ -126,7 +127,7 @@ export function GenericExampleCard({ providerId, kind }) {
   const apiPathWithQuery = `${apiPath}${wantBinary ? "?response_format=binary" : ""}`;
   const headersPreview = `-H "Content-Type: application/json" \\\n  -H "Authorization: Bearer ${apiKey || "YOUR_KEY"}"${pinnedConnectionId ? ` \\\n  -H "x-connection-id: ${pinnedConnectionId}"` : ""}${useStreaming ? ` \\\n  -H "Accept: text/event-stream"` : ""}`;
   const curlSnippet = `curl -X ${kindConfig.endpoint.method} ${endpoint}${apiPathWithQuery} \\
-  ${headersPreview.replace(/\\\n  /g, "\\\n  ")} \\
+  ${headersPreview.replace(/\\\n {2}/g, "\\\n  ")} \\
   -d '${JSON.stringify(requestBody)}'${wantBinary ? " \\\n  --output image.png" : ""}`;
 
   const handleRun = async () => {
@@ -344,6 +345,7 @@ export function GenericExampleCard({ providerId, kind }) {
                 )}
               </div>
               {refImagePreviewSrc && (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={refImagePreviewSrc}
                   alt="Reference"
@@ -377,6 +379,7 @@ export function GenericExampleCard({ providerId, kind }) {
                 )}
               </div>
               {maskImagePreviewSrc && (
+                // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={maskImagePreviewSrc}
                   alt="Mask"
@@ -483,6 +486,7 @@ export function GenericExampleCard({ providerId, kind }) {
         {partialImage?.b64_json && !result && (
           <div>
             <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Partial preview</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`data:image/png;base64,${partialImage.b64_json}`}
               alt="Partial"
@@ -525,6 +529,7 @@ export function GenericExampleCard({ providerId, kind }) {
                   Download
                 </a>
               </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={binaryImageUrl || (result?.data?.data?.[0]?.b64_json ? `data:image/png;base64,${result.data.data[0].b64_json}` : result?.data?.data?.[0]?.url)}
                 alt="Generated"

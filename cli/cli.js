@@ -11,7 +11,7 @@ function createSpinner(text) {
   const frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
   let i = 0;
   let interval = null;
-  let currentText = text;
+  const currentText = text;
   return {
     start() {
       if (process.stdout.isTTY) {
@@ -252,7 +252,7 @@ function killAllAppProcesses(appPort) {
       killTunnelByPidFile();
 
       const platform = process.platform;
-      let pids = [];
+      const pids = [];
 
       // Catch stale PID files: kill cloudflared bound to this app's port
       pids.push(...killCloudflaredByAppPort(appPort));

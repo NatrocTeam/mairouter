@@ -17,6 +17,7 @@ export default function McpMarketplaceModal({ isOpen, onClose, onAdd, addedNames
   const [toolsLoading, setToolsLoading] = useState({});
   const [toolSelection, setToolSelection] = useState({});
 
+  // servers omitted intentionally: effect should only run when modal opens; servers dep would cause re-fetch if already loaded
   useEffect(() => {
     if (!isOpen) return;
     if (servers.length > 0) return;
@@ -29,7 +30,7 @@ export default function McpMarketplaceModal({ isOpen, onClose, onAdd, addedNames
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [isOpen]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addedSet = useMemo(() => new Set(addedNames), [addedNames]);
 

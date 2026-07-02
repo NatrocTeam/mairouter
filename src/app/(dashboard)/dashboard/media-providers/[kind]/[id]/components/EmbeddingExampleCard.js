@@ -37,6 +37,7 @@ export function EmbeddingExampleCard({ providerId, customAlias }) {
   const { copied: copiedRes, copy: copyRes } = useCopyToClipboard();
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalEndpoint(window.location.origin);
     fetch("/api/keys")
       .then((r) => r.json())

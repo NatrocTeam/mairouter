@@ -26,11 +26,11 @@ export default function MitmToolCard({
   hasCachedPassword,
   needsSudoPassword,
   isWin,
-  apiKeys,
+  apiKeys: _apiKeys,
   activeProviders,
   hasActiveProviders,
   modelAliases = {},
-  cloudEnabled,
+  cloudEnabled: _cloudEnabled,
   onDnsChange,
 }) {
   const [loading, setLoading] = useState(false);
@@ -47,10 +47,6 @@ export default function MitmToolCard({
   const canRunWithoutPassword =
     isWin || hasCachedPassword || needsSudoPassword === false;
 
-  useEffect(() => {
-    if (isExpanded) loadSavedMappings();
-  }, [isExpanded]);
-
   const loadSavedMappings = async () => {
     try {
       const res = await fetch(
@@ -65,6 +61,12 @@ export default function MitmToolCard({
       /* ignore */
     }
   };
+
+  // Effect intentionally runs only on isExpanded changes — deps loadSavedMappings would re-run on every render
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (isExpanded) loadSavedMappings();
+  }, [isExpanded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const saveMappings = useCallback(
     async (mappings) => {

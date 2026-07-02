@@ -38,7 +38,7 @@ export default function TranslatorPage() {
   const setContent = (id, val) => setContents(prev => ({ ...prev, [id]: val }));
   const toggle = (id) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
-  const openNext = (nextId) => setExpanded(prev => {
+  const openNext = (nextId) => setExpanded(_prev => {
     const next = {};
     STEPS.forEach(s => { next[s.id] = false; });
     next[nextId] = true;

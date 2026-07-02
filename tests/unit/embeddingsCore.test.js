@@ -615,7 +615,7 @@ describe("handleEmbeddingsCore — token refresh on 401/403", () => {
     };
 
     // Mock executor's refreshCredentials to return new creds
-    const result = await handleEmbeddingsCore(makeOptions({
+    const _result = await handleEmbeddingsCore(makeOptions({
       modelInfo: { provider: "openai", model: "text-embedding-ada-002" },
       credentials,
       onCredentialsRefreshed: vi.fn(),

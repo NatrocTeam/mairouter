@@ -51,7 +51,7 @@ export default function ProviderLimitCard({
   };
 
   const providerColor = getProviderColor();
-  const planVariant = planVariants[plan?.toLowerCase()] || "default";
+  const _planVariant = planVariants[plan?.toLowerCase()] || "default";
 
   return (
     <Card padding="md" className="flex flex-col gap-4">

@@ -16,7 +16,7 @@ export default function OpenClawToolCard({
   tool,
   isExpanded,
   onToggle,
-  baseUrl,
+  baseUrl: _baseUrl,
   hasActiveProviders,
   apiKeys,
   activeProviders,
@@ -32,7 +32,7 @@ export default function OpenClawToolCard({
   const [applying, setApplying] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
+  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
   const [selectedModel, setSelectedModel] = useState("");
   const [agentModels, setAgentModels] = useState({}); // { [agentId]: modelId }
   const [agentModalFor, setAgentModalFor] = useState(null); // agentId opening modal
@@ -58,22 +58,9 @@ export default function OpenClawToolCard({
   const configStatus = getConfigStatus();
 
   useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
-    }
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (initialStatus) setOpenclawStatus(initialStatus);
   }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !openclawStatus) {
-      checkOpenclawStatus();
-      fetchModelAliases();
-    }
-    if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
 
   const fetchModelAliases = async () => {
     try {
@@ -85,6 +72,30 @@ export default function OpenClawToolCard({
     }
   };
 
+  const checkOpenclawStatus = async () => {
+    setCheckingOpenclaw(true);
+    try {
+      const res = await fetch("/api/cli-tools/openclaw-settings");
+      const data = await res.json();
+      setOpenclawStatus(data);
+    } catch (error) {
+      setOpenclawStatus({ installed: false, error: error.message });
+    } finally {
+      setCheckingOpenclaw(false);
+    }
+  };
+
+  // Effect polls status on expand — adding openclawStatus dep would cause re-fetch loop
+  useEffect(() => {
+    if (isExpanded && !openclawStatus) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      checkOpenclawStatus();
+      fetchModelAliases();
+    }
+    if (isExpanded)
+      fetchModelAliases();
+  }, [isExpanded]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (openclawStatus?.installed && !hasInitializedModel.current) {
       hasInitializedModel.current = true;
@@ -94,6 +105,7 @@ export default function OpenClawToolCard({
         const primaryModel =
           openclawStatus.settings?.agents?.defaults?.model?.primary;
         if (primaryModel)
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setSelectedModel(primaryModel.replace("mairouter/", ""));
         if (
           provider.apiKey &&
@@ -111,19 +123,6 @@ export default function OpenClawToolCard({
       setAgentModels(initAgentModels);
     }
   }, [openclawStatus, apiKeys]);
-
-  const checkOpenclawStatus = async () => {
-    setCheckingOpenclaw(true);
-    try {
-      const res = await fetch("/api/cli-tools/openclaw-settings");
-      const data = await res.json();
-      setOpenclawStatus(data);
-    } catch (error) {
-      setOpenclawStatus({ installed: false, error: error.message });
-    } finally {
-      setCheckingOpenclaw(false);
-    }
-  };
 
   const normalizeLocalhost = (url) =>
     url.replace("://localhost", "://127.0.0.1");

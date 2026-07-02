@@ -14,7 +14,7 @@ import { OAUTH_PROVIDERS, APIKEY_PROVIDERS } from "@/shared/constants/config";
 import {
   FREE_PROVIDERS,
   FREE_TIER_PROVIDERS,
-  WEB_COOKIE_PROVIDERS,
+  _WEB_COOKIE_PROVIDERS,
   OPENAI_COMPATIBLE_PREFIX,
   ANTHROPIC_COMPATIBLE_PREFIX,
 } from "@/shared/constants/providers";
@@ -131,7 +131,7 @@ export default function ProvidersPage() {
       return (a.name || "").localeCompare(b.name || "");
     });
 
-  const sortItemsByPriority = (items, authType) =>
+  const _sortItemsByPriority = (items, authType) =>
     [...items].sort((a, b) => {
       const pa = a.priority ?? 999;
       const pb = b.priority ?? 999;
@@ -247,7 +247,7 @@ export default function ProvidersPage() {
         if (failed === 0) notify.success(`All ${total} tests passed`);
         else notify.warning(`${passed}/${total} passed, ${failed} failed`);
       }
-    } catch (error) {
+    } catch (_error) {
       setTestResults({ error: "Test request failed" });
       notify.error("Provider test failed");
     } finally {
@@ -619,17 +619,17 @@ export default function ProvidersPage() {
   );
 }
 
-function ProviderCard({ providerId, provider, stats, authType, onToggle }) {
+function ProviderCard({ providerId, provider, stats, authType: _authType, onToggle }) {
   const { connected, error, errorCode, errorTime, allDisabled } = stats;
   const isNoAuth = !!provider.noAuth;
 
-  const dotColors = {
+  const _dotColors = {
     free: "bg-green-500",
     oauth: "bg-blue-500",
     apikey: "bg-amber-500",
     compatible: "bg-orange-500",
   };
-  const dotLabels = {
+  const _dotLabels = {
     free: "Free",
     oauth: "OAuth",
     apikey: "API Key",
@@ -733,7 +733,7 @@ function ApiKeyProviderCard({
   providerId,
   provider,
   stats,
-  authType,
+  authType: _authType,
   onToggle,
 }) {
   const { connected, error, errorCode, errorTime, allDisabled } = stats;
@@ -742,13 +742,13 @@ function ApiKeyProviderCard({
     ANTHROPIC_COMPATIBLE_PREFIX,
   );
 
-  const dotColors = {
+  const _dotColors = {
     free: "bg-green-500",
     oauth: "bg-blue-500",
     apikey: "bg-amber-500",
     compatible: "bg-orange-500",
   };
-  const dotLabels = {
+  const _dotLabels = {
     free: "Free",
     oauth: "OAuth",
     apikey: "API Key",

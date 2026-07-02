@@ -36,7 +36,7 @@ export default function MitmServerCard({
     status?.needsSudoPassword === false;
   const isAdmin = status?.isAdmin !== false;
   // No privilege: not admin/root AND (Win OR no cached sudo password)
-  const noPrivilege =
+  const _noPrivilege =
     !isAdmin &&
     (serverIsWindows ||
       (!status?.hasCachedPassword && status?.needsSudoPassword !== false));

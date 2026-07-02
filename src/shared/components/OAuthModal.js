@@ -31,6 +31,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
   // Detect if running on localhost (client-side only)
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsLocalhost(
         window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
       );
@@ -65,7 +66,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
       setError(err.message);
       setStep("error");
     }
-  }, [authData, provider, onSuccess]);
+  }, [authData, provider, onSuccess, oauthMeta]);
 
   const completeXaiManualCode = useCallback(async (code) => {
     if (!authData?.state) return;
@@ -420,7 +421,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
     try {
       channel = new BroadcastChannel("oauth_callback");
       channel.onmessage = (event) => handleCallback(event.data);
-    } catch (e) {
+    } catch (_e) {
       console.log("BroadcastChannel not supported");
     }
 
@@ -431,7 +432,7 @@ export default function OAuthModal({ isOpen, provider, providerInfo, onSuccess, 
           const data = JSON.parse(event.newValue);
           handleCallback(data);
           localStorage.removeItem("oauth_callback");
-        } catch (e) {
+        } catch (_e) {
           console.log("Failed to parse localStorage data");
         }
       }

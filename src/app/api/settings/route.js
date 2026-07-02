@@ -107,7 +107,7 @@ export async function PATCH(request) {
       });
     }
 
-    const { password, oidcClientSecret, ...safeSettings } = settings;
+    const { password: _password, oidcClientSecret, ...safeSettings } = settings;
     safeSettings.oidcConfigured = !!(safeSettings.oidcIssuerUrl && safeSettings.oidcClientId && oidcClientSecret);
     return NextResponse.json(safeSettings, { headers: SETTINGS_RESPONSE_HEADERS });
   } catch (error) {

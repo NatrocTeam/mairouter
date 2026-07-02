@@ -9,7 +9,7 @@ import {
   parseQuotaData,
   calculatePercentage,
   getConnectionLabel,
-  getConnectionQuotaRemaining,
+  _getConnectionQuotaRemaining,
   sortVisibleConnections,
   buildLoadingState,
   filterQuotaStateByConnections,
@@ -105,7 +105,7 @@ export default function ProviderLimits() {
   const [errors, setErrors] = useState({});
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [autoPingMaps, setAutoPingMaps] = useState({ claude: {}, codex: {} });
-  const [lastUpdated, setLastUpdated] = useState(null);
+  const [_lastUpdated, setLastUpdated] = useState(null);
   const [hasHydratedAutoRefresh, setHasHydratedAutoRefresh] = useState(false);
   const [refreshingAll, setRefreshingAll] = useState(false);
   const [countdown, setCountdown] = useState(60);
@@ -183,7 +183,7 @@ export default function ProviderLimits() {
         return [];
       }
     },
-    [accountFilter, expiringFirst, page, pageSize, providerFilter],
+    [accountFilter, page, pageSize, providerFilter],
   );
 
   // Fetch quota for a specific connection
@@ -651,7 +651,7 @@ export default function ProviderLimits() {
   );
   const connectionsPageSummary = getConnectionsPaginationSummary(pagination);
   const isCustomPageSize = !ACCOUNT_PAGE_SIZE_OPTIONS.includes(pageSize);
-  const pageSizeLabel = getPageSizeLabel(pageSize, isCustomPageSize);
+  const _pageSizeLabel = getPageSizeLabel(pageSize, isCustomPageSize);
 
   if (!connectionsLoading && !hasEligibleConnections) {
     return (

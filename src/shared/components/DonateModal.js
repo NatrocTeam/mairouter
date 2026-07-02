@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import Image from "next/image";
 import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
 import { GITHUB_CONFIG } from "@/shared/constants/config";
@@ -13,6 +14,7 @@ export default function DonateModal({ isOpen, onClose }) {
 
   useEffect(() => {
     if (!isOpen || data) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError("");
     fetch(GITHUB_CONFIG.donateUrl, { cache: "no-store" })
@@ -116,10 +118,13 @@ function DonateChannelCard({ channel }) {
         </div>
       )}
       {qr && (
-        <img
+        <Image
           src={qr}
           alt={`${label} QR`}
-          className="w-full max-w-[180px] aspect-square object-contain rounded-lg bg-white p-1"
+          width={180}
+          height={180}
+          className="max-w-[180px] aspect-square object-contain rounded-lg bg-white p-1"
+          unoptimized
         />
       )}
     </>

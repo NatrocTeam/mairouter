@@ -11,9 +11,6 @@ import {
 import {
   enableTunnel,
   enableTailscale,
-  isTunnelManuallyDisabled,
-  isTunnelReconnecting,
-  isTailscaleReconnecting,
   getTunnelService,
   getTailscaleService,
   setTunnelUnexpectedExitCallback,

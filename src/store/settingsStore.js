@@ -24,7 +24,7 @@ const useSettingsStore = create((set, get) => ({
         return data;
       }
       set({ error: data.error, loading: false });
-    } catch (e) {
+    } catch (_e) {
       set({ error: "Failed to fetch settings", loading: false });
     }
     return null;

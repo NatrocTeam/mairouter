@@ -183,7 +183,7 @@ function safeJSONParse(str, fallback) {
  * Returns { history, currentMessage }.
  */
 function convertMessages(messages, tools, model) {
-  let history = [];
+  const history = [];
   let currentMessage = null;
 
   const clientProvidedTools = tools && tools.length > 0;

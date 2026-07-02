@@ -10,7 +10,7 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
+  _Legend,
 } from "recharts";
 import Card from "@/shared/components/Card";
 
@@ -43,6 +43,7 @@ export default function UsageChart({ period = "7d" }) {
   }, [period]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 

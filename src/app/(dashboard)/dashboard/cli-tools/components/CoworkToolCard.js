@@ -26,7 +26,7 @@ export default function CoworkToolCard({
   tool,
   isExpanded,
   onToggle,
-  baseUrl,
+  baseUrl: _baseUrl,
   apiKeys,
   activeProviders,
   hasActiveProviders,
@@ -43,7 +43,7 @@ export default function CoworkToolCard({
   const [applying, setApplying] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
+  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
   const [selectedModels, setSelectedModels] = useState([]);
   const [showManualConfigModal, setShowManualConfigModal] = useState(false);
   const [customBaseUrl, setCustomBaseUrl] = useState("");
@@ -57,19 +57,24 @@ export default function CoworkToolCard({
   const [addMcpOpen, setAddMcpOpen] = useState(false);
   const [addMcpForm, setAddMcpForm] = useState({ name: "", url: "" });
 
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
+  const checkStatus = async () => {
+    setChecking(true);
+    try {
+      const res = await fetch(ENDPOINT);
+      const data = await res.json();
+      setStatus(data);
+    } catch (error) {
+      setStatus({ installed: false, error: error.message });
+    } finally {
+      setChecking(false);
     }
-  }, [apiKeys, selectedApiKey]);
+  };
 
+  // Effect intentionally runs only on isExpanded changes — deps checkStatus would re-run on every render
   useEffect(() => {
-    if (initialStatus) setStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isExpanded && !status) checkStatus();
-  }, [isExpanded]);
+  }, [isExpanded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isExpanded) return;
@@ -81,8 +86,10 @@ export default function CoworkToolCard({
       .catch(() => {});
   }, [isExpanded]);
 
+  // Intentionally runs only on status change — adding customBaseUrl/plugins.length would cause infinite loop
   useEffect(() => {
     if (status?.cowork?.models?.length) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedModels(status.cowork.models);
     }
     if (status?.cowork?.baseUrl && !customBaseUrl) {
@@ -106,20 +113,7 @@ export default function CoworkToolCard({
     ) {
       setCustomPlugins(status.cowork.customPlugins);
     }
-  }, [status]);
-
-  const checkStatus = async () => {
-    setChecking(true);
-    try {
-      const res = await fetch(ENDPOINT);
-      const data = await res.json();
-      setStatus(data);
-    } catch (error) {
-      setStatus({ installed: false, error: error.message });
-    } finally {
-      setChecking(false);
-    }
-  };
+  }, [status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const getEffectiveBaseUrl = () => ensureV1(customBaseUrl);
 

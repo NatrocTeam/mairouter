@@ -175,7 +175,7 @@ export class KiroService {
    * Refresh token using refresh token
    */
   async refreshToken(refreshToken, providerSpecificData = {}) {
-    const { authMethod, clientId, clientSecret, region } = providerSpecificData;
+    const { authMethod: _authMethod, clientId, clientSecret, region } = providerSpecificData;
 
     // AWS SSO OIDC refresh (Builder ID or IDC)
     if (clientId && clientSecret) {

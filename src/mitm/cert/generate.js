@@ -1,6 +1,6 @@
-const path = require("path");
-const fs = require("fs");
-const { MITM_DIR } = require("../paths");
+const _path = require("path");
+const _fs = require("fs");
+const { MITM_DIR: _MITM_DIR } = require("../paths");
 const { generateRootCA, loadRootCA, generateLeafCert } = require("./rootCA");
 
 /**

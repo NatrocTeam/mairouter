@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useParams, notFound, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -24,7 +25,7 @@ function parseModelEntry(entry) {
   return { providerId: entry.slice(0, idx), model: entry.slice(idx + 1) };
 }
 
-const VALID_NAME_REGEX = /^[a-zA-Z0-9_.\-]+$/;
+const VALID_NAME_REGEX = /^[a-zA-Z0-9_.-]+$/;
 
 const KIND_LABELS = {
   webSearch: "Web Search",
@@ -130,8 +131,8 @@ export default function ComboDetailPage() {
     setLoading(false);
   };
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAll();
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -234,6 +235,7 @@ export default function ComboDetailPage() {
         URL.revokeObjectURL(testResult.imageUrl);
       } catch {}
     }
+    // eslint-disable-next-line react-hooks/purity
     const start = Date.now();
     try {
       const path = EXAMPLE_PATHS[combo.kind];
@@ -245,6 +247,7 @@ export default function ComboDetailPage() {
         headers,
         body: JSON.stringify(body),
       });
+      // eslint-disable-next-line react-hooks/purity
       const latencyMs = Date.now() - start;
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -504,11 +507,15 @@ export default function ComboDetailPage() {
                       Download
                     </a>
                   </div>
-                  <img
-                    src={testResult.imageUrl}
-                    alt="Generated"
-                    className="max-w-full rounded-lg border border-border"
-                  />
+                  <div className="relative w-full" style={{ minHeight: 200 }}>
+                    <Image
+                      src={testResult.imageUrl}
+                      alt="Generated"
+                      fill
+                      className="max-w-full rounded-lg border border-border object-contain"
+                      unoptimized
+                    />
+                  </div>
                 </div>
               )}
               {testResult.audioUrl && (

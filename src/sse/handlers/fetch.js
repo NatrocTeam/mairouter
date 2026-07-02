@@ -34,8 +34,8 @@ export async function handleFetch(request) {
   // Accept either `provider` or `model` (UI sends `model` since provider IS the model for webFetch)
   const providerInput = body.provider || body.model;
   const targetUrl = body.url;
-  const format = body.format;
-  const maxCharacters = body.max_characters;
+  const _format = body.format;
+  const _maxCharacters = body.max_characters;
 
   log.request("POST", `${reqUrl.pathname} | ${providerInput}`);
 
@@ -109,10 +109,10 @@ export async function handleFetch(request) {
   return handleSingleProviderFetch(body, providerInput, request, apiKey, settings);
 }
 
-async function handleSingleProviderFetch(body, providerInput, request, apiKey, settings) {
+async function handleSingleProviderFetch(body, providerInput, _request, _apiKey, _settings) {
   const targetUrl = body.url;
-  const format = body.format;
-  const maxCharacters = body.max_characters;
+  const _format = body.format;
+  const _maxCharacters = body.max_characters;
   const providerId = resolveProviderId(providerInput);
   const resolvedProvider = AI_PROVIDERS[providerId];
 
@@ -138,8 +138,8 @@ async function handleSingleProviderFetch(body, providerInput, request, apiKey, s
     log.info("AUTH", `\x1b[32m${providerId} no-auth mode\x1b[0m`);
     const result = await handleFetchCore({
       url: targetUrl,
-      format,
-      maxCharacters,
+      _format,
+      _maxCharacters,
       provider: resolvedProvider.id,
       providerConfig,
       credentials: null,
@@ -182,8 +182,8 @@ async function handleSingleProviderFetch(body, providerInput, request, apiKey, s
 
     const result = await handleFetchCore({
       url: targetUrl,
-      format,
-      maxCharacters,
+      _format,
+      _maxCharacters,
       provider: resolvedProvider.id,
       providerConfig,
       credentials: refreshedCredentials,

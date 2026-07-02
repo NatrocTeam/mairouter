@@ -16,7 +16,7 @@ export default function JcodeToolCard({
   tool,
   isExpanded,
   onToggle,
-  baseUrl,
+  baseUrl: _baseUrl,
   hasActiveProviders,
   apiKeys,
   activeProviders,
@@ -32,7 +32,7 @@ export default function JcodeToolCard({
   const [applying, setApplying] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
+  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
   const [selectedModel, setSelectedModel] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [modelAliases, setModelAliases] = useState({});
@@ -55,23 +55,6 @@ export default function JcodeToolCard({
 
   const configStatus = getConfigStatus();
 
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
-    }
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setJcodeStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !jcodeStatus) {
-      checkJcodeStatus();
-      fetchModelAliases();
-    }
-    if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
 
   const fetchModelAliases = async () => {
     try {
@@ -82,23 +65,6 @@ export default function JcodeToolCard({
       console.log("Error fetching model aliases:", error);
     }
   };
-
-  useEffect(() => {
-    if (jcodeStatus?.installed && !hasInitializedModel.current) {
-      hasInitializedModel.current = true;
-      const provider = jcodeStatus.config?.providers?.["mairouter"];
-      if (provider) {
-        if (provider.default_model) {
-          setSelectedModel(provider.default_model);
-        }
-        // Try to match API key from env file
-        const envApiKey = jcodeStatus.envApiKey;
-        if (envApiKey && apiKeys?.some((k) => k.key === envApiKey)) {
-          setSelectedApiKey(envApiKey);
-        }
-      }
-    }
-  }, [jcodeStatus, apiKeys]);
 
   const checkJcodeStatus = async () => {
     setCheckingJcode(true);
@@ -112,6 +78,34 @@ export default function JcodeToolCard({
       setCheckingJcode(false);
     }
   };
+
+  // Effect polls status on expand — adding jcodeStatus dep would cause re-fetch loop
+  useEffect(() => {
+    if (isExpanded && !jcodeStatus) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      checkJcodeStatus();
+      fetchModelAliases();
+    }
+    if (isExpanded) fetchModelAliases();
+  }, [isExpanded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (jcodeStatus?.installed && !hasInitializedModel.current) {
+      hasInitializedModel.current = true;
+      const provider = jcodeStatus.config?.providers?.["mairouter"];
+      if (provider) {
+        if (provider.default_model) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
+          setSelectedModel(provider.default_model);
+        }
+        // Try to match API key from env file
+        const envApiKey = jcodeStatus.envApiKey;
+        if (envApiKey && apiKeys?.some((k) => k.key === envApiKey)) {
+          setSelectedApiKey(envApiKey);
+        }
+      }
+    }
+  }, [jcodeStatus, apiKeys]);
 
   const normalizeLocalhost = (url) =>
     url.replace("://localhost", "://127.0.0.1");

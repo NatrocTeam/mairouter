@@ -7,7 +7,7 @@
 import "open-sse/index.js";
 import crypto from "crypto";
 
-import { generatePKCE, generateState } from "./utils/pkce";
+import { generatePKCE, generateState as _generateState } from "./utils/pkce";
 import {
   CLAUDE_CONFIG,
   CODEX_CONFIG,
@@ -433,7 +433,7 @@ const PROVIDERS = {
                 const result = await onboardRes.json();
                 if (result.done === true) break;
               }
-            } catch (e) {
+            } catch (_e) {
               break;
             }
             await new Promise(resolve => setTimeout(resolve, 5000));
@@ -738,7 +738,7 @@ const PROVIDERS = {
       let data;
       try {
         data = await response.json();
-      } catch (e) {
+      } catch (_e) {
         // If response is not JSON, get as text
         const text = await response.text();
         data = { error: "invalid_response", error_description: text };
@@ -884,7 +884,7 @@ const PROVIDERS = {
       let data;
       try {
         data = await response.json();
-      } catch (e) {
+      } catch (_e) {
         const text = await response.text();
         data = { error: "invalid_response", error_description: text };
       }
@@ -990,7 +990,7 @@ const PROVIDERS = {
       let data;
       try {
         data = await response.json();
-      } catch (e) {
+      } catch (_e) {
         const text = await response.text();
         data = { error: "invalid_response", error_description: text };
       }
@@ -1089,7 +1089,7 @@ const PROVIDERS = {
           lastName: tokenData.lastName,
           expires_at: tokenData.expiresAt,
         };
-      } catch (e) {
+      } catch (_e) {
         const response = await fetch(config.tokenExchangeUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },

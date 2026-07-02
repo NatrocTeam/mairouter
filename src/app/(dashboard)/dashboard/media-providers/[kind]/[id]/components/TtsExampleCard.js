@@ -23,7 +23,7 @@ export function TtsExampleCard({ providerId }) {
 
   // Voice state
   const [selectedVoice, setSelectedVoice]     = useState(config.defaultVoiceId || "");
-  const [selectedVoiceName, setSelectedVoiceName] = useState("");
+  const [_selectedVoiceName, setSelectedVoiceName] = useState("");
   const [voiceId, setVoiceId]               = useState(config.defaultVoiceId || ""); // editable voice id (elevenlabs/config providers)
   // Voices shown below Voice row after language selected
   const [countryVoices, setCountryVoices]     = useState([]);
@@ -62,7 +62,9 @@ export function TtsExampleCard({ providerId }) {
   // Language hint (e.g. Gemini): controls the spoken language without affecting voice selection
   const [languageHint, setLanguageHint]     = useState("");
 
+  // config.* deps omitted — runs once on providerId change to init voice state; adding config props would cause unnecessary re-runs
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalEndpoint(window.location.origin);
     fetch("/api/keys")
       .then((r) => r.json())
@@ -101,18 +103,20 @@ export function TtsExampleCard({ providerId }) {
     // api-language (edge-tts, local-device, elevenlabs): NO default load, wait for user to pick language
     // config (nvidia, hyperbolic, deepgram, huggingface, cartesia, playht, coqui, tortoise, inworld, qwen):
     // use ttsConfig.models for model selector; voice is empty by default (backend uses provider default)
-  }, [providerId]);
+  }, [providerId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Update voices when model changes (voicesPerModel providers)
+  // config.voicesPerModel/providerId omitted — effect only needs to run when selectedModel changes
   useEffect(() => {
     if (!config.voicesPerModel || !selectedModel) return;
     const voices = getTtsVoicesForModel(providerId, selectedModel) || [];
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCountryVoices(voices);
     if (voices.length) {
       setSelectedVoice(voices[0].id);
       setSelectedVoiceName(voices[0].name || voices[0].id);
     }
-  }, [selectedModel]);
+  }, [selectedModel]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Open modal — load language list
   const openModal = async () => {

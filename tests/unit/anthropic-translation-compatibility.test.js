@@ -3,7 +3,6 @@ import { FORMATS } from "../../open-sse/translator/formats.js";
 import {
   assertClaudeTranslationIsLossless,
   assertClaudeModalitiesSupported,
-  TranslationCompatibilityError,
 } from "../../open-sse/translator/concerns/translationCompatibility.js";
 import { claudeToOpenAIRequest } from "../../open-sse/translator/request/claude-to-openai.js";
 

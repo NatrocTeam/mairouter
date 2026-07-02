@@ -331,7 +331,7 @@ export async function handleChatSearch({
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  let upstreamStart = Date.now();
+  const upstreamStart = Date.now();
   let resp;
   try {
     resp = await fetch(url, {

@@ -11,7 +11,7 @@ const execAsync = promisify(exec);
 
 const BIN_DIR = path.join(DATA_DIR, "bin");
 const IS_MAC = os.platform() === "darwin";
-const IS_LINUX = os.platform() === "linux";
+const _IS_LINUX = os.platform() === "linux";
 const IS_WINDOWS = os.platform() === "win32";
 const TAILSCALE_BIN = path.join(
   BIN_DIR,
@@ -953,7 +953,7 @@ export async function startFunnel(port) {
       stdio: "ignore",
       windowsHide: true,
     });
-  } catch (e) {
+  } catch (_e) {
     /* ignore */
   }
 
@@ -1071,7 +1071,7 @@ export function stopFunnel() {
       stdio: "ignore",
       windowsHide: true,
     });
-  } catch (e) {
+  } catch (_e) {
     /* ignore */
   }
 }

@@ -271,7 +271,7 @@ export async function spawnCloudflared(tunnelToken) {
       }
     });
 
-    child.on("exit", (code, signal) => {
+    child.on("exit", (code, _signal) => {
       cloudflaredProcess = null;
       clearPid();
       const wasConnected = resolved; // true = already connected successfully
@@ -334,7 +334,7 @@ export async function spawnQuickTunnel(localPort, onUrlUpdate) {
     isCleaned = true;
     try {
       fs.rmSync(configDir, { recursive: true, force: true });
-    } catch (e) {
+    } catch (_e) {
       /* ignore */
     }
   };
@@ -508,7 +508,7 @@ function killCloudflaredByPort(port) {
         { stdio: "ignore", windowsHide: true },
       );
     }
-  } catch (e) {
+  } catch (_e) {
     /* ignore */
   }
 }
@@ -518,7 +518,7 @@ export function killCloudflared(localPort) {
   if (cloudflaredProcess) {
     try {
       cloudflaredProcess.kill();
-    } catch (e) {
+    } catch (_e) {
       /* ignore */
     }
     cloudflaredProcess = null;
@@ -528,7 +528,7 @@ export function killCloudflared(localPort) {
   if (pid) {
     try {
       process.kill(pid);
-    } catch (e) {
+    } catch (_e) {
       /* ignore */
     }
     clearPid();
@@ -543,7 +543,7 @@ export function isCloudflaredRunning() {
   try {
     process.kill(pid, 0);
     return true;
-  } catch (e) {
+  } catch (_e) {
     return false;
   }
 }

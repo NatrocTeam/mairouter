@@ -10,7 +10,7 @@ import {
 import Image from "next/image";
 import BaseUrlSelect from "./BaseUrlSelect";
 import ApiKeySelect from "./ApiKeySelect";
-import { matchKnownEndpoint } from "./cliEndpointMatch";
+import { matchKnownEndpoint as _matchKnownEndpoint } from "./cliEndpointMatch";
 
 export default function KiloToolCard({
   tool,
@@ -32,29 +32,12 @@ export default function KiloToolCard({
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
+  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
   const [selectedModel, setSelectedModel] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [modelAliases, setModelAliases] = useState({});
   const [showManualConfigModal, setShowManualConfigModal] = useState(false);
   const [customBaseUrl, setCustomBaseUrl] = useState("");
-
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey)
-      setSelectedApiKey(apiKeys[0].key);
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !status) {
-      checkStatus();
-      fetchModelAliases();
-    }
-    if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
 
   const fetchModelAliases = async () => {
     try {
@@ -63,6 +46,19 @@ export default function KiloToolCard({
       if (res.ok) setModelAliases(data.aliases || {});
     } catch (error) {
       console.log("Error fetching model aliases:", error);
+    }
+  };
+
+  const checkStatus = async () => {
+    setChecking(true);
+    try {
+      const res = await fetch("/api/cli-tools/kilo-settings");
+      const data = await res.json();
+      setStatus(data);
+    } catch (error) {
+      setStatus({ installed: false, error: error.message });
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -80,18 +76,15 @@ export default function KiloToolCard({
 
   const getDisplayUrl = () => customBaseUrl || `${baseUrl}/v1`;
 
-  const checkStatus = async () => {
-    setChecking(true);
-    try {
-      const res = await fetch("/api/cli-tools/kilo-settings");
-      const data = await res.json();
-      setStatus(data);
-    } catch (error) {
-      setStatus({ installed: false, error: error.message });
-    } finally {
-      setChecking(false);
+  // Effect polls status on expand — adding status dep would cause re-fetch loop
+  useEffect(() => {
+    if (isExpanded && !status) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      checkStatus();
+      fetchModelAliases();
     }
-  };
+    if (isExpanded) fetchModelAliases();
+  }, [isExpanded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleApply = async () => {
     setApplying(true);

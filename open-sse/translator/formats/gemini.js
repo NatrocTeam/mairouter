@@ -307,7 +307,7 @@ export function cleanJSONSchemaForAntigravity(schema) {
   if (!schema || typeof schema !== "object") return schema;
 
   // Mutate directly (schema is only used once per request)
-  let cleaned = schema;
+  const cleaned = schema;
 
   // Phase 1: Convert and prepare
   convertConstToEnum(cleaned);

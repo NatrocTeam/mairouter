@@ -52,7 +52,7 @@ async function resolveMitmRouterBaseUrl() {
 }
 
 const MITM_PORT = 443;
-const MITM_WIN_NODE_PORT = 8443;
+const _MITM_WIN_NODE_PORT = 8443;
 const PID_FILE = path.join(MITM_DIR, ".mitm.pid");
 const LOCK_FILE = path.join(MITM_DIR, ".mitm.lock");
 
@@ -334,7 +334,7 @@ function checkPort443Free() {
   });
 }
 
-function getPort443Owner(sudoPassword) {
+function getPort443Owner(_sudoPassword) {
   return new Promise((resolve) => {
     if (IS_WIN) {
       const psCmd =

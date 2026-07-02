@@ -40,7 +40,7 @@ const readConfig = async () => {
     const configPath = getConfigPath();
     const content = await fs.readFile(configPath, "utf-8");
     return parseTOML(content);
-  } catch (error) {
+  } catch (_error) {
     return { providers: {} };
   }
 };
@@ -52,7 +52,7 @@ const hasmairouterConfig = (config) => {
 
   if (providers["mairouter"]) return true;
 
-  for (const [name, provider] of Object.entries(providers)) {
+  for (const [_name, provider] of Object.entries(providers)) {
     if (provider.base_url && provider.base_url.includes("localhost:12890")) {
       return true;
     }
@@ -147,7 +147,7 @@ export async function POST(request) {
       ? baseUrl
       : `${baseUrl}/v1`;
 
-    let config = await readConfig();
+    const config = await readConfig();
 
     if (!config.providers) {
       config.providers = {};

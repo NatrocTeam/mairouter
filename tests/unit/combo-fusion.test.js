@@ -32,7 +32,7 @@ describe("fusion combo", () => {
 
   it("fans out to the panel then routes a synthesis turn to the judge", async () => {
     const seen = [];
-    const handleSingleModel = vi.fn(async (body, model, isPanel) => {
+    const handleSingleModel = vi.fn(async (body, model, _isPanel) => {
       seen.push(model);
       if (model === "p/judge") return okResponse("FINAL");
       return okResponse(`ans-${model}`);
@@ -52,7 +52,7 @@ describe("fusion combo", () => {
     expect(seen[3]).toBe("p/judge");
 
     // Panel calls are non-streaming with tools stripped.
-    for (const [body, model, isPanel] of handleSingleModel.mock.calls.filter(([, m]) => m !== "p/judge")) {
+    for (const [body, _model, isPanel] of handleSingleModel.mock.calls.filter(([, m]) => m !== "p/judge")) {
       expect(body.stream).toBe(false);
       expect(body.tools).toBeUndefined();
       expect(isPanel).toBe(true);

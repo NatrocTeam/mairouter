@@ -32,7 +32,7 @@ export default function OpenCodeToolCard({
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
+  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
   const [selectedModel, setSelectedModel] = useState("");
   const [subagentModel, setSubagentModel] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
@@ -48,41 +48,6 @@ export default function OpenCodeToolCard({
     selectedModelsRef.current = selectedModels;
   }, [selectedModels]);
 
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
-    }
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !status) {
-      checkStatus();
-      fetchModelAliases();
-    }
-    if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
-
-  // Sync models from existing config
-  useEffect(() => {
-    if (status?.opencode?.models) {
-      setSelectedModels(status.opencode.models);
-    }
-    if (status?.opencode?.activeModel) {
-      setActiveModel(status.opencode.activeModel);
-    }
-
-    // Parse subagent settings from agent.explorer if exists
-    if (status?.config?.agent?.explorer?.model?.startsWith("mairouter/")) {
-      setSubagentModel(
-        status.config.agent.explorer.model.replace("mairouter/", ""),
-      );
-    }
-  }, [status]);
-
   const fetchModelAliases = async () => {
     try {
       const res = await fetch("/api/models/alias");
@@ -90,6 +55,19 @@ export default function OpenCodeToolCard({
       if (res.ok) setModelAliases(data.aliases || {});
     } catch (error) {
       console.log("Error fetching model aliases:", error);
+    }
+  };
+
+  const checkStatus = async () => {
+    setChecking(true);
+    try {
+      const res = await fetch("/api/cli-tools/opencode-settings");
+      const data = await res.json();
+      setStatus(data);
+    } catch (error) {
+      setStatus({ installed: false, error: error.message });
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -139,18 +117,33 @@ export default function OpenCodeToolCard({
 
   const getDisplayUrl = () => customBaseUrl || `${baseUrl}/v1`;
 
-  const checkStatus = async () => {
-    setChecking(true);
-    try {
-      const res = await fetch("/api/cli-tools/opencode-settings");
-      const data = await res.json();
-      setStatus(data);
-    } catch (error) {
-      setStatus({ installed: false, error: error.message });
-    } finally {
-      setChecking(false);
+  // Effect polls status on expand — adding status dep would cause re-fetch loop
+  useEffect(() => {
+    if (isExpanded && !status) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      checkStatus();
+      fetchModelAliases();
     }
-  };
+    if (isExpanded) fetchModelAliases();
+  }, [isExpanded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sync models from existing config
+  useEffect(() => {
+    if (status?.opencode?.models) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setSelectedModels(status.opencode.models);
+    }
+    if (status?.opencode?.activeModel) {
+      setActiveModel(status.opencode.activeModel);
+    }
+
+    // Parse subagent settings from agent.explorer if exists
+    if (status?.config?.agent?.explorer?.model?.startsWith("mairouter/")) {
+      setSubagentModel(
+        status.config.agent.explorer.model.replace("mairouter/", ""),
+      );
+    }
+  }, [status]);
 
   const handleApply = async () => {
     setApplying(true);

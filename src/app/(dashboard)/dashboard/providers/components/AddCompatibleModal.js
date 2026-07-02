@@ -51,15 +51,17 @@ function AddCompatibleModal({ variant, isOpen, onClose, onCreated }) {
   const [validationResult, setValidationResult] = useState(null);
 
   // openai: reset baseUrl when apiType changes; anthropic: reset checks when opened
+  // Intentionally uses ternary expression; adding config.* deps would cause unnecessary re-runs on unrelated config changes
   useEffect(() => {
     if (config.hasApiType) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData((prev) => ({ ...prev, baseUrl: config.defaultBaseUrl }));
     } else if (isOpen) {
       setValidationResult(null);
       setCheckKey("");
       setCheckModelId("");
     }
-  }, [config.hasApiType ? formData.apiType : isOpen]);
+  }, [config.hasApiType ? formData.apiType : isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSubmit = async () => {
     if (!formData.name.trim() || !formData.prefix.trim() || !formData.baseUrl.trim()) return;

@@ -24,10 +24,10 @@ function CallbackContent() {
       fullUrl: window.location.href,
     };
 
-    let relayed = false;
+    let _relayed = false;
 
     // Trusted origins that may receive this callback. The OAuth code/state
-    // must only be relayed to the dashboard window we expect to be the opener
+    // must only be _relayed to the dashboard window we expect to be the opener
     // (same origin) or the Codex helper that listens on a fixed loopback port.
     // Any other origin is treated as hostile (drive-by attacker that opened
     // the popup against the well-known redirect_uri to phish the code).
@@ -45,7 +45,7 @@ function CallbackContent() {
       for (const origin of expectedOrigins) {
         try {
           window.opener.postMessage({ type: "oauth_callback", data: callbackData }, origin);
-          relayed = true;
+          _relayed = true;
         } catch (e) {
           console.log("postMessage failed:", e);
         }
@@ -57,7 +57,7 @@ function CallbackContent() {
       const channel = new BroadcastChannel("oauth_callback");
       channel.postMessage(callbackData);
       channel.close();
-      relayed = true;
+      _relayed = true;
     } catch (e) {
       console.log("BroadcastChannel failed:", e);
     }
@@ -65,7 +65,7 @@ function CallbackContent() {
     // Method 3: localStorage event (fallback)
     try {
       localStorage.setItem("oauth_callback", JSON.stringify({ ...callbackData, timestamp: Date.now() }));
-      relayed = true;
+      _relayed = true;
     } catch (e) {
       console.log("localStorage failed:", e);
     }
@@ -75,6 +75,7 @@ function CallbackContent() {
       return;
     }
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setStatus("success");
     setTimeout(() => {
       window.close();

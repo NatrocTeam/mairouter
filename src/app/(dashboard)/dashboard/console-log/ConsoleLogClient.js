@@ -21,7 +21,7 @@ function colorLine(line) {
 
 export default function ConsoleLogClient() {
   const [logs, setLogs] = useState([]);
-  const [connected, setConnected] = useState(false);
+  const [_connected, setConnected] = useState(false);
   const logRef = useRef(null);
 
   const handleClear = async () => {

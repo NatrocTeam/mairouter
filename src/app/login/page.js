@@ -53,7 +53,7 @@ export default function LoginPage() {
           // Safe fallback on non-OK response to avoid infinite loading state.
           setHasPassword(true);
         }
-      } catch (err) {
+      } catch (_err) {
         clearTimeout(timeoutId);
         setHasPassword(true);
       }
@@ -87,7 +87,7 @@ export default function LoginPage() {
         if (data.resetHint) setResetHint(data.resetHint);
         if (data.retryAfter) setRetryAfter(Number(data.retryAfter));
       }
-    } catch (err) {
+    } catch (_err) {
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
@@ -111,7 +111,7 @@ export default function LoginPage() {
         const data = await res.json();
         setError(data.error || "Failed to set password");
       }
-    } catch (err) {
+    } catch (_err) {
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);

@@ -42,7 +42,7 @@ const readJson = async (filePath) => {
     // rather than throwing a 500 that the UI misreads as "tool not installed".
     const stripped = content.replace(/,(\s*[}\]])/g, "$1");
     return JSON.parse(stripped);
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 };

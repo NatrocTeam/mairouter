@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, Fragment } from "react";
 import PropTypes from "prop-types";
 import Card from "@/shared/components/Card";
-import Badge from "@/shared/components/Badge";
+import _Badge from "@/shared/components/Badge";
 
 const fmt = (n) => new Intl.NumberFormat().format(n || 0);
 const fmtCost = (n) => `$${(n || 0).toFixed(2)}`;
@@ -106,6 +106,7 @@ export default function UsageTable({
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (saved) setExpanded(new Set(JSON.parse(saved)));
     } catch (e) {
       console.error(`Failed to load ${storageKey}:`, e);

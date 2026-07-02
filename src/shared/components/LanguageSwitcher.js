@@ -71,10 +71,12 @@ export default function LanguageSwitcher({ className = "", isOpen: controlledOpe
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocale(getLocaleFromCookie());
   }, []);
 
   // Close modal when clicking outside
+  // setIsOpen omitted as it's a wrapper that changes when controlled state changes; adding it would cause unnecessary re-subscription
   useEffect(() => {
     function handleClickOutside(event) {
       if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -85,7 +87,7 @@ export default function LanguageSwitcher({ className = "", isOpen: controlledOpe
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [isOpen]);
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleSetLocale = async (nextLocale) => {
     if (nextLocale === locale || isPending) return;

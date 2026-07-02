@@ -23,7 +23,7 @@ const {
   MODEL_NO_MAP,
   getToolForHost,
 } = require("./config");
-const { DATA_DIR, MITM_DIR } = require("./paths");
+const { DATA_DIR: _DATA_DIR, MITM_DIR } = require("./paths");
 const { getCertForDomain } = require("./cert/generate");
 const { getMitmAlias } = require("./dbReader");
 const {

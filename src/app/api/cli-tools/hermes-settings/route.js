@@ -58,7 +58,7 @@ const upsertEnvVar = (envText, key, value) => {
     : `${envText}${line}\n`;
 };
 
-const removeEnvVar = (envText, key) => {
+const _removeEnvVar = (envText, key) => {
   const re = new RegExp(`^${key}=.*\\r?\\n?`, "m");
   return envText.replace(re, "");
 };

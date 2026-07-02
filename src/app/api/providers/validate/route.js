@@ -252,21 +252,23 @@ export async function POST(request) {
       }
 
       switch (provider) {
-        case "openai":
+        case "openai": {
           const openaiRes = await fetch("https://api.openai.com/v1/models", {
             headers: { "Authorization": `Bearer ${apiKey}` },
           });
           isValid = openaiRes.ok;
           break;
+        }
 
-        case "vercel-ai-gateway":
+        case "vercel-ai-gateway": {
           const vercelAiGatewayRes = await fetch("https://ai-gateway.vercel.sh/v1/models", {
             headers: { "Authorization": `Bearer ${apiKey}` },
           });
           isValid = vercelAiGatewayRes.ok;
           break;
+        }
 
-        case "anthropic":
+        case "anthropic": {
           const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
             method: "POST",
             headers: {
@@ -282,18 +284,21 @@ export async function POST(request) {
           });
           isValid = anthropicRes.status !== 401;
           break;
+        }
 
-        case "gemini":
+        case "gemini": {
           const geminiRes = await fetch(`https://generativelanguage.googleapis.com/v1/models?key=${apiKey}`);
           isValid = geminiRes.ok;
           break;
+        }
 
-        case "openrouter":
+        case "openrouter": {
           const openrouterRes = await fetch("https://openrouter.ai/api/v1/models", {
             headers: { "Authorization": `Bearer ${apiKey}` },
           });
           isValid = openrouterRes.ok;
           break;
+        }
 
         case "glm":
         case "glm-cn":

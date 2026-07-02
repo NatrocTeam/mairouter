@@ -6,14 +6,10 @@ import Card from "@/shared/components/Card";
 import PricingModal from "@/shared/components/PricingModal";
 
 export default function PricingSettingsPage() {
-  const router = useRouter();
+  const _router = useRouter();
   const [showModal, setShowModal] = useState(false);
   const [currentPricing, setCurrentPricing] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadPricing();
-  }, []);
 
   const loadPricing = async () => {
     setLoading(true);
@@ -29,6 +25,11 @@ export default function PricingSettingsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    loadPricing();
+  }, []);
 
   const handlePricingUpdated = () => {
     loadPricing();

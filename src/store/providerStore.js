@@ -45,7 +45,7 @@ const useProviderStore = create((set, get) => ({
       } else {
         set({ error: data.error, loading: false });
       }
-    } catch (error) {
+    } catch (_error) {
       set({ error: "Failed to fetch providers", loading: false });
     }
   },

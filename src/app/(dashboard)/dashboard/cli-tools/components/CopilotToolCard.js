@@ -31,7 +31,7 @@ export default function CopilotToolCard({
   const [applying, setApplying] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState("");
+  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
   const [customBaseUrl, setCustomBaseUrl] = useState("");
   const [modelAliases, setModelAliases] = useState({});
   const [showManualConfigModal, setShowManualConfigModal] = useState(false);
@@ -43,38 +43,6 @@ export default function CopilotToolCard({
     selectedModelsRef.current = selectedModels;
   }, [selectedModels]);
 
-  useEffect(() => {
-    if (apiKeys?.length > 0 && !selectedApiKey) {
-      setSelectedApiKey(apiKeys[0].key);
-    }
-  }, [apiKeys, selectedApiKey]);
-
-  useEffect(() => {
-    if (initialStatus) setStatus(initialStatus);
-  }, [initialStatus]);
-
-  useEffect(() => {
-    if (isExpanded && !status) {
-      checkStatus();
-      fetchModelAliases();
-    }
-    if (isExpanded) fetchModelAliases();
-  }, [isExpanded]);
-
-  // Pre-fill from existing config
-  useEffect(() => {
-    if (
-      status?.config &&
-      Array.isArray(status.config) &&
-      selectedModels.length === 0
-    ) {
-      const entry = status.config.find((e) => e.name === "mairouter");
-      if (entry?.models?.length > 0) {
-        setSelectedModels(entry.models.map((m) => m.id));
-      }
-    }
-  }, [status]);
-
   const fetchModelAliases = async () => {
     try {
       const res = await fetch("/api/models/alias");
@@ -82,6 +50,19 @@ export default function CopilotToolCard({
       if (res.ok) setModelAliases(data.aliases || {});
     } catch (error) {
       console.log("Error fetching model aliases:", error);
+    }
+  };
+
+  const checkStatus = async () => {
+    setChecking(true);
+    try {
+      const res = await fetch("/api/cli-tools/copilot-settings");
+      const data = await res.json();
+      setStatus(data);
+    } catch (error) {
+      setStatus({ error: error.message });
+    } finally {
+      setChecking(false);
     }
   };
 
@@ -128,18 +109,30 @@ export default function CopilotToolCard({
   const removeModel = (id) =>
     setSelectedModels((prev) => prev.filter((m) => m !== id));
 
-  const checkStatus = async () => {
-    setChecking(true);
-    try {
-      const res = await fetch("/api/cli-tools/copilot-settings");
-      const data = await res.json();
-      setStatus(data);
-    } catch (error) {
-      setStatus({ error: error.message });
-    } finally {
-      setChecking(false);
+  // Effect intentionally runs only on isExpanded changes — deps checkStatus/fetchModelAliases would re-run on every render
+  useEffect(() => {
+    if (isExpanded && !status) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      checkStatus();
+      fetchModelAliases();
     }
-  };
+    if (isExpanded) fetchModelAliases();
+  }, [isExpanded]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Pre-fill from existing config
+  useEffect(() => {
+    if (
+      status?.config &&
+      Array.isArray(status.config) &&
+      selectedModels.length === 0
+    ) {
+      const entry = status.config.find((e) => e.name === "mairouter");
+      if (entry?.models?.length > 0) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setSelectedModels(entry.models.map((m) => m.id));
+      }
+    }
+  }, [status, selectedModels]);
 
   const handleApply = async () => {
     setApplying(true);

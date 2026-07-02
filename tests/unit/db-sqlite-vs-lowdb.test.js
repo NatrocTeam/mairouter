@@ -75,7 +75,7 @@ describe("DB SQLite layer — public API parity", () => {
       name: "a",
       apiKey: "k1",
     });
-    const c2 = await sqliteDb.createProviderConnection({
+    const _c2 = await sqliteDb.createProviderConnection({
       provider: "test",
       authType: "apikey",
       name: "b",

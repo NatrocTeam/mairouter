@@ -20,7 +20,7 @@ function getLocaleFromCookie() {
 }
 
 export default function ProfilePage() {
-  const { theme, setTheme, isDark } = useTheme();
+  const { theme, setTheme, isDark: _isDark } = useTheme();
   const [locale, setLocale] = useState("en");
   const [langOpen, setLangOpen] = useState(false);
   const [shutdownOpen, setShutdownOpen] = useState(false);
@@ -68,6 +68,7 @@ export default function ProfilePage() {
   const [proxyTestLoading, setProxyTestLoading] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocale(getLocaleFromCookie());
   }, [langOpen]);
 
@@ -101,6 +102,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOidcRedirectUri(`${window.location.origin}/api/auth/oidc/callback`);
     }
   }, []);
@@ -131,7 +133,7 @@ export default function ProfilePage() {
           message: data.error || "Failed to update proxy settings",
         });
       }
-    } catch (err) {
+    } catch (_err) {
       setProxyStatus({ type: "error", message: "An error occurred" });
     } finally {
       setProxyLoading(false);
@@ -172,7 +174,7 @@ export default function ProfilePage() {
           message: data?.error || "Proxy test failed",
         });
       }
-    } catch (err) {
+    } catch (_err) {
       setProxyStatus({ type: "error", message: "An error occurred" });
     } finally {
       setProxyTestLoading(false);
@@ -207,7 +209,7 @@ export default function ProfilePage() {
           message: data.error || "Failed to update proxy settings",
         });
       }
-    } catch (err) {
+    } catch (_err) {
       setProxyStatus({ type: "error", message: "An error occurred" });
     } finally {
       setProxyLoading(false);
@@ -248,7 +250,7 @@ export default function ProfilePage() {
           message: data.error || "Failed to update password",
         });
       }
-    } catch (err) {
+    } catch (_err) {
       setPassStatus({ type: "error", message: "An error occurred" });
     } finally {
       setPassLoading(false);
@@ -414,7 +416,7 @@ export default function ProfilePage() {
           message: data.error || "Failed to save OIDC settings",
         });
       }
-    } catch (err) {
+    } catch (_err) {
       setOidcStatus({ type: "error", message: "An error occurred" });
     } finally {
       setOidcLoading(false);
@@ -490,7 +492,7 @@ export default function ProfilePage() {
           message: data.error || "OIDC connection test failed",
         });
       }
-    } catch (err) {
+    } catch (_err) {
       setOidcTestStatus({ type: "error", message: "An error occurred" });
     } finally {
       setOidcTestLoading(false);
@@ -617,7 +619,7 @@ export default function ProfilePage() {
     setIsShuttingDown(true);
     try {
       await fetch("/api/version/shutdown", { method: "POST" });
-    } catch (e) {
+    } catch (_e) {
       // Expected to fail as server shuts down; ignore error
     }
     setIsShuttingDown(false);

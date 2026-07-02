@@ -52,7 +52,7 @@ export async function GET() {
     const connections = await getProviderConnections();
 
     // Build nodeNameMap for compatible providers (id → name)
-    let nodeNameMap = {};
+    const nodeNameMap = {};
     try {
       const nodes = await getProviderNodes();
       for (const node of nodes) {

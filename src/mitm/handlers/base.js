@@ -1,4 +1,4 @@
-const { log, err } = require("../logger");
+const { log, err: _err } = require("../logger");
 
 const DEFAULT_LOCAL_ROUTER = "http://localhost:12890";
 const ROUTER_BASE =

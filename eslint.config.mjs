@@ -8,11 +8,40 @@ const eslintConfig = defineConfig([
     name: "mairouter/javascript-recommended",
     files: ["**/*.{js,jsx,mjs,cjs}"],
     ...js.configs.recommended,
+    rules: {
+      ...js.configs.recommended.rules,
+      "no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+      "no-empty": ["error", { allowEmptyCatch: true }],
+      "no-var": "error",
+      "prefer-const": "error",
+      eqeqeq: ["error", "smart"],
+    },
   },
   {
     name: "mairouter/nextjs",
     files: ["src/**/*.{js,jsx,mjs,ts,tsx,mts,cts}"],
     extends: [nextVitals],
+    rules: {
+      "no-unused-vars": [
+        "error",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+      "no-var": "error",
+      "prefer-const": "error",
+      eqeqeq: ["error", "smart"],
+      "no-empty": ["error", { allowEmptyCatch: true }],
+    },
   },
   {
     name: "mairouter/node-esm",
@@ -53,7 +82,7 @@ const eslintConfig = defineConfig([
   {
     name: "mairouter/linter-options",
     linterOptions: {
-      reportUnusedDisableDirectives: "warn",
+      reportUnusedDisableDirectives: "error",
     },
   },
   globalIgnores([
@@ -80,6 +109,7 @@ const eslintConfig = defineConfig([
     "source/**",
     "open-sse.old/**",
     "graphify-out/**",
+    "docs/**",
   ]),
 ]);
 

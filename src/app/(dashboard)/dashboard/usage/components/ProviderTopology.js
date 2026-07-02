@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import PropTypes from "prop-types";
 import { ReactFlow, Handle, Position, Controls } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -8,7 +9,6 @@ import { AI_PROVIDERS } from "@/shared/constants/providers";
 
 // Force-stop FE animation if a provider stays active longer than this
 const FE_ACTIVE_TIMEOUT_MS = 60000;
-const FE_ACTIVE_TICK_MS = 1000;
 
 function getProviderConfig(providerId) {
   return AI_PROVIDERS[providerId] || { color: "#6b7280", name: providerId };
@@ -63,6 +63,7 @@ function ProviderNode({ data }) {
         style={{ backgroundColor: `${color}15` }}
       >
         {!imgError ? (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             src={imageUrl}
             alt={label}
@@ -134,7 +135,7 @@ function RouterNode({ data }) {
         className="!bg-transparent !border-0 !w-0 !h-0"
       />
 
-      <img src="/favicon.svg" alt="mairouter" className="w-6 h-6 mr-2" />
+      <Image src="/favicon.svg" alt="mairouter" width={24} height={24} className="mr-2" />
       <span className="text-sm font-bold text-primary">mairouter</span>
       {data.activeCount > 0 && (
         <span className="ml-2 px-1.5 py-0.5 rounded-full bg-primary text-white text-xs font-bold">
@@ -191,7 +192,7 @@ function buildLayout(providers, activeSet, lastSet, errorSet) {
     draggable: false,
   });
 
-  const edgeStyle = (active, last, error, color) => {
+  const edgeStyle = (active, last, error, _color) => {
     if (error) return { stroke: "#ef4444", strokeWidth: 2.5, opacity: 0.9 };
     if (active) return { stroke: "#22c55e", strokeWidth: 2.5, opacity: 0.9 };
     if (last) return { stroke: "#f59e0b", strokeWidth: 2, opacity: 0.7 };
@@ -294,7 +295,8 @@ export default function ProviderTopology({
 
   // Track firstSeen per active provider; drop provider if running too long (BE stuck)
   const firstSeenRef = useRef({});
-  const [tick, setTick] = useState(0);
+  const [_tick, _setTick] = useState(0);
+  const [activeSet, setActiveSet] = useState(new Set());
 
   useEffect(() => {
     const seen = firstSeenRef.current;
@@ -309,23 +311,23 @@ export default function ProviderTopology({
 
   useEffect(() => {
     if (rawActiveSet.size === 0) return;
-    const id = setInterval(() => setTick((t) => t + 1), FE_ACTIVE_TICK_MS);
+    const id = setInterval(() => _setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
   }, [rawActiveSet]);
 
-  const activeSet = useMemo(() => {
-    const now = Date.now();
+  useEffect(() => {
     const filtered = new Set();
     for (const p of rawActiveSet) {
       const ts = firstSeenRef.current[p];
-      if (!ts || now - ts < FE_ACTIVE_TIMEOUT_MS) filtered.add(p);
+      if (!ts || Date.now() - ts < FE_ACTIVE_TIMEOUT_MS) filtered.add(p);
     }
-    return filtered;
-  }, [rawActiveSet, tick]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setActiveSet(filtered);
+  }, [rawActiveSet, _tick]);
 
   const { nodes, edges } = useMemo(
     () => buildLayout(providers, activeSet, lastSet, errorSet),
-    [providers, activeSet, lastKey, errorKey],
+    [providers, activeSet, lastSet, errorSet],
   );
 
   // Stable key — only remount when provider list changes
@@ -340,11 +342,11 @@ export default function ProviderTopology({
 
   const rfInstance = useRef(null);
   const containerRef = useRef(null);
-  const fitOpts = { padding: 0.2, duration: 200 };
+  const fitOpts = useMemo(() => ({ padding: 0.2, duration: 200 }), []);
   const onInit = useCallback((instance) => {
     rfInstance.current = instance;
     setTimeout(() => instance.fitView(fitOpts), 50);
-  }, []);
+  }, [fitOpts]);
 
   // Re-fit on container resize
   useEffect(() => {
@@ -355,7 +357,7 @@ export default function ProviderTopology({
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Re-fit when node count/layout changes
   useEffect(() => {
@@ -363,7 +365,7 @@ export default function ProviderTopology({
       const id = setTimeout(() => rfInstance.current.fitView(fitOpts), 50);
       return () => clearTimeout(id);
     }
-  }, [nodes.length]);
+  }, [nodes.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div

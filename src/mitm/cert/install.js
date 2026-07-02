@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const { exec } = require("child_process");
 const { execWithPassword, isSudoAvailable } = require("../dns/dnsConfig.js");
 const { runElevatedPowerShell, quotePs } = require("../winElevated.js");
-const { log, err } = require("../logger");
+const { log, err: _err } = require("../logger");
 
 const IS_WIN = process.platform === "win32";
 const IS_MAC = process.platform === "darwin";
@@ -182,7 +182,7 @@ async function uninstallCertMac(sudoPassword, certPath) {
   try {
     await execWithPassword(command, sudoPassword);
     log("🔐 Cert: ✅ uninstalled from system keychain");
-  } catch (err) {
+  } catch (_err) {
     throw new Error("Failed to uninstall certificate");
   }
 }
@@ -292,7 +292,7 @@ async function uninstallCertLinux(sudoPassword) {
     log(
       "🔐 Cert: ✅ uninstalled from Linux trust store and user browser databases",
     );
-  } catch (error) {
+  } catch (_error) {
     throw new Error("Failed to uninstall certificate");
   }
 }

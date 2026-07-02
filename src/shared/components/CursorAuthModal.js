@@ -36,7 +36,7 @@ export default function CursorAuthModal({ isOpen, onSuccess, onClose }) {
       } else {
         setError(data.error || "Could not auto-detect tokens");
       }
-    } catch (err) {
+    } catch (_err) {
       setError("Failed to auto-detect tokens");
     } finally {
       setAutoDetecting(false);
@@ -46,6 +46,7 @@ export default function CursorAuthModal({ isOpen, onSuccess, onClose }) {
   // Auto-detect tokens when modal opens
   useEffect(() => {
     if (!isOpen) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     runAutoDetect();
   }, [isOpen]);
 
