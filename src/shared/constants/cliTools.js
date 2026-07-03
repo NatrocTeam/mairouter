@@ -602,6 +602,88 @@ amp --model "{{model}}"
       },
     ],
   },
+  zcode: {
+    id: "zcode",
+    name: "ZCode Desktop",
+    image: "/providers/zcode.png",
+    color: "#121619",
+    description: "ZCode AI Coding IDE — desktop AI assistant with CLI",
+    docsUrl: "https://zcode.z.ai",
+    configType: "guide",
+    notes: [
+      {
+        type: "info",
+        text: "ZCode is an Electron-based AI coding IDE with built-in CLI support. Configure mairouter as a custom Anthropic-format provider to route all ZCode AI requests through mairouter.",
+      },
+      {
+        type: "warning",
+        text: "Config path: Windows %USERPROFILE%\\.zcode\\v2\\config.json • Linux/macOS ~/.zcode/v2/config.json",
+      },
+    ],
+    guideSteps: [
+      {
+        step: 1,
+        title: "Open ZCode Settings",
+        desc: "Launch ZCode, click the gear icon ⚙️ to open Settings.",
+      },
+      {
+        step: 2,
+        title: "Go to Provider Settings",
+        desc: 'Go to the "Model settings" section in Settings.',
+      },
+      {
+        step: 3,
+        title: "Add Custom Provider",
+        desc: 'Click "Add Provider" or the + button to create a new provider entry.',
+      },
+      {
+        step: 4,
+        title: "Set Provider Name",
+        desc: 'Enter a name (e.g. "mairouter") to identify this provider.',
+      },
+      {
+        step: 5,
+        title: "Set Base URL",
+        value: "{{baseUrl}}",
+        copyable: true,
+      },
+      { step: 6, title: "API Key", type: "apiKeySelector" },
+      { step: 7, title: "Select API Format", value: "Anthropic" },
+      {
+        step: 8,
+        title: "Add Model",
+        desc: 'Add a model ID (e.g. "friday-3-3") with context limit and output limit (if available).',
+      },
+      { step: 9, title: "Select Model", type: "modelSelector" },
+    ],
+    codeBlock: {
+      language: "json",
+      code: JSON.stringify(
+        {
+          provider: {
+            "your-provider-uuid": {
+              name: "mairouter",
+              kind: "anthropic",
+              options: {
+                apiKey: "{{apiKey}}",
+                baseURL: "{{baseUrl}}",
+                apiKeyRequired: true,
+              },
+              source: "custom",
+              models: {
+                "{{model}}": {
+                  limit: { context: 256000, output: 128000 },
+                  modalities: { input: ["text"], output: ["text"] },
+                },
+              },
+            },
+          },
+        },
+        null,
+        2,
+      ),
+    },
+  },
   // HIDDEN: gemini-cli
   // "gemini-cli": {
   //   id: "gemini-cli",
