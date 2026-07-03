@@ -6,34 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build UI + CLI
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Install root dependencies (UI)
-        run: npm install
-
-      - name: Install CLI dependencies
-        working-directory: cli
-        run: npm install
-
-      - name: Build UI (Next.js)
-        run: npm run build
-
-      - name: Build CLI (esbuild)
-        working-directory: cli
-        run: npm run build
-
   publish:
     name: npm publish (${{ github.event.release.prerelease && 'prerelease' || 'latest' }})
-    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -43,6 +17,9 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
+
+      - name: Install root dependencies (needed for CLI build — Next.js)
+        run: npm install
 
       - name: Install CLI dependencies
         working-directory: cli
