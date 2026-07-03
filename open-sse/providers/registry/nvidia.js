@@ -20,12 +20,17 @@ export default {
     validateUrl: "https://integrate.api.nvidia.com/v1/models",
   },
   models: [
-    { id: "minimaxai/minimax-m3", name: "Minimax M3" },
+    { id: "deepseek-ai/deepseek-v4-flash", name: "DeepSeek V4 Flash" },
+    { id: "deepseek-ai/deepseek-v4-pro", name: "DeepSeek V4 Pro" },
     { id: "minimaxai/minimax-m2.7", name: "Minimax M2.7" },
-    { id: "z-ai/glm4.7", name: "GLM 4.7" },
     {
-      id: "nvidia/nv-embedqa-e5-v5",
-      name: "NV EmbedQA E5 v5",
+      id: "nvidia/nemotron-3-ultra-550b-a55b",
+      name: "NemoTron 3 Ultra 550B A55B",
+    },
+    { id: "z-ai/glm-5.2", name: "GLM 5.2" },
+    {
+      id: "nvidia/nv-embed-v1",
+      name: "NV-Embed V1",
       kind: "embedding",
     },
     {
@@ -37,7 +42,7 @@ export default {
     { id: "fastpitch", name: "FastPitch", kind: "tts" },
     { id: "tacotron2", name: "Tacotron2", kind: "tts" },
   ],
-  serviceKinds: ["llm", "tts", "embedding"],
+  serviceKinds: ["llm", "tts", "embedding", "stt"],
   ttsConfig: {
     baseUrl: "https://integrate.api.nvidia.com/v1/audio/speech",
     authType: "apikey",
