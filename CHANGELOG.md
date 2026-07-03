@@ -1,6 +1,29 @@
 # Changelog
 
-## v1.0.0 (2026-07-03)
+## v1.1.0 2026-07-03 [(4beea7e)](https://github.com/NatrocTeam/mairouter/commit/4beea7ea3f53cf68cc45589a2da1fb9400441d5a)
+
+### Added
+
+- **ZCode CLI Tools integration** — new tool card and settings API for ZCode AI Coding IDE on the `/dashboard/cli-tools` page:
+  - Guide-based setup with 8-step walkthrough for configuring mairouter as a custom Anthropic-format provider
+  - `POST /api/cli-tools/zcode-settings` — writes the mairouter provider entry to `~/.zcode/v2/config.json` with auto-generated UUID (matching ZCode's own `crypto.randomUUID()` pattern)
+  - `GET /api/cli-tools/zcode-settings` — detects ZCode installation and checks if mairouter is already configured
+  - `DELETE /api/cli-tools/zcode-settings` — removes the mairouter provider entry from ZCode config
+  - Registered in the batch all-statuses endpoint for live status display on the CLI Tools grid
+  - ZCode provider icon (`/providers/zcode.png`)
+
+### Changed
+
+- **CI workflows**:
+  - Added `workflow_dispatch` trigger to both code quality and npm workflows for manual runs
+  - Removed redundant build jobs from code-quality and npm workflows
+  - Simplified npm workflow dependency installation steps
+
+### Fixed
+
+- **LICENSE**: Updated copyright information in CLI package license
+
+## v1.0.0 2026-07-03
 
 Forked from 9Router v0.5.x. This is the first mairouter release.
 
