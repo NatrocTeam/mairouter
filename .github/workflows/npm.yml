@@ -6,14 +6,37 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish:
-    name: npm publish (${{ github.event.release.prerelease && 'prerelease' || 'latest' }})
+  build:
+    name: Build UI + CLI
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    defaults:
-      run:
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install root dependencies (UI)
+        run: npm install
+
+      - name: Install CLI dependencies
         working-directory: cli
+        run: npm install
+
+      - name: Build UI (Next.js)
+        run: npm run build
+
+      - name: Build CLI (esbuild)
+        working-directory: cli
+        run: npm run build
+
+  publish:
+    name: npm publish (${{ github.event.release.prerelease && 'prerelease' || 'latest' }})
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,47 +44,40 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - name: Install dependencies
+      - name: Install CLI dependencies
+        working-directory: cli
         run: npm install
 
       - name: Set version from release tag
         id: version
+        working-directory: cli
         env:
           TAG_NAME: ${{ github.event.release.tag_name || '' }}
           IS_PRERELEASE: ${{ github.event.release.prerelease || false }}
         run: |
           if [ -z "${TAG_NAME}" ]; then
-            echo "No release tag — using local package version"
             NPM_VERSION=$(node -p "require('./package.json').version")
           else
-            # Strip leading "v" from tag
             NPM_VERSION="${TAG_NAME#v}"
           fi
           npm pkg set version="${NPM_VERSION}"
           echo "version=${NPM_VERSION}" >> "$GITHUB_OUTPUT"
           echo "is_prerelease=${IS_PRERELEASE}" >> "$GITHUB_OUTPUT"
-          echo "VERSION=${NPM_VERSION}"
-          echo "IS_PRERELEASE=${IS_PRERELEASE}"
-
-      - name: Build CLI (esbuild)
-        run: npm run build
 
       - name: Publish — latest
         if: steps.version.outputs.is_prerelease != 'true'
+        working-directory: cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          echo "Publishing latest: version=${{ steps.version.outputs.version }}, npm-tag=latest"
-          npm publish --tag latest
+        run: npm publish --tag latest
 
       - name: Publish — prerelease
         if: steps.version.outputs.is_prerelease == 'true'
+        working-directory: cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          # Extract pre-release tag, e.g. "1.1.2-beta.1" → "beta"
           PRERELEASE_ID="${VERSION#*-}"
           PRERELEASE_TAG="${PRERELEASE_ID%%.*}"
-          echo "Publishing prerelease: version=${VERSION}, npm-tag=${PRERELEASE_TAG}"
           npm publish --tag "${PRERELEASE_TAG}"
