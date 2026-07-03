@@ -28,9 +28,7 @@ export default {
       combined: true,
       header: "x-api-key",
       scheme: "raw",
-      hooks: [
-        "kimiHeaders",
-      ],
+      hooks: ["kimiHeaders"],
     },
   },
   // Multi-endpoint: pick the transport matching client sourceFormat to skip translation.
@@ -38,14 +36,24 @@ export default {
     {
       format: "openai",
       baseUrl: "https://api.kimi.com/coding/v1/chat/completions",
-      auth: { combined: true, header: "Authorization", scheme: "bearer", hooks: ["kimiHeaders"] },
+      auth: {
+        combined: true,
+        header: "Authorization",
+        scheme: "bearer",
+        hooks: ["kimiHeaders"],
+      },
     },
     {
       format: "claude",
       baseUrl: "https://api.kimi.com/coding/v1/messages",
       urlSuffix: "?beta=true",
       headers: { ...CLAUDE_API_HEADERS },
-      auth: { combined: true, header: "x-api-key", scheme: "raw", hooks: ["kimiHeaders"] },
+      auth: {
+        combined: true,
+        header: "x-api-key",
+        scheme: "raw",
+        hooks: ["kimiHeaders"],
+      },
     },
   ],
   models: [

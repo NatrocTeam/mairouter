@@ -34,7 +34,9 @@ export default function DroidToolCard({
   const [applying, setApplying] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
+  const [selectedApiKey, setSelectedApiKey] = useState(
+    () => apiKeys?.[0]?.key ?? "",
+  );
   const [modelList, setModelList] = useState([]);
   const [modelInput, setModelInput] = useState("");
   const [modalOpen, setModalOpen] = useState(false);

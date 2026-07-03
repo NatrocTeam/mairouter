@@ -27,7 +27,9 @@ describe("compressWithHeadroom openai-responses format (#1998)", () => {
         {
           type: "message",
           role: "user",
-          content: [{ type: "input_text", text: "a long original message ".repeat(20) }],
+          content: [
+            { type: "input_text", text: "a long original message ".repeat(20) },
+          ],
         },
       ],
     };

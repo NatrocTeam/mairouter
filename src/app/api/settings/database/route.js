@@ -13,14 +13,20 @@ function isCliRequest(request) {
 
 export async function GET(request) {
   try {
-    if (!isCliRequest(request) && !(await verifyDashboardPassword(request.headers.get(PASSWORD_HEADER)))) {
+    if (
+      !isCliRequest(request) &&
+      !(await verifyDashboardPassword(request.headers.get(PASSWORD_HEADER)))
+    ) {
       return NextResponse.json({ error: "Invalid password" }, { status: 401 });
     }
     const payload = await exportDb();
     return NextResponse.json(payload);
   } catch (error) {
     console.log("Error exporting database:", error);
-    return NextResponse.json({ error: "Failed to export database" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to export database" },
+      { status: 500 },
+    );
   }
 }
 
@@ -37,7 +43,10 @@ export async function POST(request) {
       const settings = await getSettings();
       applyOutboundProxyEnv(settings);
     } catch (err) {
-      console.warn("[Settings][DatabaseImport] Failed to re-apply outbound proxy env:", err);
+      console.warn(
+        "[Settings][DatabaseImport] Failed to re-apply outbound proxy env:",
+        err,
+      );
     }
 
     return NextResponse.json({ success: true });
@@ -45,7 +54,7 @@ export async function POST(request) {
     console.log("Error importing database:", error);
     return NextResponse.json(
       { error: error?.message || "Failed to import database" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

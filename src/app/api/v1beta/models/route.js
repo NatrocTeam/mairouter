@@ -8,8 +8,8 @@ export async function OPTIONS() {
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "*"
-    }
+      "Access-Control-Allow-Headers": "*",
+    },
   });
 }
 
@@ -22,7 +22,12 @@ export async function GET() {
     const models = [];
     const seen = new Set();
 
-    function addModel({ name, displayName, description, methods = ["generateContent"] }) {
+    function addModel({
+      name,
+      displayName,
+      description,
+      methods = ["generateContent"],
+    }) {
       if (seen.has(name)) return;
       seen.add(name);
       models.push({
@@ -34,7 +39,7 @@ export async function GET() {
         outputTokenLimit: 8192,
       });
     }
-    
+
     for (const [provider, providerModels] of Object.entries(PROVIDER_MODELS)) {
       for (const model of providerModels) {
         addModel({
@@ -57,6 +62,9 @@ export async function GET() {
     return Response.json({ models });
   } catch (error) {
     console.log("Error fetching models:", error);
-    return Response.json({ error: { message: error.message } }, { status: 500 });
+    return Response.json(
+      { error: { message: error.message } },
+      { status: 500 },
+    );
   }
 }

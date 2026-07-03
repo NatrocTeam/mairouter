@@ -50,7 +50,12 @@ export class KiroService {
   /**
    * Start device authorization for AWS Builder ID or IDC
    */
-  async startDeviceAuthorization(clientId, clientSecret, startUrl, region = "us-east-1") {
+  async startDeviceAuthorization(
+    clientId,
+    clientSecret,
+    startUrl,
+    region = "us-east-1",
+  ) {
     assertValidAwsRegion(region);
     const endpoint = `https://oidc.${region}.amazonaws.com/device_authorization`;
 
@@ -85,7 +90,12 @@ export class KiroService {
   /**
    * Poll for token using device code (AWS Builder ID/IDC)
    */
-  async pollDeviceToken(clientId, clientSecret, deviceCode, region = "us-east-1") {
+  async pollDeviceToken(
+    clientId,
+    clientSecret,
+    deviceCode,
+    region = "us-east-1",
+  ) {
     assertValidAwsRegion(region);
     const endpoint = `https://oidc.${region}.amazonaws.com/token`;
 
@@ -110,7 +120,8 @@ export class KiroService {
         success: false,
         error: data.error,
         errorDescription: data.error_description,
-        pending: data.error === "authorization_pending" || data.error === "slow_down",
+        pending:
+          data.error === "authorization_pending" || data.error === "slow_down",
       };
     }
 
@@ -175,7 +186,12 @@ export class KiroService {
    * Refresh token using refresh token
    */
   async refreshToken(refreshToken, providerSpecificData = {}) {
-    const { authMethod: _authMethod, clientId, clientSecret, region } = providerSpecificData;
+    const {
+      authMethod: _authMethod,
+      clientId,
+      clientSecret,
+      region,
+    } = providerSpecificData;
 
     // AWS SSO OIDC refresh (Builder ID or IDC)
     if (clientId && clientSecret) {
@@ -241,7 +257,9 @@ export class KiroService {
   async validateImportToken(refreshToken) {
     // Validate token format
     if (!refreshToken.startsWith("aorAAAAAG")) {
-      throw new Error("Invalid token format. Token should start with aorAAAAAG...");
+      throw new Error(
+        "Invalid token format. Token should start with aorAAAAAG...",
+      );
     }
 
     // Try to refresh to validate
@@ -275,8 +293,8 @@ export class KiroService {
       headers: {
         "Content-Type": "application/x-amz-json-1.0",
         "x-amz-target": "AmazonCodeWhispererService.ListAvailableProfiles",
-        "Authorization": `Bearer ${accessToken}`,
-        "Accept": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
       },
       body: JSON.stringify({ maxResults: 10 }),
     });
@@ -289,7 +307,8 @@ export class KiroService {
     const data = await response.json();
     const profiles = Array.isArray(data?.profiles) ? data.profiles : [];
     const arnOf = (p) => p?.arn || p?.profileArn || null;
-    const match = profiles.find((p) => arnOf(p)?.split(":")[3] === region) || profiles[0];
+    const match =
+      profiles.find((p) => arnOf(p)?.split(":")[3] === region) || profiles[0];
     return arnOf(match);
   }
 
@@ -333,8 +352,8 @@ export class KiroService {
       headers: {
         "Content-Type": "application/x-amz-json-1.0",
         "x-amz-target": target,
-        "Authorization": `Bearer ${accessToken}`,
-        "Accept": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+        Accept: "application/json",
       },
       body: JSON.stringify({
         origin: "AI_EDITOR",
@@ -348,7 +367,7 @@ export class KiroService {
     }
 
     const data = await response.json();
-    return (data.models || []).map(m => ({
+    return (data.models || []).map((m) => ({
       id: m.modelId,
       name: m.modelName || m.modelId,
       description: m.description,
@@ -372,7 +391,9 @@ export class KiroService {
         payload += "=";
       }
 
-      const decoded = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+      const decoded = JSON.parse(
+        atob(payload.replace(/-/g, "+").replace(/_/g, "/")),
+      );
       return decoded.email || decoded.preferred_username || decoded.sub;
     } catch {
       return null;

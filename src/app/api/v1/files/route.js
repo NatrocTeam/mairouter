@@ -12,7 +12,7 @@ import { errorResponse } from "open-sse/utils/error.js";
 const CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "*"
+  "Access-Control-Allow-Headers": "*",
 };
 
 export async function OPTIONS() {
@@ -30,24 +30,27 @@ export async function POST(request) {
     if (!file) {
       return new Response(JSON.stringify({ error: "No file provided" }), {
         status: 400,
-        headers: { "Content-Type": "application/json", ...CORS_HEADERS }
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     }
 
     // Get Anthropic credentials
     const credentials = await getProviderCredentials("anthropic");
     if (!credentials) {
-      return new Response(JSON.stringify({ error: "No Anthropic provider configured" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json", ...CORS_HEADERS }
-      });
+      return new Response(
+        JSON.stringify({ error: "No Anthropic provider configured" }),
+        {
+          status: 400,
+          headers: { "Content-Type": "application/json", ...CORS_HEADERS },
+        },
+      );
     }
 
     const apiKey = credentials.apiKey;
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "No Anthropic API key" }), {
         status: 400,
-        headers: { "Content-Type": "application/json", ...CORS_HEADERS }
+        headers: { "Content-Type": "application/json", ...CORS_HEADERS },
       });
     }
 
@@ -59,18 +62,21 @@ export async function POST(request) {
       method: "POST",
       headers: {
         "x-api-key": apiKey,
-        "Anthropic-Version": "2023-06-01"
+        "Anthropic-Version": "2023-06-01",
       },
-      body: formData
+      body: formData,
     });
 
     const data = await response.json();
 
     return new Response(JSON.stringify(data), {
       status: response.status,
-      headers: { "Content-Type": "application/json", ...CORS_HEADERS }
+      headers: { "Content-Type": "application/json", ...CORS_HEADERS },
     });
   } catch (err) {
-    return errorResponse(HTTP_STATUS.SERVER_ERROR, `File upload failed: ${err.message}`);
+    return errorResponse(
+      HTTP_STATUS.SERVER_ERROR,
+      `File upload failed: ${err.message}`,
+    );
   }
 }

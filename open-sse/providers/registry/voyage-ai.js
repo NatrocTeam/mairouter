@@ -23,7 +23,11 @@ export default {
     { id: "voyage-code-3", name: "Voyage Code 3", kind: "embedding" },
     { id: "voyage-finance-2", name: "Voyage Finance 2", kind: "embedding" },
     { id: "voyage-law-2", name: "Voyage Law 2", kind: "embedding" },
-    { id: "voyage-multilingual-2", name: "Voyage Multilingual 2", kind: "embedding" },
+    {
+      id: "voyage-multilingual-2",
+      name: "Voyage Multilingual 2",
+      kind: "embedding",
+    },
   ],
   serviceKinds: ["embedding"],
   embeddingConfig: { baseUrl: "https://api.voyageai.com/v1/embeddings" },

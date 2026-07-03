@@ -13,29 +13,31 @@ const { getEndpoint } = require("../utils/endpoint");
 async function handleCreateKey() {
   console.log("\n📝 Create New API Key");
   console.log("─".repeat(30));
-  
+
   const name = await prompt("Enter key name: ");
-  
+
   if (!name) {
     showStatus("Key name cannot be empty", "error");
     await pause();
     return false;
   }
-  
+
   const result = await api.createApiKey(name);
-  
+
   if (!result.success) {
     showStatus(`Failed to create key: ${result.error}`, "error");
     await pause();
     return false;
   }
-  
+
   console.log("\n✅ API Key created successfully!");
-  console.log("\n⚠️  IMPORTANT: Save this key now. You won't be able to see it again!");
+  console.log(
+    "\n⚠️  IMPORTANT: Save this key now. You won't be able to see it again!",
+  );
   console.log(`\nKey: ${result.data.key}`);
   console.log(`Name: ${result.data.name}`);
   console.log(`ID: ${result.data.id}`);
-  
+
   const shouldCopy = await confirm("\nCopy key to clipboard?");
   if (shouldCopy) {
     if (copyToClipboard(result.data.key)) {
@@ -44,7 +46,7 @@ async function handleCreateKey() {
       showStatus("Failed to copy to clipboard", "error");
     }
   }
-  
+
   await pause();
   return true;
 }
@@ -72,23 +74,25 @@ async function handleDeleteKey(key) {
   console.log("─".repeat(30));
   console.log(`Key: ${maskKey(key.key)}`);
   console.log(`Created: ${formatDate(key.createdAt)}`);
-  
-  const confirmed = await confirm("\nAre you sure you want to delete this key?");
-  
+
+  const confirmed = await confirm(
+    "\nAre you sure you want to delete this key?",
+  );
+
   if (!confirmed) {
     showStatus("Deletion cancelled", "info");
     await pause();
     return false;
   }
-  
+
   const result = await api.deleteApiKey(key.id);
-  
+
   if (!result.success) {
     showStatus(`Failed to delete key: ${result.error}`, "error");
     await pause();
     return false;
   }
-  
+
   showStatus("API key deleted successfully", "success");
   await pause();
   return true;
@@ -112,16 +116,16 @@ async function showKeyActions(key, port, breadcrumb = []) {
         action: async () => {
           await handleCopyKey(key);
           return true;
-        }
+        },
       },
       {
         label: "Delete Key",
         action: async () => {
           await handleDeleteKey(key);
           return false; // Exit after delete
-        }
-      }
-    ]
+        },
+      },
+    ],
   });
 }
 
@@ -132,7 +136,7 @@ async function showKeyActions(key, port, breadcrumb = []) {
  */
 async function showApiKeysMenu(port, breadcrumb = []) {
   const { showListMenu } = require("../utils/menuHelper");
-  
+
   const { endpoint } = await getEndpoint(port);
   await showListMenu({
     title: "🔑 API Keys Management",
@@ -156,11 +160,11 @@ async function showApiKeysMenu(port, breadcrumb = []) {
       label: "Create New API Key",
       action: async () => {
         await handleCreateKey();
-      }
-    }
+      },
+    },
   });
 }
 
 module.exports = {
-  showApiKeysMenu
+  showApiKeysMenu,
 };

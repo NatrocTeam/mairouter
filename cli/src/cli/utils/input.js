@@ -15,7 +15,7 @@ const COLORS = {
   bgBlue: "\x1b[44m",
   black: "\x1b[30m",
   terracotta: "\x1b[38;2;217;119;87m",
-  bgTerracotta: "\x1b[48;2;217;119;87m"
+  bgTerracotta: "\x1b[48;2;217;119;87m",
 };
 
 // Prime stdin once globally. Toggling raw mode between menus adds latency on
@@ -57,13 +57,19 @@ function suspendRawFor(fn) {
 }
 
 async function prompt(question) {
-  return suspendRawFor(() => new Promise((resolve) => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve((answer || "").trim());
-    });
-  }));
+  return suspendRawFor(
+    () =>
+      new Promise((resolve) => {
+        const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout,
+        });
+        rl.question(question, (answer) => {
+          rl.close();
+          resolve((answer || "").trim());
+        });
+      }),
+  );
 }
 
 async function select(question, options) {
@@ -73,7 +79,9 @@ async function select(question, options) {
     const answer = await prompt("\nSelect option (number): ");
     const num = parseInt(answer, 10);
     if (!isNaN(num) && num >= 1 && num <= options.length) return num - 1;
-    console.log(`Invalid selection. Please enter a number between 1 and ${options.length}`);
+    console.log(
+      `Invalid selection. Please enter a number between 1 and ${options.length}`,
+    );
   }
 }
 
@@ -88,10 +96,19 @@ async function confirm(question) {
 }
 
 async function pause(message = "Press Enter to continue...") {
-  return suspendRawFor(() => new Promise((resolve) => {
-    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    rl.question(message, () => { rl.close(); resolve(); });
-  }));
+  return suspendRawFor(
+    () =>
+      new Promise((resolve) => {
+        const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout,
+        });
+        rl.question(message, () => {
+          rl.close();
+          resolve();
+        });
+      }),
+  );
 }
 
 /**
@@ -99,32 +116,50 @@ async function pause(message = "Press Enter to continue...") {
  * (no underline). Uses readline keypress + raw 'data' fallback to prevent
  * arrow-key escape sequence leaks on macOS.
  */
-async function selectMenu(title, items, defaultIndex = 0, subtitle = "", headerContent = "", breadcrumb = []) {
+async function selectMenu(
+  title,
+  items,
+  defaultIndex = 0,
+  subtitle = "",
+  headerContent = "",
+  breadcrumb = [],
+) {
   return new Promise((resolve) => {
     let selectedIndex = defaultIndex;
     let isActive = true;
 
     primeRawOnce();
-    if (!process.stdin.isTTY) { resolve(-1); return; }
+    if (!process.stdin.isTTY) {
+      resolve(-1);
+      return;
+    }
 
     const renderMenu = () => {
       if (!isActive) return;
       process.stdout.write("\x1b[2J\x1b[H");
       const width = Math.min(process.stdout.columns || 40, 40);
       console.log(`\n${COLORS.terracotta}${"=".repeat(width)}${COLORS.reset}`);
-      console.log(`  ${COLORS.bright}${COLORS.terracotta}${title}${COLORS.reset}`);
+      console.log(
+        `  ${COLORS.bright}${COLORS.terracotta}${title}${COLORS.reset}`,
+      );
       if (subtitle) console.log(`  ${COLORS.dim}${subtitle}${COLORS.reset}`);
       console.log(`${COLORS.terracotta}${"=".repeat(width)}${COLORS.reset}`);
-      if (breadcrumb.length > 0) console.log(`  ${COLORS.dim}${breadcrumb.join(" > ")}${COLORS.reset}`);
+      if (breadcrumb.length > 0)
+        console.log(`  ${COLORS.dim}${breadcrumb.join(" > ")}${COLORS.reset}`);
       console.log();
-      if (headerContent) { console.log(headerContent); console.log(); }
+      if (headerContent) {
+        console.log(headerContent);
+        console.log();
+      }
 
       const isWin = process.platform === "win32";
       items.forEach((item, index) => {
         const isSelected = index === selectedIndex;
-        const icon = isSelected ? (isWin ? ">" : "★") : (isWin ? " " : "☆");
+        const icon = isSelected ? (isWin ? ">" : "★") : isWin ? " " : "☆";
         if (isSelected) {
-          console.log(` ${COLORS.reverse}${COLORS.bright}${icon} ${item.label}${COLORS.reset}`);
+          console.log(
+            ` ${COLORS.reverse}${COLORS.bright}${icon} ${item.label}${COLORS.reset}`,
+          );
         } else {
           console.log(`  ${icon} ${item.label}`);
         }
@@ -146,9 +181,20 @@ async function selectMenu(title, items, defaultIndex = 0, subtitle = "", headerC
       if (!isActive || !key) return;
       if (key.name === "up") return move(-1);
       if (key.name === "down") return move(1);
-      if (key.name === "return") { cleanup(); resolve(selectedIndex); return; }
-      if (key.name === "escape") { cleanup(); resolve(-1); return; }
-      if (key.ctrl && key.name === "c") { cleanup(); process.exit(0); }
+      if (key.name === "return") {
+        cleanup();
+        resolve(selectedIndex);
+        return;
+      }
+      if (key.name === "escape") {
+        cleanup();
+        resolve(-1);
+        return;
+      }
+      if (key.ctrl && key.name === "c") {
+        cleanup();
+        process.exit(0);
+      }
     };
 
     process.stdin.on("keypress", onKeypress);
@@ -162,5 +208,5 @@ module.exports = {
   confirm,
   pause,
   selectMenu,
-  COLORS
+  COLORS,
 };

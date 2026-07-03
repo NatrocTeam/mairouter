@@ -37,7 +37,8 @@ export default function ChangelogModal({ isOpen, onClose }) {
     };
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen, onClose]);
 
@@ -72,12 +73,16 @@ export default function ChangelogModal({ isOpen, onClose }) {
         <div className="p-6 overflow-y-auto flex-1">
           {loading && (
             <div className="flex items-center justify-center py-10 text-text-muted">
-              <span className="material-symbols-outlined animate-spin mr-2">progress_activity</span>
+              <span className="material-symbols-outlined animate-spin mr-2">
+                progress_activity
+              </span>
               Loading...
             </div>
           )}
           {error && (
-            <div className="text-red-500 py-4">Failed to load changelog: {error}</div>
+            <div className="text-red-500 py-4">
+              Failed to load changelog: {error}
+            </div>
           )}
           {!loading && !error && html && (
             <div
@@ -88,7 +93,7 @@ export default function ChangelogModal({ isOpen, onClose }) {
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 

@@ -2,9 +2,7 @@ export default {
   id: "volcengine-ark",
   priority: 270,
   alias: "volcengine-ark",
-  aliases: [
-    "ark",
-  ],
+  aliases: ["ark"],
   uiAlias: "ark",
   display: {
     name: "Volcengine Ark",
@@ -13,7 +11,8 @@ export default {
     textIcon: "ARK",
     website: "https://ark.cn-beijing.volces.com",
     notice: {
-      apiKeyUrl: "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey",
+      apiKeyUrl:
+        "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey",
     },
   },
   category: "apikey",

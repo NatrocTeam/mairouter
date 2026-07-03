@@ -24,7 +24,10 @@ describe("endpoint base URL normalization", () => {
     ["http://localhost:20127/", "http://localhost:20127/v1"],
     ["https://tunnel.example.com/v1", "https://tunnel.example.com/v1"],
     ["https://tailnet.example.com/api", "https://tailnet.example.com/api/v1"],
-    ["https://gateway.example.com/api/v1/", "https://gateway.example.com/api/v1"],
+    [
+      "https://gateway.example.com/api/v1/",
+      "https://gateway.example.com/api/v1",
+    ],
   ])("builds an OpenAI-compatible URL from %s", (input, expected) => {
     expect(toOpenAIBaseUrl(input)).toBe(expected);
     expect(formatEndpoint(input)).toBe(expected);

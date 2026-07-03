@@ -78,7 +78,11 @@ export function startLocalServer(onCallback, fixedPort = null) {
 
     server.on("error", (err) => {
       if (err.code === "EADDRINUSE" && fixedPort) {
-        reject(new Error(`Port ${fixedPort} is already in use. Please close other applications using this port.`));
+        reject(
+          new Error(
+            `Port ${fixedPort} is already in use. Please close other applications using this port.`,
+          ),
+        );
       } else {
         reject(err);
       }
@@ -206,7 +210,9 @@ export function startCodexProxy(appPort) {
       if (session) {
         try {
           if (errorParam) {
-            throw new Error(url.searchParams.get("error_description") || errorParam);
+            throw new Error(
+              url.searchParams.get("error_description") || errorParam,
+            );
           }
           if (!code) throw new Error("No authorization code received");
 
@@ -219,7 +225,7 @@ export function startCodexProxy(appPort) {
             code,
             session.redirectUri,
             session.codeVerifier,
-            state
+            state,
           );
           const connection = await createProviderConnection({
             provider: "codex",
@@ -257,7 +263,10 @@ export function startCodexProxy(appPort) {
 
     server.listen(CODEX_PORT, "127.0.0.1", () => {
       codexProxyServer = server;
-      codexProxyTimeout = setTimeout(() => stopCodexProxy(), CODEX_PROXY_TIMEOUT_MS);
+      codexProxyTimeout = setTimeout(
+        () => stopCodexProxy(),
+        CODEX_PROXY_TIMEOUT_MS,
+      );
       resolve({ success: true });
     });
 
@@ -349,7 +358,9 @@ export function startXaiProxy(appPort) {
       if (session) {
         try {
           if (errorParam) {
-            throw new Error(url.searchParams.get("error_description") || errorParam);
+            throw new Error(
+              url.searchParams.get("error_description") || errorParam,
+            );
           }
           if (!code) throw new Error("No authorization code received");
 
@@ -361,7 +372,7 @@ export function startXaiProxy(appPort) {
             code,
             session.redirectUri,
             session.codeVerifier,
-            state
+            state,
           );
           const connection = await createProviderConnection({
             provider: "xai",
@@ -423,4 +434,3 @@ export function stopXaiProxy() {
     xaiProxyServer = null;
   }
 }
-

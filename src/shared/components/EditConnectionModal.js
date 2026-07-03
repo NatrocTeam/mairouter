@@ -6,9 +6,18 @@ import Modal from "@/shared/components/Modal";
 import Input from "@/shared/components/Input";
 import Button from "@/shared/components/Button";
 import Badge from "@/shared/components/Badge";
-import { isOpenAICompatibleProvider, isAnthropicCompatibleProvider } from "@/shared/constants/providers";
+import {
+  isOpenAICompatibleProvider,
+  isAnthropicCompatibleProvider,
+} from "@/shared/constants/providers";
 
-export default function EditConnectionModal({ isOpen, connection, proxyPools: _proxyPools, onSave, onClose }) {
+export default function EditConnectionModal({
+  isOpen,
+  connection,
+  proxyPools: _proxyPools,
+  onSave,
+  onClose,
+}) {
   const [formData, setFormData] = useState({
     name: "",
     priority: 1,
@@ -39,13 +48,19 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools: _p
       if (connection.provider === "azure" && connection.providerSpecificData) {
         setAzureData({
           azureEndpoint: connection.providerSpecificData.azureEndpoint || "",
-          apiVersion: connection.providerSpecificData.apiVersion || "2024-10-01-preview",
+          apiVersion:
+            connection.providerSpecificData.apiVersion || "2024-10-01-preview",
           deployment: connection.providerSpecificData.deployment || "",
           organization: connection.providerSpecificData.organization || "",
         });
       }
-      if (connection.provider === "cloudflare-ai" && connection.providerSpecificData) {
-        setCloudflareData({ accountId: connection.providerSpecificData.accountId || "" });
+      if (
+        connection.provider === "cloudflare-ai" &&
+        connection.providerSpecificData
+      ) {
+        setCloudflareData({
+          accountId: connection.providerSpecificData.accountId || "",
+        });
       }
       setTestResult(null);
       setValidationResult(null);
@@ -56,7 +71,8 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools: _p
   const isAzure = connection?.provider === "azure";
   const isCloudflareAi = connection?.provider === "cloudflare-ai";
   const isCompatible = connection
-    ? (isOpenAICompatibleProvider(connection.provider) || isAnthropicCompatibleProvider(connection.provider))
+    ? isOpenAICompatibleProvider(connection.provider) ||
+      isAnthropicCompatibleProvider(connection.provider)
     : false;
 
   const handleTest = async () => {
@@ -64,7 +80,9 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools: _p
     setTesting(true);
     setTestResult(null);
     try {
-      const res = await fetch(`/api/providers/${connection.id}/test`, { method: "POST" });
+      const res = await fetch(`/api/providers/${connection.id}/test`, {
+        method: "POST",
+      });
       const data = await res.json();
       setTestResult(data.valid ? "success" : "failed");
     } catch {
@@ -120,7 +138,9 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools: _p
                 provider: connection.provider,
                 apiKey: formData.apiKey,
                 ...(isAzure ? { providerSpecificData: azureData } : {}),
-                ...(isCloudflareAi ? { providerSpecificData: cloudflareData } : {}),
+                ...(isCloudflareAi
+                  ? { providerSpecificData: cloudflareData }
+                  : {}),
               }),
             });
             const data = await res.json();
@@ -138,7 +158,7 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools: _p
           updates.lastErrorAt = null;
         }
       }
-      
+
       // Add Azure-specific data if this is an Azure connection
       if (isAzure) {
         updates.providerSpecificData = {
@@ -151,7 +171,7 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools: _p
       if (isCloudflareAi) {
         updates.providerSpecificData = { accountId: cloudflareData.accountId };
       }
-      
+
       await onSave(updates);
     } finally {
       setSaving(false);
@@ -179,7 +199,12 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools: _p
           label="Priority"
           type="number"
           value={formData.priority}
-          onChange={(e) => setFormData({ ...formData, priority: Number.parseInt(e.target.value, 10) || 1 })}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              priority: Number.parseInt(e.target.value, 10) || 1,
+            })
+          }
         />
 
         {!isOAuth && (
@@ -189,19 +214,27 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools: _p
                 label="API Key"
                 type="password"
                 value={formData.apiKey}
-                onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, apiKey: e.target.value })
+                }
                 placeholder="Enter new API key"
                 hint="Leave blank to keep the current API key."
                 className="flex-1"
               />
               <div className="pt-6">
-                <Button onClick={handleValidate} disabled={!formData.apiKey || validating || saving} variant="secondary">
+                <Button
+                  onClick={handleValidate}
+                  disabled={!formData.apiKey || validating || saving}
+                  variant="secondary"
+                >
                   {validating ? "Checking..." : "Check"}
                 </Button>
               </div>
             </div>
             {validationResult && (
-              <Badge variant={validationResult === "success" ? "success" : "error"}>
+              <Badge
+                variant={validationResult === "success" ? "success" : "error"}
+              >
                 {validationResult === "success" ? "Valid" : "Invalid"}
               </Badge>
             )}
@@ -210,33 +243,43 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools: _p
 
         {isAzure && (
           <div className="bg-sidebar/50 p-4 rounded-lg border border-accent/20">
-            <h3 className="font-semibold mb-3 text-sm">Azure OpenAI Configuration</h3>
+            <h3 className="font-semibold mb-3 text-sm">
+              Azure OpenAI Configuration
+            </h3>
             <div className="flex flex-col gap-3">
               <Input
                 label="Azure Endpoint"
                 value={azureData.azureEndpoint}
-                onChange={(e) => setAzureData({ ...azureData, azureEndpoint: e.target.value })}
+                onChange={(e) =>
+                  setAzureData({ ...azureData, azureEndpoint: e.target.value })
+                }
                 placeholder="https://your-resource.openai.azure.com"
                 hint="Your Azure OpenAI resource endpoint URL"
               />
               <Input
                 label="Deployment Name"
                 value={azureData.deployment}
-                onChange={(e) => setAzureData({ ...azureData, deployment: e.target.value })}
+                onChange={(e) =>
+                  setAzureData({ ...azureData, deployment: e.target.value })
+                }
                 placeholder="gpt-4"
                 hint="The deployment name in your Azure resource"
               />
               <Input
                 label="API Version"
                 value={azureData.apiVersion}
-                onChange={(e) => setAzureData({ ...azureData, apiVersion: e.target.value })}
+                onChange={(e) =>
+                  setAzureData({ ...azureData, apiVersion: e.target.value })
+                }
                 placeholder="2024-10-01-preview"
                 hint="Azure OpenAI API version to use"
               />
               <Input
                 label="Organization"
                 value={azureData.organization}
-                onChange={(e) => setAzureData({ ...azureData, organization: e.target.value })}
+                onChange={(e) =>
+                  setAzureData({ ...azureData, organization: e.target.value })
+                }
                 placeholder="Organization ID"
                 hint="Required for billing"
               />
@@ -258,8 +301,12 @@ export default function EditConnectionModal({ isOpen, connection, proxyPools: _p
         )}
 
         <div className="flex gap-2">
-          <Button onClick={handleSubmit} fullWidth disabled={saving}>{saving ? "Saving..." : "Save"}</Button>
-          <Button onClick={onClose} variant="ghost" fullWidth>Cancel</Button>
+          <Button onClick={handleSubmit} fullWidth disabled={saving}>
+            {saving ? "Saving..." : "Save"}
+          </Button>
+          <Button onClick={onClose} variant="ghost" fullWidth>
+            Cancel
+          </Button>
         </div>
       </div>
     </Modal>
@@ -277,11 +324,12 @@ EditConnectionModal.propTypes = {
     provider: PropTypes.string,
     providerSpecificData: PropTypes.object,
   }),
-  proxyPools: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    name: PropTypes.string,
-  })),
+  proxyPools: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      name: PropTypes.string,
+    }),
+  ),
   onSave: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
 };
-

@@ -6,7 +6,15 @@ import { FORMATS } from "../../open-sse/translator/formats.js";
 import { AntigravityExecutor } from "../../open-sse/executors/antigravity.js";
 
 const AG2O = (req) =>
-  translateRequest(FORMATS.ANTIGRAVITY, FORMATS.OPENAI, "m", { request: req }, true, null, null);
+  translateRequest(
+    FORMATS.ANTIGRAVITY,
+    FORMATS.OPENAI,
+    "m",
+    { request: req },
+    true,
+    null,
+    null,
+  );
 
 describe("Antigravity → OpenAI", () => {
   // antigravity-to-openai.js:177-189 — content with BOTH functionResponse and functionCall/text
@@ -14,16 +22,27 @@ describe("Antigravity → OpenAI", () => {
   // KNOWN BUG
   it.fails("functionResponse + functionCall in same content keeps both", () => {
     const out = AG2O({
-      contents: [{
-        role: "model",
-        parts: [
-          { functionResponse: { id: "c1", name: "prev", response: { result: "done" } } },
-          { functionCall: { id: "c2", name: "next", args: {} } },
-        ],
-      }],
+      contents: [
+        {
+          role: "model",
+          parts: [
+            {
+              functionResponse: {
+                id: "c1",
+                name: "prev",
+                response: { result: "done" },
+              },
+            },
+            { functionCall: { id: "c2", name: "next", args: {} } },
+          ],
+        },
+      ],
     });
     const json = JSON.stringify(out);
-    expect(json, "functionCall lost when sharing content with functionResponse").toContain("\"next\"");
+    expect(
+      json,
+      "functionCall lost when sharing content with functionResponse",
+    ).toContain('"next"');
   });
 
   // antigravity-to-openai.js:167 — functionCall without id gets a random Date.now() id
@@ -31,19 +50,31 @@ describe("Antigravity → OpenAI", () => {
   it("functionCall without id keeps a stable matchable id", () => {
     const out = AG2O({
       contents: [
-        { role: "model", parts: [{ functionCall: { name: "search", args: { q: "x" } } }] },
-        { role: "user", parts: [{ functionResponse: { name: "search", response: { result: "r" } } }] },
+        {
+          role: "model",
+          parts: [{ functionCall: { name: "search", args: { q: "x" } } }],
+        },
+        {
+          role: "user",
+          parts: [
+            { functionResponse: { name: "search", response: { result: "r" } } },
+          ],
+        },
       ],
     });
     const asst = out.messages.find((m) => m.tool_calls);
     const tool = out.messages.find((m) => m.role === "tool");
-    expect(tool?.tool_call_id, "id mismatch between call and response").toBe(asst?.tool_calls?.[0]?.id);
+    expect(tool?.tool_call_id, "id mismatch between call and response").toBe(
+      asst?.tool_calls?.[0]?.id,
+    );
   });
 
   // antigravity-to-openai.js:144-147 — signature-only part handling (regression guard)
   it("signature-only part does not produce empty text", () => {
     const out = AG2O({
-      contents: [{ role: "model", parts: [{ thoughtSignature: "sig", text: "" }] }],
+      contents: [
+        { role: "model", parts: [{ thoughtSignature: "sig", text: "" }] },
+      ],
     });
     const asst = out.messages.find((m) => m.role === "assistant");
     const content = asst?.content;
@@ -56,29 +87,39 @@ describe("Antigravity → OpenAI", () => {
 
 describe("Antigravity executor", () => {
   it("strips optional from nested tool schemas", () => {
-    const out = new AntigravityExecutor().transformRequest("gemini-2.5-pro", {
-      request: {
-        contents: [{ role: "user", parts: [{ text: "hi" }] }],
-        tools: [{
-          functionDeclarations: [{
-            name: "lookup",
-            description: "Lookup a value",
-            parameters: {
-              type: "object",
-              properties: {
-                query: {
-                  type: "string",
-                  description: "Search query",
-                  optional: true,
+    const out = new AntigravityExecutor().transformRequest(
+      "gemini-2.5-pro",
+      {
+        request: {
+          contents: [{ role: "user", parts: [{ text: "hi" }] }],
+          tools: [
+            {
+              functionDeclarations: [
+                {
+                  name: "lookup",
+                  description: "Lookup a value",
+                  parameters: {
+                    type: "object",
+                    properties: {
+                      query: {
+                        type: "string",
+                        description: "Search query",
+                        optional: true,
+                      },
+                    },
+                  },
                 },
-              },
+              ],
             },
-          }],
-        }],
+          ],
+        },
       },
-    }, true, { projectId: "project-1", connectionId: "conn-1" });
+      true,
+      { projectId: "project-1", connectionId: "conn-1" },
+    );
 
-    const query = out.request.tools[0].functionDeclarations[0].parameters.properties.query;
+    const query =
+      out.request.tools[0].functionDeclarations[0].parameters.properties.query;
     expect(query).toEqual({ type: "string", description: "Search query" });
   });
 });

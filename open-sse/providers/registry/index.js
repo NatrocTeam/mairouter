@@ -194,5 +194,5 @@ export default [
   p93,
   p94,
   p95,
-  p96
+  p96,
 ];

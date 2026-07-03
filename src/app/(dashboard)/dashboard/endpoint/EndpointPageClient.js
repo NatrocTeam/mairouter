@@ -92,7 +92,9 @@ export default function APIPageClient({ machineId: _machineId }) {
   // Client-side local/remote detection (UI hint only, not a security gate)
   const [isRemoteHost, _setIsRemoteHost] = useState(() => {
     if (typeof window !== "undefined")
-      return !["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+      return !["localhost", "127.0.0.1", "::1"].includes(
+        window.location.hostname,
+      );
     return false;
   });
 
@@ -869,8 +871,7 @@ export default function APIPageClient({ machineId: _machineId }) {
 
   const localOpenAIEndpoint = toOpenAIBaseUrl(baseUrl);
   const localAnthropicEndpoint = toAnthropicBaseUrl(baseUrl);
-  const tunnelReady =
-    tunnelEnabled && !tunnelLoading && tunnelReachable;
+  const tunnelReady = tunnelEnabled && !tunnelLoading && tunnelReachable;
   const tunnelRoot = toAnthropicBaseUrl(tunnelPublicUrl || tunnelUrl);
   const tailscaleReady = tsEnabled && !tsLoading && tsReachable;
   const tailscaleRoot = toAnthropicBaseUrl(tsUrl);
@@ -910,8 +911,8 @@ export default function APIPageClient({ machineId: _machineId }) {
                 tunnelReady
                   ? "bg-surface-2 text-text-muted"
                   : tunnelEnabled
-                  ? "bg-primary/10 text-primary"
-                  : "bg-surface-2 text-text-muted"
+                    ? "bg-primary/10 text-primary"
+                    : "bg-surface-2 text-text-muted"
               }`}
             >
               {tunnelReady ? "OpenAI" : "Tunnel"}
@@ -935,9 +936,7 @@ export default function APIPageClient({ machineId: _machineId }) {
                   className="p-2 hover:bg-black/5 dark:hover:bg-white/5 rounded text-text-muted hover:text-primary transition-colors shrink-0"
                 >
                   <span className="material-symbols-outlined text-[18px]">
-                    {copied === "tunnel_openai_url"
-                      ? "check"
-                      : "content_copy"}
+                    {copied === "tunnel_openai_url" ? "check" : "content_copy"}
                   </span>
                 </button>
                 <button
@@ -1069,8 +1068,8 @@ export default function APIPageClient({ machineId: _machineId }) {
                 tailscaleReady
                   ? "bg-surface-2 text-text-muted"
                   : tsEnabled
-                  ? "bg-primary/10 text-primary"
-                  : "bg-surface-2 text-text-muted"
+                    ? "bg-primary/10 text-primary"
+                    : "bg-surface-2 text-text-muted"
               }`}
             >
               {tailscaleReady ? "OpenAI" : "Tailscale"}

@@ -9,7 +9,9 @@ describe("Venice AI provider", () => {
   it("is registered as an OpenAI-compatible apikey provider", () => {
     expect(venice).toBeDefined();
     expect(venice.category).toBe("apikey");
-    expect(venice.transport.baseUrl).toBe("https://api.venice.ai/api/v1/chat/completions");
+    expect(venice.transport.baseUrl).toBe(
+      "https://api.venice.ai/api/v1/chat/completions",
+    );
     expect(venice.alias).toBe("venice");
     expect(venice.aliases).toContain("vn");
   });
@@ -25,7 +27,9 @@ describe("Venice AI provider", () => {
   it("builds into the runtime PROVIDERS map with the openai format default", () => {
     expect(PROVIDERS.venice).toBeDefined();
     expect(PROVIDERS.venice.format).toBe("openai");
-    expect(PROVIDERS.venice.baseUrl).toBe("https://api.venice.ai/api/v1/chat/completions");
+    expect(PROVIDERS.venice.baseUrl).toBe(
+      "https://api.venice.ai/api/v1/chat/completions",
+    );
   });
 
   it("exposes its seed models (incl. the signature uncensored model)", () => {

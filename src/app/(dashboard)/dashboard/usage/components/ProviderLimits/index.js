@@ -58,8 +58,10 @@ const AUTO_PING_SETTINGS_KEYS = {
 };
 
 const AUTO_PING_TOOLTIPS = {
-  claude: "When your 5h quota runs out, auto-sends a request the moment it resets so a new window starts right away.",
-  codex: "Auto-starts the next 5h Codex window after reset by sending a tiny gpt-5.5 request. Consumes a small amount of quota.",
+  claude:
+    "When your 5h quota runs out, auto-sends a request the moment it resets so a new window starts right away.",
+  codex:
+    "Auto-starts the next 5h Codex window after reset by sending a tiny gpt-5.5 request. Consumes a small amount of quota.",
 };
 
 function kiroMethodLabel(conn) {
@@ -69,11 +71,19 @@ function kiroMethodLabel(conn) {
 }
 
 function getConnectionSecondaryLabel(connection) {
-  if (connection.name?.trim() && connection.email?.trim() && connection.name.trim() !== connection.email.trim()) {
+  if (
+    connection.name?.trim() &&
+    connection.email?.trim() &&
+    connection.name.trim() !== connection.email.trim()
+  ) {
     return connection.email.trim();
   }
 
-  if (connection.name?.trim() && connection.displayName?.trim() && connection.name.trim() !== connection.displayName.trim()) {
+  if (
+    connection.name?.trim() &&
+    connection.displayName?.trim() &&
+    connection.name.trim() !== connection.displayName.trim()
+  ) {
     return connection.displayName.trim();
   }
 
@@ -280,17 +290,28 @@ export default function ProviderLimits() {
       setErrors((prev) => ({ ...prev, [connectionId]: null }));
 
       try {
-        const response = await fetch(`/api/usage/${connectionId}/codex-reset-credits`, { method: "POST" });
+        const response = await fetch(
+          `/api/usage/${connectionId}/codex-reset-credits`,
+          { method: "POST" },
+        );
         const result = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-          throw new Error(result.message || result.error || result.code || "Failed to reset Codex limit");
+          throw new Error(
+            result.message ||
+              result.error ||
+              result.code ||
+              "Failed to reset Codex limit",
+          );
         }
 
         await fetchQuota(connectionId, provider);
         setLastUpdated(new Date());
       } catch (error) {
-        setErrors((prev) => ({ ...prev, [connectionId]: error.message || "Failed to reset Codex limit" }));
+        setErrors((prev) => ({
+          ...prev,
+          [connectionId]: error.message || "Failed to reset Codex limit",
+        }));
       } finally {
         setResettingLimitId(null);
       }
@@ -413,42 +434,47 @@ export default function ProviderLimits() {
     };
   }, []);
 
-  const refreshAll = useCallback(async (force = false) => {
-    if (refreshingAll) return;
+  const refreshAll = useCallback(
+    async (force = false) => {
+      if (refreshingAll) return;
 
-    setRefreshingAll(true);
-    setCountdown(60);
+      setRefreshingAll(true);
+      setCountdown(60);
 
-    // Throttle Claude: poll its quota every Nth auto-tick (manual force bypasses)
-    const tick = (tickCountRef.current += 1);
-    const claudeEvery = Math.round(CLAUDE_REFRESH_INTERVAL_MS / REFRESH_INTERVAL_MS);
-    const shouldFetch = (conn) =>
-      force || conn.provider !== "claude" || tick % claudeEvery === 0;
-
-    try {
-      const visibleConnections = await fetchConnections(page);
-
-      setLoading(buildLoadingState(visibleConnections));
-      setErrors((prev) =>
-        filterQuotaStateByConnections(prev, visibleConnections),
+      // Throttle Claude: poll its quota every Nth auto-tick (manual force bypasses)
+      const tick = (tickCountRef.current += 1);
+      const claudeEvery = Math.round(
+        CLAUDE_REFRESH_INTERVAL_MS / REFRESH_INTERVAL_MS,
       );
-      setQuotaData((prev) =>
-        filterQuotaStateByConnections(prev, visibleConnections),
-      );
+      const shouldFetch = (conn) =>
+        force || conn.provider !== "claude" || tick % claudeEvery === 0;
 
-      await Promise.all(
-        visibleConnections
-          .filter(shouldFetch)
-          .map((conn) => fetchQuota(conn.id, conn.provider)),
-      );
+      try {
+        const visibleConnections = await fetchConnections(page);
 
-      setLastUpdated(new Date());
-    } catch (error) {
-      console.error("Error refreshing all providers:", error);
-    } finally {
-      setRefreshingAll(false);
-    }
-  }, [refreshingAll, fetchConnections, fetchQuota, page]);
+        setLoading(buildLoadingState(visibleConnections));
+        setErrors((prev) =>
+          filterQuotaStateByConnections(prev, visibleConnections),
+        );
+        setQuotaData((prev) =>
+          filterQuotaStateByConnections(prev, visibleConnections),
+        );
+
+        await Promise.all(
+          visibleConnections
+            .filter(shouldFetch)
+            .map((conn) => fetchQuota(conn.id, conn.provider)),
+        );
+
+        setLastUpdated(new Date());
+      } catch (error) {
+        console.error("Error refreshing all providers:", error);
+      } finally {
+        setRefreshingAll(false);
+      }
+    },
+    [refreshingAll, fetchConnections, fetchQuota, page],
+  );
 
   useEffect(() => {
     const initializeData = async () => {
@@ -491,34 +517,42 @@ export default function ProviderLimits() {
   useEffect(() => {
     fetch("/api/settings", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : {}))
-      .then((s) => setAutoPingMaps({
-        claude: s?.claudeAutoPing?.connections || {},
-        codex: s?.codexAutoPing?.connections || {},
-      }))
+      .then((s) =>
+        setAutoPingMaps({
+          claude: s?.claudeAutoPing?.connections || {},
+          codex: s?.codexAutoPing?.connections || {},
+        }),
+      )
       .catch(() => {});
   }, []);
 
-  const toggleAutoPing = useCallback(async (connectionId, provider, on) => {
-    const settingsKey = AUTO_PING_SETTINGS_KEYS[provider];
-    if (!settingsKey) return;
+  const toggleAutoPing = useCallback(
+    async (connectionId, provider, on) => {
+      const settingsKey = AUTO_PING_SETTINGS_KEYS[provider];
+      if (!settingsKey) return;
 
-    const previous = autoPingMaps;
-    const nextProviderMap = { ...(autoPingMaps[provider] || {}), [connectionId]: on };
-    const nextMaps = { ...autoPingMaps, [provider]: nextProviderMap };
-    setAutoPingMaps(nextMaps);
-    try {
-      const r = await fetch("/api/settings", { cache: "no-store" });
-      const s = r.ok ? await r.json() : {};
-      const cfg = { ...(s[settingsKey] || {}), connections: nextProviderMap };
-      await fetch("/api/settings", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [settingsKey]: cfg }),
-      });
-    } catch {
-      setAutoPingMaps(previous);
-    }
-  }, [autoPingMaps]);
+      const previous = autoPingMaps;
+      const nextProviderMap = {
+        ...(autoPingMaps[provider] || {}),
+        [connectionId]: on,
+      };
+      const nextMaps = { ...autoPingMaps, [provider]: nextProviderMap };
+      setAutoPingMaps(nextMaps);
+      try {
+        const r = await fetch("/api/settings", { cache: "no-store" });
+        const s = r.ok ? await r.json() : {};
+        const cfg = { ...(s[settingsKey] || {}), connections: nextProviderMap };
+        await fetch("/api/settings", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ [settingsKey]: cfg }),
+        });
+      } catch {
+        setAutoPingMaps(previous);
+      }
+    },
+    [autoPingMaps],
+  );
 
   // Auto-refresh interval
   useEffect(() => {
@@ -567,7 +601,10 @@ export default function ProviderLimits() {
         }
       } else if (autoRefresh && hasHydratedAutoRefresh) {
         // Resume auto-refresh when tab becomes visible
-        intervalRef.current = setInterval(() => refreshAll(), REFRESH_INTERVAL_MS);
+        intervalRef.current = setInterval(
+          () => refreshAll(),
+          REFRESH_INTERVAL_MS,
+        );
         countdownRef.current = setInterval(() => {
           setCountdown((prev) => (prev <= 1 ? 60 : prev - 1));
         }, 1000);
@@ -890,7 +927,6 @@ export default function ProviderLimits() {
             )}
           </button>
 
-
           {/* Refresh all button */}
           <button
             type="button"
@@ -927,7 +963,10 @@ export default function ProviderLimits() {
           const isCodex = conn.provider === "codex";
           const resetCreditCount = getCodexResetCreditCount(quota);
           const isResettingLimit = resettingLimitId === conn.id;
-          const rowBusy = deletingId === conn.id || togglingId === conn.id || isResettingLimit;
+          const rowBusy =
+            deletingId === conn.id ||
+            togglingId === conn.id ||
+            isResettingLimit;
 
           return (
             <Card
@@ -977,19 +1016,29 @@ export default function ProviderLimits() {
                             className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                               isInactive
                                 ? "bg-surface-2 text-text-muted"
-                                : conn.testStatus === "active" || conn.testStatus === "success"
+                                : conn.testStatus === "active" ||
+                                    conn.testStatus === "success"
                                   ? "bg-green-500/10 text-green-600 dark:text-green-400"
-                                  : conn.testStatus === "error" || conn.testStatus === "expired" || conn.testStatus === "unavailable"
+                                  : conn.testStatus === "error" ||
+                                      conn.testStatus === "expired" ||
+                                      conn.testStatus === "unavailable"
                                     ? "bg-red-500/10 text-red-600 dark:text-red-400"
                                     : "bg-surface-2 text-text-muted"
                             }`}
                           >
-                            {isInactive ? "disabled" : conn.testStatus || "unknown"}
+                            {isInactive
+                              ? "disabled"
+                              : conn.testStatus || "unknown"}
                           </span>
                           {conn.providerSpecificData?.profileArn && (
                             <button
                               type="button"
-                              onClick={() => copy(conn.providerSpecificData.profileArn, conn.id)}
+                              onClick={() =>
+                                copy(
+                                  conn.providerSpecificData.profileArn,
+                                  conn.id,
+                                )
+                              }
                               title={conn.providerSpecificData.profileArn}
                               className="inline-flex max-w-full items-center gap-1 rounded-full border border-border-subtle px-2 py-0.5 text-[10px] text-text-muted transition-colors hover:text-primary"
                             >
@@ -1017,8 +1066,15 @@ export default function ProviderLimits() {
                       >
                         <button
                           type="button"
-                          onClick={() => setResetConfirmState({ connection: conn, resetCreditCount })}
-                          disabled={resetCreditCount <= 0 || isLoading || rowBusy}
+                          onClick={() =>
+                            setResetConfirmState({
+                              connection: conn,
+                              resetCreditCount,
+                            })
+                          }
+                          disabled={
+                            resetCreditCount <= 0 || isLoading || rowBusy
+                          }
                           aria-label={
                             resetCreditCount > 0
                               ? `Use one Codex reset credit. ${resetCreditCount} available.`
@@ -1030,25 +1086,41 @@ export default function ProviderLimits() {
                               : "border-black/10 bg-black/[0.02] text-text-muted dark:border-white/10 dark:bg-white/[0.03]"
                           }`}
                         >
-                          <span className={`material-symbols-outlined text-[15px] ${isResettingLimit ? "animate-spin" : ""}`}>
-                            {isResettingLimit ? "progress_activity" : "restart_alt"}
+                          <span
+                            className={`material-symbols-outlined text-[15px] ${isResettingLimit ? "animate-spin" : ""}`}
+                          >
+                            {isResettingLimit
+                              ? "progress_activity"
+                              : "restart_alt"}
                           </span>
                           <span>{resetCreditCount}</span>
                         </button>
                       </Tooltip>
                     )}
-                    {AUTO_PING_SETTINGS_KEYS[conn.provider] && conn.authType === "oauth" && (
-                      <Tooltip text={AUTO_PING_TOOLTIPS[conn.provider]}>
-                        <button
-                          type="button"
-                          onClick={() => toggleAutoPing(conn.id, conn.provider, !(autoPingMaps[conn.provider]?.[conn.id] === true))}
-                          aria-label="Toggle auto-ping"
-                          className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5 ${autoPingMaps[conn.provider]?.[conn.id] === true ? "text-primary" : "text-text-muted"}`}
-                        >
-                          <span className="material-symbols-outlined text-[18px]">bolt</span>
-                        </button>
-                      </Tooltip>
-                    )}
+                    {AUTO_PING_SETTINGS_KEYS[conn.provider] &&
+                      conn.authType === "oauth" && (
+                        <Tooltip text={AUTO_PING_TOOLTIPS[conn.provider]}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              toggleAutoPing(
+                                conn.id,
+                                conn.provider,
+                                !(
+                                  autoPingMaps[conn.provider]?.[conn.id] ===
+                                  true
+                                ),
+                              )
+                            }
+                            aria-label="Toggle auto-ping"
+                            className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/5 ${autoPingMaps[conn.provider]?.[conn.id] === true ? "text-primary" : "text-text-muted"}`}
+                          >
+                            <span className="material-symbols-outlined text-[18px]">
+                              bolt
+                            </span>
+                          </button>
+                        </Tooltip>
+                      )}
                     <Tooltip text="Refresh quota">
                       <button
                         type="button"
@@ -1151,127 +1223,137 @@ export default function ProviderLimits() {
       </div>
 
       <div className="rounded-xl border border-black/10 bg-black/[0.02] px-3 py-2 dark:border-white/10 dark:bg-white/[0.03]">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="text-xs text-text-muted">{connectionsPageSummary}</span>
-            <div className="flex flex-wrap items-center gap-2">
-              <select
-                value={isCustomPageSize ? "custom" : String(pageSize)}
-                onChange={(event) => {
-                  const nextValue = event.target.value;
-                  if (nextValue === "custom") return;
-                  const nextPageSize = Number.parseInt(nextValue, 10);
-                  if (Number.isFinite(nextPageSize)) {
-                    setPage(1);
-                    setPageSize(nextPageSize);
-                    setCustomPageSizeInput(String(nextPageSize));
-                  }
-                }}
-                className="h-8 rounded-lg border border-black/10 bg-black/[0.02] px-2 text-xs text-text-primary outline-none transition-colors hover:bg-black/5 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/10"
-                aria-label="Accounts per page"
-              >
-                {ACCOUNT_PAGE_SIZE_OPTIONS.map((option) => (
-                  <option key={option} value={String(option)}>
-                    {option} / page
-                  </option>
-                ))}
-                <option value="custom">Custom</option>
-              </select>
-              <input
-                type="number"
-                min="1"
-                max={String(ACCOUNT_PAGE_SIZE_MAX)}
-                inputMode="numeric"
-                value={customPageSizeInput}
-                onChange={(event) => setCustomPageSizeInput(event.target.value)}
-                onBlur={() => {
-                  const parsedValue = Number.parseInt(customPageSizeInput, 10);
-                  if (!Number.isFinite(parsedValue)) {
-                    setCustomPageSizeInput(String(pageSize));
-                    return;
-                  }
-                  const nextPageSize = Math.min(ACCOUNT_PAGE_SIZE_MAX, Math.max(1, parsedValue));
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <span className="text-xs text-text-muted">
+            {connectionsPageSummary}
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={isCustomPageSize ? "custom" : String(pageSize)}
+              onChange={(event) => {
+                const nextValue = event.target.value;
+                if (nextValue === "custom") return;
+                const nextPageSize = Number.parseInt(nextValue, 10);
+                if (Number.isFinite(nextPageSize)) {
                   setPage(1);
                   setPageSize(nextPageSize);
                   setCustomPageSizeInput(String(nextPageSize));
-                }}
-                onKeyDown={(event) => {
-                  if (event.key !== "Enter") return;
-                  const parsedValue = Number.parseInt(customPageSizeInput, 10);
-                  if (!Number.isFinite(parsedValue)) {
-                    setCustomPageSizeInput(String(pageSize));
-                    return;
-                  }
-                  const nextPageSize = Math.min(ACCOUNT_PAGE_SIZE_MAX, Math.max(1, parsedValue));
-                  setPage(1);
-                  setPageSize(nextPageSize);
-                  setCustomPageSizeInput(String(nextPageSize));
-                }}
-                className="h-8 w-20 rounded-lg border border-black/10 bg-black/[0.02] px-2 text-xs text-text-primary outline-none transition-colors hover:bg-black/5 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/10"
-                aria-label="Custom accounts per page"
-                placeholder="Custom"
-              />
-              <span className="text-xs text-text-muted">Page {pagination.page} / {pagination.totalPages}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setPage(1)}
-                disabled={
-                  pagination.page <= 1 || connectionsLoading || refreshingAll
                 }
-                className="flex h-8 items-center rounded-lg border border-black/10 px-3 text-xs text-text-primary transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:hover:bg-white/5"
-              >
-                First Page
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setPage((currentPage) => Math.max(1, currentPage - 1))
+              }}
+              className="h-8 rounded-lg border border-black/10 bg-black/[0.02] px-2 text-xs text-text-primary outline-none transition-colors hover:bg-black/5 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/10"
+              aria-label="Accounts per page"
+            >
+              {ACCOUNT_PAGE_SIZE_OPTIONS.map((option) => (
+                <option key={option} value={String(option)}>
+                  {option} / page
+                </option>
+              ))}
+              <option value="custom">Custom</option>
+            </select>
+            <input
+              type="number"
+              min="1"
+              max={String(ACCOUNT_PAGE_SIZE_MAX)}
+              inputMode="numeric"
+              value={customPageSizeInput}
+              onChange={(event) => setCustomPageSizeInput(event.target.value)}
+              onBlur={() => {
+                const parsedValue = Number.parseInt(customPageSizeInput, 10);
+                if (!Number.isFinite(parsedValue)) {
+                  setCustomPageSizeInput(String(pageSize));
+                  return;
                 }
-                disabled={
-                  pagination.page <= 1 || connectionsLoading || refreshingAll
+                const nextPageSize = Math.min(
+                  ACCOUNT_PAGE_SIZE_MAX,
+                  Math.max(1, parsedValue),
+                );
+                setPage(1);
+                setPageSize(nextPageSize);
+                setCustomPageSizeInput(String(nextPageSize));
+              }}
+              onKeyDown={(event) => {
+                if (event.key !== "Enter") return;
+                const parsedValue = Number.parseInt(customPageSizeInput, 10);
+                if (!Number.isFinite(parsedValue)) {
+                  setCustomPageSizeInput(String(pageSize));
+                  return;
                 }
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/10 text-text-primary transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:hover:bg-white/5"
-                aria-label="Previous accounts page"
-              >
-                <span className="material-symbols-outlined text-[16px]">
-                  chevron_left
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  setPage((currentPage) =>
-                    Math.min(pagination.totalPages, currentPage + 1),
-                  )
-                }
-                disabled={
-                  pagination.page >= pagination.totalPages ||
-                  connectionsLoading ||
-                  refreshingAll
-                }
-                className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/10 text-text-primary transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:hover:bg-white/5"
-                aria-label="Next accounts page"
-              >
-                <span className="material-symbols-outlined text-[16px]">
-                  chevron_right
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setPage(pagination.totalPages)}
-                disabled={
-                  pagination.page >= pagination.totalPages ||
-                  connectionsLoading ||
-                  refreshingAll
-                }
-                className="flex h-8 items-center rounded-lg border border-black/10 px-3 text-xs text-text-primary transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:hover:bg-white/5"
-              >
-                Last Page
-              </button>
-            </div>
+                const nextPageSize = Math.min(
+                  ACCOUNT_PAGE_SIZE_MAX,
+                  Math.max(1, parsedValue),
+                );
+                setPage(1);
+                setPageSize(nextPageSize);
+                setCustomPageSizeInput(String(nextPageSize));
+              }}
+              className="h-8 w-20 rounded-lg border border-black/10 bg-black/[0.02] px-2 text-xs text-text-primary outline-none transition-colors hover:bg-black/5 dark:border-white/10 dark:bg-white/[0.03] dark:hover:bg-white/10"
+              aria-label="Custom accounts per page"
+              placeholder="Custom"
+            />
+            <span className="text-xs text-text-muted">
+              Page {pagination.page} / {pagination.totalPages}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setPage(1)}
+              disabled={
+                pagination.page <= 1 || connectionsLoading || refreshingAll
+              }
+              className="flex h-8 items-center rounded-lg border border-black/10 px-3 text-xs text-text-primary transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:hover:bg-white/5"
+            >
+              First Page
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPage((currentPage) => Math.max(1, currentPage - 1))
+              }
+              disabled={
+                pagination.page <= 1 || connectionsLoading || refreshingAll
+              }
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/10 text-text-primary transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:hover:bg-white/5"
+              aria-label="Previous accounts page"
+            >
+              <span className="material-symbols-outlined text-[16px]">
+                chevron_left
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setPage((currentPage) =>
+                  Math.min(pagination.totalPages, currentPage + 1),
+                )
+              }
+              disabled={
+                pagination.page >= pagination.totalPages ||
+                connectionsLoading ||
+                refreshingAll
+              }
+              className="flex h-8 w-8 items-center justify-center rounded-lg border border-black/10 text-text-primary transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:hover:bg-white/5"
+              aria-label="Next accounts page"
+            >
+              <span className="material-symbols-outlined text-[16px]">
+                chevron_right
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage(pagination.totalPages)}
+              disabled={
+                pagination.page >= pagination.totalPages ||
+                connectionsLoading ||
+                refreshingAll
+              }
+              className="flex h-8 items-center rounded-lg border border-black/10 px-3 text-xs text-text-primary transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40 dark:border-white/10 dark:hover:bg-white/5"
+            >
+              Last Page
+            </button>
           </div>
         </div>
+      </div>
 
       <ConfirmModal
         isOpen={Boolean(resetConfirmState)}

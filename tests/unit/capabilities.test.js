@@ -24,16 +24,30 @@ describe("getCapabilitiesForModel", () => {
   });
 
   it("falls through to pattern capabilities for NVIDIA models without provider override", () => {
-    const caps = getCapabilitiesForModel("nvidia", "deepseek-ai/deepseek-v4-pro");
+    const caps = getCapabilitiesForModel(
+      "nvidia",
+      "deepseek-ai/deepseek-v4-pro",
+    );
     expect(caps.reasoning).toBe(true);
     expect(caps.thinkingFormat).toBe("deepseek");
   });
 
   it("reports Kiro Claude Opus 4.8 as a 1M context model", () => {
-    expect(getCapabilitiesForModel("kiro", "claude-opus-4.8").contextWindow).toBe(1000000);
-    expect(getCapabilitiesForModel("kiro", "anthropic/claude-opus-4.8").contextWindow).toBe(1000000);
-    expect(getCapabilitiesForModel("kiro", "claude-opus-4-8").contextWindow).toBe(1000000);
-    expect(getCapabilitiesForModel("kiro", "claude-opus-4.8-thinking").contextWindow).toBe(1000000);
-    expect(getCapabilitiesForModel("kiro", "claude-opus-4-8-thinking").contextWindow).toBe(1000000);
+    expect(
+      getCapabilitiesForModel("kiro", "claude-opus-4.8").contextWindow,
+    ).toBe(1000000);
+    expect(
+      getCapabilitiesForModel("kiro", "anthropic/claude-opus-4.8")
+        .contextWindow,
+    ).toBe(1000000);
+    expect(
+      getCapabilitiesForModel("kiro", "claude-opus-4-8").contextWindow,
+    ).toBe(1000000);
+    expect(
+      getCapabilitiesForModel("kiro", "claude-opus-4.8-thinking").contextWindow,
+    ).toBe(1000000);
+    expect(
+      getCapabilitiesForModel("kiro", "claude-opus-4-8-thinking").contextWindow,
+    ).toBe(1000000);
   });
 });

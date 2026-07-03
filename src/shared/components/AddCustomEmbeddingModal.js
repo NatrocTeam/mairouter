@@ -7,7 +7,13 @@ import { Modal, Input, Button, Badge } from "@/shared/components";
 const DEFAULT_BASE_URL = "https://api.openai.com/v1";
 
 // Dual-mode modal: edit when `node` provided, add otherwise
-export default function AddCustomEmbeddingModal({ isOpen, onClose, onCreated, onSaved, node }) {
+export default function AddCustomEmbeddingModal({
+  isOpen,
+  onClose,
+  onCreated,
+  onSaved,
+  node,
+}) {
   const isEdit = !!node;
   const [formData, setFormData] = useState({
     name: "",
@@ -38,10 +44,17 @@ export default function AddCustomEmbeddingModal({ isOpen, onClose, onCreated, on
   }, [isOpen, isEdit, node]);
 
   const handleSubmit = async () => {
-    if (!formData.name.trim() || !formData.prefix.trim() || !formData.baseUrl.trim()) return;
+    if (
+      !formData.name.trim() ||
+      !formData.prefix.trim() ||
+      !formData.baseUrl.trim()
+    )
+      return;
     setSubmitting(true);
     try {
-      const url = isEdit ? `/api/provider-nodes/${node.id}` : "/api/provider-nodes";
+      const url = isEdit
+        ? `/api/provider-nodes/${node.id}`
+        : "/api/provider-nodes";
       const method = isEdit ? "PUT" : "POST";
       const payload = {
         name: formData.name,
@@ -96,7 +109,9 @@ export default function AddCustomEmbeddingModal({ isOpen, onClose, onCreated, on
       return (
         <>
           <Badge variant="success">Valid</Badge>
-          {dimensions && <span className="text-sm text-text-muted">{dimensions} dims</span>}
+          {dimensions && (
+            <span className="text-sm text-text-muted">{dimensions} dims</span>
+          )}
         </>
       );
     }
@@ -109,7 +124,11 @@ export default function AddCustomEmbeddingModal({ isOpen, onClose, onCreated, on
   };
 
   return (
-    <Modal isOpen={isOpen} title={isEdit ? "Edit Custom Embedding" : "Add Custom Embedding"} onClose={onClose}>
+    <Modal
+      isOpen={isOpen}
+      title={isEdit ? "Edit Custom Embedding" : "Add Custom Embedding"}
+      onClose={onClose}
+    >
       <div className="flex flex-col gap-4">
         <Input
           label="Name"
@@ -128,7 +147,9 @@ export default function AddCustomEmbeddingModal({ isOpen, onClose, onCreated, on
         <Input
           label="Base URL"
           value={formData.baseUrl}
-          onChange={(e) => setFormData({ ...formData, baseUrl: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, baseUrl: e.target.value })
+          }
           placeholder="https://api.voyageai.com/v1"
           hint="Most embedding APIs are OpenAI-compatible: Voyage, Cohere, Jina, Mistral, Together..."
         />
@@ -148,7 +169,12 @@ export default function AddCustomEmbeddingModal({ isOpen, onClose, onCreated, on
         <div className="flex items-center gap-3">
           <Button
             onClick={handleValidate}
-            disabled={!checkKey || !checkModelId.trim() || validating || !formData.baseUrl.trim()}
+            disabled={
+              !checkKey ||
+              !checkModelId.trim() ||
+              validating ||
+              !formData.baseUrl.trim()
+            }
             variant="secondary"
           >
             {validating ? "Checking..." : "Check"}
@@ -159,11 +185,24 @@ export default function AddCustomEmbeddingModal({ isOpen, onClose, onCreated, on
           <Button
             onClick={handleSubmit}
             fullWidth
-            disabled={!formData.name.trim() || !formData.prefix.trim() || !formData.baseUrl.trim() || submitting}
+            disabled={
+              !formData.name.trim() ||
+              !formData.prefix.trim() ||
+              !formData.baseUrl.trim() ||
+              submitting
+            }
           >
-            {submitting ? (isEdit ? "Saving..." : "Creating...") : (isEdit ? "Save" : "Create")}
+            {submitting
+              ? isEdit
+                ? "Saving..."
+                : "Creating..."
+              : isEdit
+                ? "Save"
+                : "Create"}
           </Button>
-          <Button onClick={onClose} variant="ghost" fullWidth>Cancel</Button>
+          <Button onClick={onClose} variant="ghost" fullWidth>
+            Cancel
+          </Button>
         </div>
       </div>
     </Modal>

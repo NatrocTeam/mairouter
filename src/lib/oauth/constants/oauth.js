@@ -2,8 +2,14 @@
  * OAuth Configuration Constants — static data lives in registry, re-exported here for consumers.
  */
 import { platform, arch } from "os";
-import { ANTIGRAVITY_OAUTH_CLIENT, GOOGLE_OAUTH_CLIENT } from "open-sse/providers/shared.js";
-import { PROVIDER_OAUTH, PROVIDERS as REGISTRY_PROVIDERS } from "open-sse/providers/index.js";
+import {
+  ANTIGRAVITY_OAUTH_CLIENT,
+  GOOGLE_OAUTH_CLIENT,
+} from "open-sse/providers/shared.js";
+import {
+  PROVIDER_OAUTH,
+  PROVIDERS as REGISTRY_PROVIDERS,
+} from "open-sse/providers/index.js";
 
 /**
  * Get the platform enum value based on the current OS.
@@ -26,7 +32,10 @@ export const CODEX_CONFIG = { ...PROVIDER_OAUTH["codex"] };
 
 // Gemini (Google) OAuth Configuration (Standard OAuth2)
 // clientId/clientSecret from GOOGLE_OAUTH_CLIENT (shared.js) — not stored in registry
-export const GEMINI_CONFIG = { ...GOOGLE_OAUTH_CLIENT, ...PROVIDER_OAUTH["gemini-cli"] };
+export const GEMINI_CONFIG = {
+  ...GOOGLE_OAUTH_CLIENT,
+  ...PROVIDER_OAUTH["gemini-cli"],
+};
 
 // Qwen OAuth Configuration (Device Code Flow with PKCE)
 export const QWEN_CONFIG = { ...PROVIDER_OAUTH["qwen"] };
@@ -47,7 +56,11 @@ export const IFLOW_CONFIG = { ...PROVIDER_OAUTH["iflow"] };
 export const ANTIGRAVITY_CONFIG = {
   ...ANTIGRAVITY_OAUTH_CLIENT,
   ...PROVIDER_OAUTH["antigravity"],
-  loadCodeAssistClientMetadata: JSON.stringify({ ideType: 9, platform: getOAuthPlatformEnum(), pluginType: 2 }),
+  loadCodeAssistClientMetadata: JSON.stringify({
+    ideType: 9,
+    platform: getOAuthPlatformEnum(),
+    pluginType: 2,
+  }),
 };
 
 /**
@@ -84,7 +97,8 @@ export const CURSOR_CONFIG = {
   ...PROVIDER_OAUTH["cursor"],
   tokenStoragePaths: {
     linux: "~/.config/Cursor/User/globalStorage/state.vscdb",
-    macos: "/Users/<user>/Library/Application Support/Cursor/User/globalStorage/state.vscdb",
+    macos:
+      "/Users/<user>/Library/Application Support/Cursor/User/globalStorage/state.vscdb",
     windows: "%APPDATA%\\Cursor\\User\\globalStorage\\state.vscdb",
   },
 };
@@ -93,7 +107,9 @@ export const CURSOR_CONFIG = {
 // clientId uses env override — dynamic, not stored in registry
 export const KIMI_CODING_CONFIG = {
   ...PROVIDER_OAUTH["kimi-coding"],
-  clientId: process.env.KIMI_CODING_OAUTH_CLIENT_ID || REGISTRY_PROVIDERS["kimi-coding"]?.clientId,
+  clientId:
+    process.env.KIMI_CODING_OAUTH_CLIENT_ID ||
+    REGISTRY_PROVIDERS["kimi-coding"]?.clientId,
 };
 
 // KiloCode OAuth Configuration (Custom Device Auth Flow)

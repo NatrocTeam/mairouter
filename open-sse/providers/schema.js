@@ -1,5 +1,8 @@
 // Provider transport schema: shared defaults + endpoint defaults + resolver (skeleton, not wired)
-import { DEFAULT_RETRY_CONFIG, FETCH_CONNECT_TIMEOUT_MS } from "../config/runtimeConfig.js";
+import {
+  DEFAULT_RETRY_CONFIG,
+  FETCH_CONNECT_TIMEOUT_MS,
+} from "../config/runtimeConfig.js";
 
 /**
  * RegistryEntry shape — full contract for registry/{id}.js. See REGISTRY_TEMPLATE.js for a worked example.
@@ -45,21 +48,33 @@ export const PROVIDER_DEFAULTS = {
   baseUrl: "",
   format: "openai",
   headers: {},
-  auth: { header: "Authorization", scheme: "bearer", source: ["accessToken", "apiKey"] },
+  auth: {
+    header: "Authorization",
+    scheme: "bearer",
+    source: ["accessToken", "apiKey"],
+  },
   forceStream: false,
   urlSuffix: "",
   quirks: {},
   passthroughModels: false,
   retry: DEFAULT_RETRY_CONFIG,
   timeoutMs: FETCH_CONNECT_TIMEOUT_MS,
-  executor: "default"
+  executor: "default",
 };
 
 // Default endpoints per format (provider only overrides what differs)
 export const ENDPOINT_DEFAULTS = {
   openai: { chat: "/chat/completions", test: "/models", models: "/models" },
-  claude: { chat: "/messages", test: "/models", countTokens: "/messages/count_tokens" },
-  gemini: { chat: "/{model}:streamGenerateContent", models: "/models", test: "/models" }
+  claude: {
+    chat: "/messages",
+    test: "/models",
+    countTokens: "/messages/count_tokens",
+  },
+  gemini: {
+    chat: "/{model}:streamGenerateContent",
+    models: "/models",
+    test: "/models",
+  },
 };
 
 // Deep-merge a provider entry over PROVIDER_DEFAULTS (defensive for missing transport)
@@ -71,6 +86,6 @@ export function resolveProvider(entry) {
     headers: { ...PROVIDER_DEFAULTS.headers, ...transport.headers },
     auth: { ...PROVIDER_DEFAULTS.auth, ...transport.auth },
     quirks: { ...PROVIDER_DEFAULTS.quirks, ...transport.quirks },
-    retry: { ...PROVIDER_DEFAULTS.retry, ...transport.retry }
+    retry: { ...PROVIDER_DEFAULTS.retry, ...transport.retry },
   };
 }

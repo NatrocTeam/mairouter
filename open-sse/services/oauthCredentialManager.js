@@ -6,7 +6,8 @@ import {
 import { PROVIDER_OAUTH } from "../providers/index.js";
 
 // Single source: codex.oauth.maxRefreshAgeMs (8 days) — proactive refresh window
-export const CODEX_MAX_REFRESH_AGE_MS = PROVIDER_OAUTH["codex"]?.maxRefreshAgeMs;
+export const CODEX_MAX_REFRESH_AGE_MS =
+  PROVIDER_OAUTH["codex"]?.maxRefreshAgeMs;
 
 const refreshLocks = new Map();
 
@@ -32,27 +33,42 @@ export function getCredentialExpiryMs(credentials) {
 export function getCredentialLastRefreshMs(credentials) {
   return parseTimeMs(
     credentials?.lastRefreshAt ??
-    credentials?.lastRefresh ??
-    credentials?.providerSpecificData?.lastRefreshAt
+      credentials?.lastRefresh ??
+      credentials?.providerSpecificData?.lastRefreshAt,
   );
 }
 
-export function isCodexRefreshStale(credentials, nowMs = Date.now(), maxAgeMs = CODEX_MAX_REFRESH_AGE_MS) {
+export function isCodexRefreshStale(
+  credentials,
+  nowMs = Date.now(),
+  maxAgeMs = CODEX_MAX_REFRESH_AGE_MS,
+) {
   const lastRefreshMs = getCredentialLastRefreshMs(credentials);
   return !lastRefreshMs || nowMs - lastRefreshMs >= maxAgeMs;
 }
 
-export function shouldRefreshCredentials(provider, credentials, nowMs = Date.now()) {
+export function shouldRefreshCredentials(
+  provider,
+  credentials,
+  nowMs = Date.now(),
+) {
   if (!credentials) return false;
 
   const expiresAtMs = getCredentialExpiryMs(credentials);
-  if (expiresAtMs !== null && expiresAtMs - nowMs < getRefreshLeadMs(provider)) {
+  if (
+    expiresAtMs !== null &&
+    expiresAtMs - nowMs < getRefreshLeadMs(provider)
+  ) {
     return true;
   }
 
   // Proactive stale refresh for providers declaring oauth.maxRefreshAgeMs (e.g. codex)
   const maxAgeMs = PROVIDER_OAUTH[provider]?.maxRefreshAgeMs;
-  if (maxAgeMs && credentials.refreshToken && isCodexRefreshStale(credentials, nowMs, maxAgeMs)) {
+  if (
+    maxAgeMs &&
+    credentials.refreshToken &&
+    isCodexRefreshStale(credentials, nowMs, maxAgeMs)
+  ) {
     return true;
   }
 
@@ -67,18 +83,26 @@ export function mergeProviderSpecificData(existing, next) {
   };
 }
 
-export function mergeRefreshedCredentials(provider, currentCredentials, refreshedCredentials, nowMs = Date.now()) {
+export function mergeRefreshedCredentials(
+  provider,
+  currentCredentials,
+  refreshedCredentials,
+  nowMs = Date.now(),
+) {
   if (!refreshedCredentials) return null;
-  if (isUnrecoverableRefreshError(refreshedCredentials)) return refreshedCredentials;
+  if (isUnrecoverableRefreshError(refreshedCredentials))
+    return refreshedCredentials;
 
   const next = {};
   const nowIso = new Date(nowMs).toISOString();
 
-  if (refreshedCredentials.accessToken) next.accessToken = refreshedCredentials.accessToken;
+  if (refreshedCredentials.accessToken)
+    next.accessToken = refreshedCredentials.accessToken;
   if (refreshedCredentials.apiKey) next.apiKey = refreshedCredentials.apiKey;
   if (refreshedCredentials.token) next.token = refreshedCredentials.token;
 
-  const refreshToken = refreshedCredentials.refreshToken ?? currentCredentials?.refreshToken;
+  const refreshToken =
+    refreshedCredentials.refreshToken ?? currentCredentials?.refreshToken;
   if (refreshToken) next.refreshToken = refreshToken;
 
   const idToken = refreshedCredentials.idToken ?? currentCredentials?.idToken;
@@ -91,16 +115,18 @@ export function mergeRefreshedCredentials(provider, currentCredentials, refreshe
     next.expiresAt = refreshedCredentials.expiresAt;
   }
 
-  if (refreshedCredentials.projectId) next.projectId = refreshedCredentials.projectId;
+  if (refreshedCredentials.projectId)
+    next.projectId = refreshedCredentials.projectId;
 
   if (refreshedCredentials.providerSpecificData) {
     next.providerSpecificData = mergeProviderSpecificData(
       currentCredentials?.providerSpecificData,
-      refreshedCredentials.providerSpecificData
+      refreshedCredentials.providerSpecificData,
     );
   }
 
-  if (refreshedCredentials.copilotToken) next.copilotToken = refreshedCredentials.copilotToken;
+  if (refreshedCredentials.copilotToken)
+    next.copilotToken = refreshedCredentials.copilotToken;
   if (refreshedCredentials.copilotTokenExpiresAt) {
     next.copilotTokenExpiresAt = refreshedCredentials.copilotTokenExpiresAt;
   }
@@ -131,7 +157,11 @@ function getRefreshLockKey(provider, credentials) {
   return `${provider}:${stableId}`;
 }
 
-export async function withCredentialRefreshLock(provider, credentials, refreshFn) {
+export async function withCredentialRefreshLock(
+  provider,
+  credentials,
+  refreshFn,
+) {
   const key = getRefreshLockKey(provider, credentials);
   const existing = refreshLocks.get(key);
   if (existing) return existing;

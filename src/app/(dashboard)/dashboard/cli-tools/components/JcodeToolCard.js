@@ -32,7 +32,9 @@ export default function JcodeToolCard({
   const [applying, setApplying] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
+  const [selectedApiKey, setSelectedApiKey] = useState(
+    () => apiKeys?.[0]?.key ?? "",
+  );
   const [selectedModel, setSelectedModel] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [modelAliases, setModelAliases] = useState({});
@@ -54,7 +56,6 @@ export default function JcodeToolCard({
   };
 
   const configStatus = getConfigStatus();
-
 
   const fetchModelAliases = async () => {
     try {

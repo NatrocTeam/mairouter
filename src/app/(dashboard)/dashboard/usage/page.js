@@ -2,7 +2,12 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { UsageStats, RequestLogger, CardSkeleton, SegmentedControl } from "@/shared/components";
+import {
+  UsageStats,
+  RequestLogger,
+  CardSkeleton,
+  SegmentedControl,
+} from "@/shared/components";
 import RequestDetailsTab from "./components/RequestDetailsTab";
 
 const PERIODS = [
@@ -28,9 +33,10 @@ function UsageContent() {
   const [period, setPeriod] = useState("today");
 
   const tabFromUrl = searchParams.get("tab");
-  const activeTab = tabFromUrl && ["overview", "logs", "details"].includes(tabFromUrl)
-    ? tabFromUrl
-    : "overview";
+  const activeTab =
+    tabFromUrl && ["overview", "logs", "details"].includes(tabFromUrl)
+      ? tabFromUrl
+      : "overview";
 
   const handleTabChange = (value) => {
     if (value === activeTab) return;
@@ -65,7 +71,11 @@ function UsageContent() {
 
       {activeTab === "overview" && (
         <Suspense fallback={<CardSkeleton />}>
-          <UsageStats period={period} setPeriod={setPeriod} hidePeriodSelector />
+          <UsageStats
+            period={period}
+            setPeriod={setPeriod}
+            hidePeriodSelector
+          />
         </Suspense>
       )}
       {activeTab === "logs" && <RequestLogger />}

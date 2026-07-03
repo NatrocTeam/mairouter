@@ -85,7 +85,10 @@ export function countClaudeMessageTokens(msg) {
           break;
         case "thinking":
         case "redacted_thinking":
-          total += countStringTokens(block.thinking || block.data || "", "claude");
+          total += countStringTokens(
+            block.thinking || block.data || "",
+            "claude",
+          );
           break;
         case "image":
           // Rough estimate: base64 image ~1000 tokens per image
@@ -97,14 +100,18 @@ export function countClaudeMessageTokens(msg) {
           break;
         case "tool_use":
           total += countStringTokens(block.name, "claude");
-          total += countStringTokens(JSON.stringify(block.input || {}), "claude");
+          total += countStringTokens(
+            JSON.stringify(block.input || {}),
+            "claude",
+          );
           break;
         case "tool_result":
           if (typeof block.content === "string") {
             total += countStringTokens(block.content, "claude");
           } else if (Array.isArray(block.content)) {
             for (const c of block.content) {
-              if (c.type === "text") total += countStringTokens(c.text, "claude");
+              if (c.type === "text")
+                total += countStringTokens(c.text, "claude");
             }
           }
           break;
@@ -163,7 +170,9 @@ export function countInputTokens(body) {
   // Claude format: has messages[] with content blocks
   if (body.messages) {
     // Check for OpenAI chat format (choices[], messages[].role)
-    const hasOpenAIRoles = body.messages.some(m => ["system", "user", "assistant", "tool"].includes(m.role));
+    const hasOpenAIRoles = body.messages.some((m) =>
+      ["system", "user", "assistant", "tool"].includes(m.role),
+    );
     if (hasOpenAIRoles) {
       detectedFormat = "openai";
       for (const msg of body.messages) {
@@ -183,7 +192,8 @@ export function countInputTokens(body) {
       total += countStringTokens(body.system, detectedFormat);
     } else if (Array.isArray(body.system)) {
       for (const block of body.system) {
-        if (block.type === "text") total += countStringTokens(block.text, detectedFormat);
+        if (block.type === "text")
+          total += countStringTokens(block.text, detectedFormat);
       }
     }
   }
@@ -191,9 +201,18 @@ export function countInputTokens(body) {
   // Tool definitions
   if (Array.isArray(body.tools)) {
     for (const tool of body.tools) {
-      total += countStringTokens(tool.function?.name || tool.name || "", detectedFormat);
-      total += countStringTokens(JSON.stringify(tool.function?.parameters || tool.input_schema || {}), detectedFormat);
-      total += countStringTokens(tool.function?.description || tool.description || "", detectedFormat);
+      total += countStringTokens(
+        tool.function?.name || tool.name || "",
+        detectedFormat,
+      );
+      total += countStringTokens(
+        JSON.stringify(tool.function?.parameters || tool.input_schema || {}),
+        detectedFormat,
+      );
+      total += countStringTokens(
+        tool.function?.description || tool.description || "",
+        detectedFormat,
+      );
     }
   }
 

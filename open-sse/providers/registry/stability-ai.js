@@ -2,9 +2,7 @@ export default {
   id: "stability-ai",
   priority: 60,
   alias: "stability-ai",
-  aliases: [
-    "stability",
-  ],
+  aliases: ["stability"],
   uiAlias: "stability",
   display: {
     name: "Stability AI",
@@ -20,12 +18,39 @@ export default {
   authType: "apikey",
   transport: null,
   models: [
-    { id: "stable-image-ultra", name: "Stable Image Ultra", params: ["size"], kind: "image" },
-    { id: "stable-image-core", name: "Stable Image Core", params: ["size","style"], kind: "image" },
-    { id: "sd3.5-large", name: "Stable Diffusion 3.5 Large", params: ["size"], kind: "image" },
-    { id: "sd3.5-large-turbo", name: "Stable Diffusion 3.5 Large Turbo", params: ["size"], kind: "image" },
-    { id: "sd3.5-medium", name: "Stable Diffusion 3.5 Medium", params: ["size"], kind: "image" },
+    {
+      id: "stable-image-ultra",
+      name: "Stable Image Ultra",
+      params: ["size"],
+      kind: "image",
+    },
+    {
+      id: "stable-image-core",
+      name: "Stable Image Core",
+      params: ["size", "style"],
+      kind: "image",
+    },
+    {
+      id: "sd3.5-large",
+      name: "Stable Diffusion 3.5 Large",
+      params: ["size"],
+      kind: "image",
+    },
+    {
+      id: "sd3.5-large-turbo",
+      name: "Stable Diffusion 3.5 Large Turbo",
+      params: ["size"],
+      kind: "image",
+    },
+    {
+      id: "sd3.5-medium",
+      name: "Stable Diffusion 3.5 Medium",
+      params: ["size"],
+      kind: "image",
+    },
   ],
   serviceKinds: ["image"],
-  imageConfig: { baseUrl: "https://api.stability.ai/v2beta/stable-image/generate" },
+  imageConfig: {
+    baseUrl: "https://api.stability.ai/v2beta/stable-image/generate",
+  },
 };

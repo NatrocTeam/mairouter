@@ -15,7 +15,7 @@ export class TranslationCompatibilityError extends Error {
     const location = path ? ` at ${path}` : "";
     super(
       `Cannot translate ${sourceFormat} to ${targetFormat} losslessly${location}: ` +
-      `${blockType}${reason ? ` ${reason}` : ""}. Use a native ${sourceFormat} route or remove the unsupported history block.`,
+        `${blockType}${reason ? ` ${reason}` : ""}. Use a native ${sourceFormat} route or remove the unsupported history block.`,
     );
     this.name = "TranslationCompatibilityError";
     this.code = "translation_not_lossless";
@@ -54,8 +54,10 @@ function assertImageSource(block, targetFormat, path) {
 
   if (
     sourceType === "base64" &&
-    (typeof block.source.media_type !== "string" || !block.source.media_type ||
-      typeof block.source.data !== "string" || !block.source.data)
+    (typeof block.source.media_type !== "string" ||
+      !block.source.media_type ||
+      typeof block.source.data !== "string" ||
+      !block.source.data)
   ) {
     incompatible(
       targetFormat,
@@ -67,7 +69,8 @@ function assertImageSource(block, targetFormat, path) {
 
   if (
     sourceType === "url" &&
-    (typeof block.source.url !== "string" || !/^https?:\/\//i.test(block.source.url))
+    (typeof block.source.url !== "string" ||
+      !/^https?:\/\//i.test(block.source.url))
   ) {
     incompatible(
       targetFormat,
@@ -114,7 +117,11 @@ function assertTextOnlyToolResult(block, targetFormat, path) {
  * messages only support text content and have no is_error equivalent. Those
  * shapes therefore fail closed instead of being silently dropped or stringified.
  */
-export function assertClaudeTranslationIsLossless(body, targetFormat, { stripList = [] } = {}) {
+export function assertClaudeTranslationIsLossless(
+  body,
+  targetFormat,
+  { stripList = [] } = {},
+) {
   if (!body || targetFormat === FORMATS.CLAUDE) return;
 
   if (Array.isArray(body.system)) {
@@ -133,7 +140,11 @@ export function assertClaudeTranslationIsLossless(body, targetFormat, { stripLis
 
   if (!Array.isArray(body.messages)) return;
 
-  for (let messageIndex = 0; messageIndex < body.messages.length; messageIndex += 1) {
+  for (
+    let messageIndex = 0;
+    messageIndex < body.messages.length;
+    messageIndex += 1
+  ) {
     const content = body.messages[messageIndex]?.content;
     if (!Array.isArray(content)) continue;
 
@@ -145,7 +156,10 @@ export function assertClaudeTranslationIsLossless(body, targetFormat, { stripLis
       // Thinking blocks are lossy when translated, but claude-to-openai.js converts
       // them to regular text blocks so requests don't hard-fail. The opaque
       // signature is dropped — only the thinking content is preserved as text.
-      if (type === CLAUDE_BLOCK.THINKING || type === CLAUDE_BLOCK.REDACTED_THINKING) {
+      if (
+        type === CLAUDE_BLOCK.THINKING ||
+        type === CLAUDE_BLOCK.REDACTED_THINKING
+      ) {
         continue;
       }
 
@@ -205,7 +219,11 @@ export function assertClaudeModalitiesSupported(body, caps, targetFormat) {
     }
   };
 
-  for (let messageIndex = 0; messageIndex < body.messages.length; messageIndex += 1) {
+  for (
+    let messageIndex = 0;
+    messageIndex < body.messages.length;
+    messageIndex += 1
+  ) {
     const content = body.messages[messageIndex]?.content;
     if (!Array.isArray(content)) continue;
 
@@ -214,9 +232,19 @@ export function assertClaudeModalitiesSupported(body, caps, targetFormat) {
       const path = `messages[${messageIndex}].content[${blockIndex}]`;
       inspectBlock(block, path);
 
-      if (block?.type === CLAUDE_BLOCK.TOOL_RESULT && Array.isArray(block.content)) {
-        for (let nestedIndex = 0; nestedIndex < block.content.length; nestedIndex += 1) {
-          inspectBlock(block.content[nestedIndex], `${path}.content[${nestedIndex}]`);
+      if (
+        block?.type === CLAUDE_BLOCK.TOOL_RESULT &&
+        Array.isArray(block.content)
+      ) {
+        for (
+          let nestedIndex = 0;
+          nestedIndex < block.content.length;
+          nestedIndex += 1
+        ) {
+          inspectBlock(
+            block.content[nestedIndex],
+            `${path}.content[${nestedIndex}]`,
+          );
         }
       }
     }

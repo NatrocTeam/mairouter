@@ -9,6 +9,9 @@ export async function POST() {
     const status = result.stopped ? 200 : 409;
     return NextResponse.json({ ...result }, { status });
   } catch (error) {
-    return NextResponse.json({ error: error.message, code: error.code || null }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message, code: error.code || null },
+      { status: 500 },
+    );
   }
 }

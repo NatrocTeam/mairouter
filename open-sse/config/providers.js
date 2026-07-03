@@ -10,10 +10,15 @@ export function resolveOllamaLocalHost(credentials) {
 }
 
 // Region URLs single-source from registry xiaomi-tokenplan.transport
-export const XIAOMI_TOKENPLAN_REGIONS = PROVIDERS["xiaomi-tokenplan"]?.regions || {};
-export const XIAOMI_TOKENPLAN_DEFAULT_REGION = PROVIDERS["xiaomi-tokenplan"]?.defaultRegion;
+export const XIAOMI_TOKENPLAN_REGIONS =
+  PROVIDERS["xiaomi-tokenplan"]?.regions || {};
+export const XIAOMI_TOKENPLAN_DEFAULT_REGION =
+  PROVIDERS["xiaomi-tokenplan"]?.defaultRegion;
 
 export function resolveXiaomiTokenplanBaseUrl(credentials) {
   const region = credentials?.providerSpecificData?.region;
-  return XIAOMI_TOKENPLAN_REGIONS[region] || XIAOMI_TOKENPLAN_REGIONS[XIAOMI_TOKENPLAN_DEFAULT_REGION];
+  return (
+    XIAOMI_TOKENPLAN_REGIONS[region] ||
+    XIAOMI_TOKENPLAN_REGIONS[XIAOMI_TOKENPLAN_DEFAULT_REGION]
+  );
 }

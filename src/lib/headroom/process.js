@@ -11,13 +11,17 @@ const DEFAULT_PORT = 8787;
 const STARTUP_TIMEOUT_MS = 8000;
 
 function ensureDir() {
-  if (!fs.existsSync(HEADROOM_DIR)) fs.mkdirSync(HEADROOM_DIR, { recursive: true });
+  if (!fs.existsSync(HEADROOM_DIR))
+    fs.mkdirSync(HEADROOM_DIR, { recursive: true });
 }
 
 function readPid() {
   try {
-    if (fs.existsSync(PID_FILE)) return parseInt(fs.readFileSync(PID_FILE, "utf8"), 10);
-  } catch { /* ignore */ }
+    if (fs.existsSync(PID_FILE))
+      return parseInt(fs.readFileSync(PID_FILE, "utf8"), 10);
+  } catch {
+    /* ignore */
+  }
   return null;
 }
 
@@ -27,13 +31,22 @@ function writePid(pid) {
 }
 
 function clearPid() {
-  try { if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE); } catch { /* ignore */ }
+  try {
+    if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE);
+  } catch {
+    /* ignore */
+  }
 }
 
 // process.kill throws if pid is dead — use this to probe.
 export function isPidAlive(pid) {
   if (!pid || typeof pid !== "number") return false;
-  try { process.kill(pid, 0); return true; } catch { return false; }
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function getManagedPid() {
@@ -42,7 +55,8 @@ export function getManagedPid() {
 }
 
 export async function startHeadroomProxy({ port = DEFAULT_PORT } = {}) {
-  const safePort = Number(port) > 0 && Number(port) < 65536 ? Number(port) : DEFAULT_PORT;
+  const safePort =
+    Number(port) > 0 && Number(port) < 65536 ? Number(port) : DEFAULT_PORT;
   const binary = findHeadroomBinary();
   if (!binary) {
     const err = new Error("Headroom CLI not installed");
@@ -78,14 +92,19 @@ export async function startHeadroomProxy({ port = DEFAULT_PORT } = {}) {
   await new Promise((resolve, reject) => {
     const startupTimer = setTimeout(() => {
       if (isPidAlive(child.pid)) resolve();
-      else reject(new Error("headroom proxy exited during startup — see proxy.log"));
+      else
+        reject(
+          new Error("headroom proxy exited during startup — see proxy.log"),
+        );
     }, STARTUP_TIMEOUT_MS);
 
     child.once("exit", (code) => {
       clearTimeout(startupTimer);
       clearPid();
       fs.closeSync(outFd);
-      const e = new Error(`headroom proxy exited early (code=${code}) — see proxy.log`);
+      const e = new Error(
+        `headroom proxy exited early (code=${code}) — see proxy.log`,
+      );
       e.code = "EARLY_EXIT";
       reject(e);
     });
@@ -105,7 +124,11 @@ export function stopHeadroomProxy() {
     // Give it a moment, then force if still alive.
     setTimeout(() => {
       if (isPidAlive(pid)) {
-        try { process.kill(pid, "SIGKILL"); } catch { /* already gone */ }
+        try {
+          process.kill(pid, "SIGKILL");
+        } catch {
+          /* already gone */
+        }
       }
     }, 2000);
     clearPid();
@@ -124,5 +147,7 @@ export function getHeadroomLogTail(maxLines = 200) {
     const content = fs.readFileSync(LOG_FILE, "utf8");
     const lines = content.split(/\r?\n/).filter(Boolean);
     return lines.slice(-maxLines).join("\n");
-  } catch { return ""; }
+  } catch {
+    return "";
+  }
 }

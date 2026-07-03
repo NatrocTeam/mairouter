@@ -17,7 +17,9 @@ describe("model name regex fallback (C2)", () => {
   });
 
   it("normalizeModel: explicit name always wins over regex", () => {
-    expect(normalizeModel({ id: "kimi-k2.5", name: "Custom" }).name).toBe("Custom");
+    expect(normalizeModel({ id: "kimi-k2.5", name: "Custom" }).name).toBe(
+      "Custom",
+    );
   });
 
   it("normalizeModel: terse string id becomes object with derived name", () => {

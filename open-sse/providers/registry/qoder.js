@@ -16,7 +16,8 @@ export default {
   },
   category: "free",
   transport: {
-    baseUrl: "https://api3.qoder.sh/algo/api/v2/service/pro/sse/agent_chat_generation",
+    baseUrl:
+      "https://api3.qoder.sh/algo/api/v2/service/pro/sse/agent_chat_generation",
     headers: {},
     timeoutMs: 120000,
     stallTimeoutMs: 120000,

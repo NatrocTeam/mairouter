@@ -11,10 +11,18 @@ const T = (src, tgt, body, provider = null) =>
 describe("bug: Claude → OpenAI bridge data loss", () => {
   it("image with source.type=url is preserved (NOT dropped)", () => {
     const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
-      messages: [{ role: "user", content: [
-        { type: "text", text: "look" },
-        { type: "image", source: { type: "url", url: "https://x.com/a.png" } },
-      ] }],
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "look" },
+            {
+              type: "image",
+              source: { type: "url", url: "https://x.com/a.png" },
+            },
+          ],
+        },
+      ],
     });
     const json = JSON.stringify(out);
     expect(json, "remote image url silently dropped").toContain("a.png");
@@ -22,10 +30,20 @@ describe("bug: Claude → OpenAI bridge data loss", () => {
 
   it("signed thinking fails closed instead of being silently dropped", () => {
     const body = {
-      messages: [{ role: "assistant", content: [
-        { type: "thinking", thinking: "secret reasoning", signature: "sig" },
-        { type: "text", text: "answer" },
-      ] }, { role: "user", content: "go" }],
+      messages: [
+        {
+          role: "assistant",
+          content: [
+            {
+              type: "thinking",
+              thinking: "secret reasoning",
+              signature: "sig",
+            },
+            { type: "text", text: "answer" },
+          ],
+        },
+        { role: "user", content: "go" },
+      ],
     };
     expect(() => T(FORMATS.CLAUDE, FORMATS.OPENAI, body)).toThrowError(
       /Cannot translate claude to openai losslessly.*thinking block/,
@@ -33,29 +51,61 @@ describe("bug: Claude → OpenAI bridge data loss", () => {
   });
 
   it("tool_result image fails closed instead of being stringified or dropped", () => {
-    expect(() => T(FORMATS.CLAUDE, FORMATS.OPENAI, {
-      messages: [
-        { role: "assistant", content: [
-          { type: "tool_use", id: "call_1", name: "shot", input: {} },
-        ] },
-        { role: "user", content: [
-          { type: "tool_result", tool_use_id: "call_1", content: [
-            { type: "image", source: { type: "base64", media_type: "image/png", data: "ZZZ" } },
-          ] },
-        ] },
-      ],
-    })).toThrowError(/image tool_result block.*not supported/);
+    expect(() =>
+      T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+        messages: [
+          {
+            role: "assistant",
+            content: [
+              { type: "tool_use", id: "call_1", name: "shot", input: {} },
+            ],
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "tool_result",
+                tool_use_id: "call_1",
+                content: [
+                  {
+                    type: "image",
+                    source: {
+                      type: "base64",
+                      media_type: "image/png",
+                      data: "ZZZ",
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    ).toThrowError(/image tool_result block.*not supported/);
   });
 
   it("tool_result is_error fails closed instead of becoming success", () => {
-    expect(() => T(FORMATS.CLAUDE, FORMATS.OPENAI, {
-      messages: [
-        { role: "assistant", content: [{ type: "tool_use", id: "call_1", name: "f", input: {} }] },
-        { role: "user", content: [
-          { type: "tool_result", tool_use_id: "call_1", is_error: true, content: "boom" },
-        ] },
-      ],
-    })).toThrowError(/tool_result\.is_error.*no equivalent error flag/);
+    expect(() =>
+      T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+        messages: [
+          {
+            role: "assistant",
+            content: [{ type: "tool_use", id: "call_1", name: "f", input: {} }],
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "tool_result",
+                tool_use_id: "call_1",
+                is_error: true,
+                content: "boom",
+              },
+            ],
+          },
+        ],
+      }),
+    ).toThrowError(/tool_result\.is_error.*no equivalent error flag/);
   });
 
   // claude-to-openai.js:24-27 — system array only takes .text, drops cache_control/non-text
@@ -78,15 +128,24 @@ describe("bug: tool_call id stability across bridge", () => {
   it("sanitized tool id stays matched between call and result", () => {
     const out = T(FORMATS.OPENAI, FORMATS.OPENAI, {
       messages: [
-        { role: "assistant", tool_calls: [
-          { id: "call/with:bad*chars", type: "function", function: { name: "f", arguments: "{}" } },
-        ] },
+        {
+          role: "assistant",
+          tool_calls: [
+            {
+              id: "call/with:bad*chars",
+              type: "function",
+              function: { name: "f", arguments: "{}" },
+            },
+          ],
+        },
         { role: "tool", tool_call_id: "call/with:bad*chars", content: "ok" },
       ],
     });
     const asst = out.messages.find((m) => m.role === "assistant");
     const tool = out.messages.find((m) => m.role === "tool");
-    expect(tool.tool_call_id, "id mismatch after sanitize").toBe(asst.tool_calls[0].id);
+    expect(tool.tool_call_id, "id mismatch after sanitize").toBe(
+      asst.tool_calls[0].id,
+    );
   });
 });
 
@@ -96,13 +155,23 @@ describe("bug: empty content message handling", () => {
     const out = T(FORMATS.OPENAI, FORMATS.OPENAI, {
       messages: [
         { role: "user", content: "do it" },
-        { role: "assistant", content: "", tool_calls: [
-          { id: "call_1", type: "function", function: { name: "f", arguments: "{}" } },
-        ] },
+        {
+          role: "assistant",
+          content: "",
+          tool_calls: [
+            {
+              id: "call_1",
+              type: "function",
+              function: { name: "f", arguments: "{}" },
+            },
+          ],
+        },
         { role: "tool", tool_call_id: "call_1", content: "done" },
       ],
     });
-    const asst = out.messages.find((m) => m.role === "assistant" && m.tool_calls);
+    const asst = out.messages.find(
+      (m) => m.role === "assistant" && m.tool_calls,
+    );
     expect(asst, "assistant tool_calls message dropped").toBeTruthy();
   });
 });

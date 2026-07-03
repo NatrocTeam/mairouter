@@ -17,7 +17,13 @@ const NON_RETRIABLE = new Set([400, 401, 403, 404]);
 function hasInvalidControlCharacter(value) {
   for (let i = 0; i < value.length; i++) {
     const code = value.charCodeAt(i);
-    if (code <= 0x08 || code === 0x0B || code === 0x0C || (code >= 0x0E && code <= 0x1F) || code === 0x7F) {
+    if (
+      code <= 0x08 ||
+      code === 0x0b ||
+      code === 0x0c ||
+      (code >= 0x0e && code <= 0x1f) ||
+      code === 0x7f
+    ) {
       return true;
     }
   }
@@ -26,7 +32,8 @@ function hasInvalidControlCharacter(value) {
 
 /** Normalize and validate query string. */
 function sanitizeQuery(query) {
-  if (hasInvalidControlCharacter(query)) return { error: "Query contains invalid control characters" };
+  if (hasInvalidControlCharacter(query))
+    return { error: "Query contains invalid control characters" };
   const clean = query.normalize("NFKC").trim().replace(/\s+/g, " ");
   if (!clean) return { error: "Query is empty after normalization" };
   return { clean };
@@ -37,9 +44,14 @@ function sanitizeHeaders(headers) {
   if (!headers) return headers;
   const out = {};
   for (const [k, v] of Object.entries(headers)) {
-    out[k] = typeof v === "string"
-      ? v.split("").filter((char) => char.charCodeAt(0) <= 0xFF).join("").trim()
-      : v;
+    out[k] =
+      typeof v === "string"
+        ? v
+            .split("")
+            .filter((char) => char.charCodeAt(0) <= 0xff)
+            .join("")
+            .trim()
+        : v;
   }
   return out;
 }
@@ -48,7 +60,10 @@ function sanitizeHeaders(headers) {
 function jsonResponse(payload, status = 200) {
   return new Response(JSON.stringify(payload), {
     status,
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
   });
 }
 
@@ -58,7 +73,7 @@ function errorResult(status, error) {
     success: false,
     status,
     error,
-    response: jsonResponse({ error: { message: error, code: status } }, status)
+    response: jsonResponse({ error: { message: error, code: status } }, status),
   };
 }
 
@@ -71,18 +86,32 @@ function successResult(data) {
  * Run a single dedicated search provider attempt.
  * @returns {Promise<{success:boolean, status?:number, error?:string, data?:object}>}
  */
-async function tryDedicatedProvider({ provider, providerConfig, body, credentials, log, globalStartTime }) {
+async function tryDedicatedProvider({
+  provider,
+  providerConfig,
+  body,
+  credentials,
+  log,
+  globalStartTime,
+}) {
   const startTime = Date.now();
   const token = credentials?.apiKey || credentials?.accessToken || undefined;
 
   if (providerConfig.authType !== "none" && !token) {
-    return { success: false, status: 401, error: `No credentials for provider: ${provider.id}` };
+    return {
+      success: false,
+      status: 401,
+      error: `No credentials for provider: ${provider.id}`,
+    };
   }
 
   const params = {
     query: body.query,
-    searchType: body.search_type || (providerConfig.searchTypes?.[0] || "web"),
-    maxResults: Math.min(body.max_results || providerConfig.defaultMaxResults || 5, providerConfig.maxMaxResults || 100),
+    searchType: body.search_type || providerConfig.searchTypes?.[0] || "web",
+    maxResults: Math.min(
+      body.max_results || providerConfig.defaultMaxResults || 5,
+      providerConfig.maxMaxResults || 100,
+    ),
     token,
     country: body.country,
     language: body.language,
@@ -91,34 +120,63 @@ async function tryDedicatedProvider({ provider, providerConfig, body, credential
     domainFilter: body.domain_filter,
     contentOptions: body.content_options,
     providerOptions: body.provider_options,
-    providerSpecificData: credentials?.providerSpecificData
+    providerSpecificData: credentials?.providerSpecificData,
   };
 
   let url, init;
   try {
-    ({ url, init } = buildSearchRequest({ id: provider.id, ...providerConfig }, params));
+    ({ url, init } = buildSearchRequest(
+      { id: provider.id, ...providerConfig },
+      params,
+    ));
   } catch (err) {
-    return { success: false, status: 400, error: err?.message || `Invalid request for ${provider.id}` };
+    return {
+      success: false,
+      status: 400,
+      error: err?.message || `Invalid request for ${provider.id}`,
+    };
   }
 
   // Timeout = min(provider timeout, remaining global)
   const remaining = GLOBAL_TIMEOUT_MS - (Date.now() - globalStartTime);
-  const timeout = Math.min(providerConfig.timeoutMs || 10000, Math.max(remaining, 1000));
+  const timeout = Math.min(
+    providerConfig.timeoutMs || 10000,
+    Math.max(remaining, 1000),
+  );
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
-  log?.info?.("SEARCH", `${provider.id} | "${params.query.slice(0, 80)}" | type=${params.searchType}`);
+  log?.info?.(
+    "SEARCH",
+    `${provider.id} | "${params.query.slice(0, 80)}" | type=${params.searchType}`,
+  );
 
   try {
-    const resp = await fetch(url, { ...init, headers: sanitizeHeaders(init.headers), signal: controller.signal });
+    const resp = await fetch(url, {
+      ...init,
+      headers: sanitizeHeaders(init.headers),
+      signal: controller.signal,
+    });
     clearTimeout(timer);
     if (!resp.ok) {
       const errText = await resp.text().catch(() => "");
-      log?.error?.("SEARCH", `${provider.id} ${resp.status}: ${errText.slice(0, 200)}`);
-      return { success: false, status: resp.status, error: `${provider.id} returned ${resp.status}: ${errText.slice(0, 200)}` };
+      log?.error?.(
+        "SEARCH",
+        `${provider.id} ${resp.status}: ${errText.slice(0, 200)}`,
+      );
+      return {
+        success: false,
+        status: resp.status,
+        error: `${provider.id} returned ${resp.status}: ${errText.slice(0, 200)}`,
+      };
     }
     const data = await resp.json();
-    const normalized = normalizeSearchResponse(provider.id, data, params.query, params.searchType);
+    const normalized = normalizeSearchResponse(
+      provider.id,
+      data,
+      params.query,
+      params.searchType,
+    );
     const results = normalized.results.slice(0, params.maxResults);
     const duration = Date.now() - startTime;
 
@@ -129,17 +187,31 @@ async function tryDedicatedProvider({ provider, providerConfig, body, credential
         query: params.query,
         results,
         answer: null,
-        usage: { queries_used: 1, search_cost_usd: providerConfig.costPerQuery || 0 },
-        metrics: { response_time_ms: duration, upstream_latency_ms: duration, total_results_available: normalized.totalResults },
-        errors: []
-      }
+        usage: {
+          queries_used: 1,
+          search_cost_usd: providerConfig.costPerQuery || 0,
+        },
+        metrics: {
+          response_time_ms: duration,
+          upstream_latency_ms: duration,
+          total_results_available: normalized.totalResults,
+        },
+        errors: [],
+      },
     };
   } catch (err) {
     clearTimeout(timer);
     const isTimeout = err.name === "AbortError";
     const status = isTimeout ? 504 : 502;
-    log?.error?.("SEARCH", `${provider.id} ${isTimeout ? "timeout" : "error"}: ${err.message}`);
-    return { success: false, status, error: `${provider.id} ${isTimeout ? "timeout" : "error"}: ${err.message}` };
+    log?.error?.(
+      "SEARCH",
+      `${provider.id} ${isTimeout ? "timeout" : "error"}: ${err.message}`,
+    );
+    return {
+      success: false,
+      status,
+      error: `${provider.id} ${isTimeout ? "timeout" : "error"}: ${err.message}`,
+    };
   }
 }
 
@@ -154,7 +226,13 @@ async function tryDedicatedProvider({ provider, providerConfig, body, credential
  * @param {object|null} options.credentials  Provider credentials
  * @param {object}   [options.log]           Logger
  */
-export async function handleSearchCore({ body, provider, providerConfig, credentials, log }) {
+export async function handleSearchCore({
+  body,
+  provider,
+  providerConfig,
+  credentials,
+  log,
+}) {
   const globalStartTime = Date.now();
 
   // 1. Sanitize query
@@ -171,7 +249,7 @@ export async function handleSearchCore({ body, provider, providerConfig, credent
       body: normalizedBody,
       credentials,
       log,
-      globalStartTime
+      globalStartTime,
     });
   } else if (provider.searchViaChat) {
     result = await handleChatSearch({
@@ -180,10 +258,13 @@ export async function handleSearchCore({ body, provider, providerConfig, credent
       maxResults: normalizedBody.max_results,
       model: provider.searchViaChat.defaultModel,
       credentials,
-      log
+      log,
     });
   } else {
-    return errorResult(400, `Provider ${provider.id} does not support web search`);
+    return errorResult(
+      400,
+      `Provider ${provider.id} does not support web search`,
+    );
   }
 
   if (result.success) return successResult(result.data);
@@ -195,14 +276,17 @@ export async function handleSearchCore({ body, provider, providerConfig, credent
     provider.searchViaChat &&
     providerConfig
   ) {
-    log?.warn?.("SEARCH", `${provider.id} dedicated failed (${result.status}), falling back to chat-based search`);
+    log?.warn?.(
+      "SEARCH",
+      `${provider.id} dedicated failed (${result.status}), falling back to chat-based search`,
+    );
     const fallback = await handleChatSearch({
       provider: provider.id,
       query: clean,
       maxResults: normalizedBody.max_results,
       model: provider.searchViaChat.defaultModel,
       credentials,
-      log
+      log,
     });
     if (fallback.success) return successResult(fallback.data);
   }

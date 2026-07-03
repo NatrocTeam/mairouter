@@ -7,7 +7,8 @@ import { describe, it, expect } from "vitest";
 import { proxyAwareFetch } from "../../open-sse/utils/proxyFetch.js";
 import { __test__ } from "../../open-sse/executors/mimo-free.js";
 
-const { BOOTSTRAP_URL, CHAT_URL, generateFingerprint, MIMO_SYSTEM_MARKER } = __test__;
+const { BOOTSTRAP_URL, CHAT_URL, generateFingerprint, MIMO_SYSTEM_MARKER } =
+  __test__;
 
 const CHROME_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -40,7 +41,11 @@ async function chatWith(jwt, ua) {
     ],
     stream: false,
   };
-  return proxyAwareFetch(CHAT_URL, { method: "POST", headers, body: JSON.stringify(body) });
+  return proxyAwareFetch(CHAT_URL, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
 }
 
 describe("MiMo Free bootstrap (live)", () => {

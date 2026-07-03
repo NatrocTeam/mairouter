@@ -11,7 +11,8 @@ import { GEMINI_NATIVE_TTS_FETCH_TIMEOUT_MS } from "open-sse/config/runtimeConfi
 import { initTranslators } from "open-sse/translator/index.js";
 
 let initialized = false;
-const GEMINI_NATIVE_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_NATIVE_BASE_URL =
+  "https://generativelanguage.googleapis.com/v1beta/models";
 // Gemini model id charset (matches sanitizeGeminiFunctionName); blocks path traversal in upstream URL.
 const GEMINI_NATIVE_MODEL_PATTERN = /^[a-zA-Z0-9_.:-]+$/;
 
@@ -33,8 +34,8 @@ export async function OPTIONS() {
     headers: {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "*"
-    }
+      "Access-Control-Allow-Headers": "*",
+    },
   });
 }
 
@@ -118,7 +119,7 @@ export async function POST(request, { params }) {
     console.log("Error handling Gemini request:", error);
     return Response.json(
       { error: { message: error.message, code: 500 } },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
@@ -151,13 +152,19 @@ function getGeminiTtsModelIds() {
 
 function hasAudioResponseModality(body) {
   const modalities = body?.generationConfig?.responseModalities;
-  return Array.isArray(modalities)
-    && modalities.some((modality) => String(modality).toUpperCase() === "AUDIO");
+  return (
+    Array.isArray(modalities) &&
+    modalities.some((modality) => String(modality).toUpperCase() === "AUDIO")
+  );
 }
 
 function isGeminiNativeTtsRequest(model, body) {
   const rawModel = String(model || "");
-  if (rawModel.includes("/") && !rawModel.startsWith("gemini/") && !rawModel.startsWith("models/")) {
+  if (
+    rawModel.includes("/") &&
+    !rawModel.startsWith("gemini/") &&
+    !rawModel.startsWith("models/")
+  ) {
     return false;
   }
 
@@ -167,7 +174,9 @@ function isGeminiNativeTtsRequest(model, body) {
 
 function buildGeminiNativeUrl(requestUrl, model, action) {
   const sourceUrl = new URL(requestUrl);
-  const upstreamUrl = new URL(`${GEMINI_NATIVE_BASE_URL}/${normalizeGeminiNativeModel(model)}${action}`);
+  const upstreamUrl = new URL(
+    `${GEMINI_NATIVE_BASE_URL}/${normalizeGeminiNativeModel(model)}${action}`,
+  );
 
   for (const [key, value] of sourceUrl.searchParams.entries()) {
     if (key === "key") continue;
@@ -183,12 +192,18 @@ async function validateGeminiNativeClientKey(request) {
 
   const apiKey = extractGeminiClientApiKey(request);
   if (!apiKey) {
-    return Response.json({ error: { message: "Missing API key" } }, { status: 401 });
+    return Response.json(
+      { error: { message: "Missing API key" } },
+      { status: 401 },
+    );
   }
 
   const valid = await isValidApiKey(apiKey);
   if (!valid) {
-    return Response.json({ error: { message: "Invalid API key" } }, { status: 401 });
+    return Response.json(
+      { error: { message: "Invalid API key" } },
+      { status: 401 },
+    );
   }
 
   return null;
@@ -196,7 +211,8 @@ async function validateGeminiNativeClientKey(request) {
 
 function buildGeminiNativeAuthHeaders(credentials) {
   if (credentials?.apiKey) return { "x-goog-api-key": credentials.apiKey };
-  if (credentials?.accessToken) return { Authorization: `Bearer ${credentials.accessToken}` };
+  if (credentials?.accessToken)
+    return { Authorization: `Bearer ${credentials.accessToken}` };
   return null;
 }
 
@@ -220,7 +236,13 @@ function getSafeGeminiConnectionLabel(credentials) {
 }
 
 function getGeminiNativeErrorCode(error) {
-  return error?.cause?.code || error?.code || error?.cause?.name || error?.name || "UNKNOWN";
+  return (
+    error?.cause?.code ||
+    error?.code ||
+    error?.cause?.name ||
+    error?.name ||
+    "UNKNOWN"
+  );
 }
 
 function isGeminiNativeTimeoutError(error, timedOut) {
@@ -241,7 +263,10 @@ async function forwardGeminiNativeRequest(request, body, model, action) {
 
   const modelId = normalizeGeminiNativeModel(model);
   if (!GEMINI_NATIVE_MODEL_PATTERN.test(modelId)) {
-    return Response.json({ error: { message: "Invalid model" } }, { status: 400 });
+    return Response.json(
+      { error: { message: "Invalid model" } },
+      { status: 400 },
+    );
   }
   const excludeConnectionIds = new Set();
   const bodyText = JSON.stringify(body);
@@ -249,12 +274,25 @@ async function forwardGeminiNativeRequest(request, body, model, action) {
   let lastStatus = null;
 
   while (true) {
-    const credentials = await getProviderCredentials("gemini", excludeConnectionIds, modelId);
+    const credentials = await getProviderCredentials(
+      "gemini",
+      excludeConnectionIds,
+      modelId,
+    );
     if (!credentials || credentials.allRateLimited) {
-      console.log(`[GEMINI_NATIVE] exhausted model=${modelId} status=${lastStatus || Number(credentials?.lastErrorCode) || 503} error=${lastError || credentials?.lastError || "No active credentials for provider: gemini"}`);
+      console.log(
+        `[GEMINI_NATIVE] exhausted model=${modelId} status=${lastStatus || Number(credentials?.lastErrorCode) || 503} error=${lastError || credentials?.lastError || "No active credentials for provider: gemini"}`,
+      );
       return Response.json(
-        { error: { message: lastError || credentials?.lastError || "No active credentials for provider: gemini" } },
-        { status: lastStatus || Number(credentials?.lastErrorCode) || 503 }
+        {
+          error: {
+            message:
+              lastError ||
+              credentials?.lastError ||
+              "No active credentials for provider: gemini",
+          },
+        },
+        { status: lastStatus || Number(credentials?.lastErrorCode) || 503 },
       );
     }
 
@@ -262,7 +300,7 @@ async function forwardGeminiNativeRequest(request, body, model, action) {
     if (!authHeaders) {
       return Response.json(
         { error: { message: "No Gemini API key configured" } },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -278,19 +316,27 @@ async function forwardGeminiNativeRequest(request, body, model, action) {
     const abortAttempt = () => attemptController.abort();
 
     if (request.signal?.aborted) {
-      console.log(`[GEMINI_NATIVE] client aborted model=${modelId} ms=0 conn=${safeConnection}`);
-      return Response.json({ error: { message: "Client closed request" } }, { status: 499 });
+      console.log(
+        `[GEMINI_NATIVE] client aborted model=${modelId} ms=0 conn=${safeConnection}`,
+      );
+      return Response.json(
+        { error: { message: "Client closed request" } },
+        { status: 499 },
+      );
     }
 
     request.signal?.addEventListener("abort", abortAttempt, { once: true });
-    console.log(`[GEMINI_NATIVE] start model=${modelId} action=${action} conn=${safeConnection} body=${Buffer.byteLength(bodyText)}B timeout=${GEMINI_NATIVE_TTS_FETCH_TIMEOUT_MS}`);
+    console.log(
+      `[GEMINI_NATIVE] start model=${modelId} action=${action} conn=${safeConnection} body=${Buffer.byteLength(bodyText)}B timeout=${GEMINI_NATIVE_TTS_FETCH_TIMEOUT_MS}`,
+    );
 
     let upstreamResponse;
     try {
       upstreamResponse = await fetch(upstreamUrl, {
         method: "POST",
         headers: {
-          "Content-Type": request.headers.get("Content-Type") || "application/json",
+          "Content-Type":
+            request.headers.get("Content-Type") || "application/json",
           ...authHeaders,
         },
         body: bodyText,
@@ -299,27 +345,36 @@ async function forwardGeminiNativeRequest(request, body, model, action) {
     } catch (error) {
       const durationMs = Date.now() - startedAt;
       if (request.signal?.aborted && !timedOut) {
-        console.log(`[GEMINI_NATIVE] client aborted model=${modelId} ms=${durationMs} conn=${safeConnection}`);
-        return Response.json({ error: { message: "Client closed request" } }, { status: 499 });
+        console.log(
+          `[GEMINI_NATIVE] client aborted model=${modelId} ms=${durationMs} conn=${safeConnection}`,
+        );
+        return Response.json(
+          { error: { message: "Client closed request" } },
+          { status: 499 },
+        );
       }
 
       const status = isGeminiNativeTimeoutError(error, timedOut) ? 504 : 502;
       const errorText = getSafeGeminiNativeErrorText(error);
-      console.log(`[GEMINI_NATIVE] fetch failed model=${modelId} status=${status} ms=${durationMs} conn=${safeConnection} error=${errorText}`);
+      console.log(
+        `[GEMINI_NATIVE] fetch failed model=${modelId} status=${status} ms=${durationMs} conn=${safeConnection} error=${errorText}`,
+      );
 
       const { shouldFallback } = await markAccountUnavailable(
         credentials.connectionId,
         status,
         errorText,
         "gemini",
-        modelId
+        modelId,
       );
 
       if (shouldFallback) {
         excludeConnectionIds.add(credentials.connectionId);
         lastError = errorText;
         lastStatus = status;
-        console.log(`[GEMINI_NATIVE] fallback model=${modelId} status=${status} conn=${safeConnection} exclude=${excludeConnectionIds.size}`);
+        console.log(
+          `[GEMINI_NATIVE] fallback model=${modelId} status=${status} conn=${safeConnection} exclude=${excludeConnectionIds.size}`,
+        );
         continue;
       }
 
@@ -329,7 +384,9 @@ async function forwardGeminiNativeRequest(request, body, model, action) {
       request.signal?.removeEventListener("abort", abortAttempt);
     }
 
-    console.log(`[GEMINI_NATIVE] upstream model=${modelId} status=${upstreamResponse.status} ms=${Date.now() - startedAt} conn=${safeConnection} ct=${upstreamResponse.headers.get("content-type") || "?"} cl=${upstreamResponse.headers.get("content-length") || "?"}`);
+    console.log(
+      `[GEMINI_NATIVE] upstream model=${modelId} status=${upstreamResponse.status} ms=${Date.now() - startedAt} conn=${safeConnection} ct=${upstreamResponse.headers.get("content-type") || "?"} cl=${upstreamResponse.headers.get("content-length") || "?"}`,
+    );
 
     if (upstreamResponse.ok) {
       await clearAccountError(credentials.connectionId, credentials, modelId);
@@ -346,7 +403,7 @@ async function forwardGeminiNativeRequest(request, body, model, action) {
       upstreamResponse.status,
       errorText,
       "gemini",
-      modelId
+      modelId,
     );
 
     if (shouldFallback) {
@@ -376,9 +433,8 @@ function convertGeminiToInternal(geminiBody, model, stream) {
 
   // Convert system instruction
   if (geminiBody.systemInstruction) {
-    const systemText = geminiBody.systemInstruction.parts
-      ?.map(p => p.text)
-      .join("\n") || "";
+    const systemText =
+      geminiBody.systemInstruction.parts?.map((p) => p.text).join("\n") || "";
     if (systemText) {
       messages.push({ role: "system", content: systemText });
     }
@@ -388,7 +444,7 @@ function convertGeminiToInternal(geminiBody, model, stream) {
   if (geminiBody.contents) {
     for (const content of geminiBody.contents) {
       const role = content.role === "model" ? "assistant" : "user";
-      const text = content.parts?.map(p => p.text).join("\n") || "";
+      const text = content.parts?.map((p) => p.text).join("\n") || "";
       messages.push({ role, content: text });
     }
   }
@@ -478,7 +534,8 @@ function transformOpenAISSEToGeminiSSE(upstreamResponse, model) {
         };
 
         if (choice.finish_reason) {
-          candidate.finishReason = FINISH_REASON_MAP[choice.finish_reason] || "STOP";
+          candidate.finishReason =
+            FINISH_REASON_MAP[choice.finish_reason] || "STOP";
         }
 
         const geminiChunk = { candidates: [candidate] };
@@ -499,7 +556,7 @@ function transformOpenAISSEToGeminiSSE(upstreamResponse, model) {
         }
 
         controller.enqueue(
-          encoder.encode("data: " + JSON.stringify(geminiChunk) + "\r\n\r\n")
+          encoder.encode("data: " + JSON.stringify(geminiChunk) + "\r\n\r\n"),
         );
       }
     },
@@ -530,19 +587,30 @@ async function convertOpenAIResponseToGemini(response, model) {
     return response;
   }
 
-  if (body.candidates) return Response.json(body, {
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
-  });
+  if (body.candidates)
+    return Response.json(body, {
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
 
-  if (body.error) return Response.json(body, {
-    status: response.status,
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
-  });
+  if (body.error)
+    return Response.json(body, {
+      status: response.status,
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
+    });
 
   const choice = body.choices?.[0];
   if (!choice) {
     return Response.json(body, {
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+      headers: {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+      },
     });
   }
 
@@ -573,13 +641,17 @@ async function convertOpenAIResponseToGemini(response, model) {
       candidatesTokenCount: body.usage.completion_tokens || 0,
       totalTokenCount: body.usage.total_tokens || 0,
     };
-    const reasoningTokens = body.usage.completion_tokens_details?.reasoning_tokens;
+    const reasoningTokens =
+      body.usage.completion_tokens_details?.reasoning_tokens;
     if (reasoningTokens) {
       geminiResponse.usageMetadata.thoughtsTokenCount = reasoningTokens;
     }
   }
 
   return Response.json(geminiResponse, {
-    headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
   });
 }

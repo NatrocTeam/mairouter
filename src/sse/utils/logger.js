@@ -4,10 +4,11 @@ const LOG_LEVELS = {
   DEBUG: 0,
   INFO: 1,
   WARN: 2,
-  ERROR: 3
+  ERROR: 3,
 };
 
-const LEVEL = LOG_LEVELS[process.env.LOG_LEVEL?.toUpperCase?.()] ?? LOG_LEVELS.INFO;
+const LEVEL =
+  LOG_LEVELS[process.env.LOG_LEVEL?.toUpperCase?.()] ?? LOG_LEVELS.INFO;
 
 function formatTime() {
   return new Date().toLocaleTimeString("en-US", { hour12: false });
@@ -53,7 +54,9 @@ export function error(tag, message, data) {
 
 export function request(method, path, extra) {
   const dataStr = extra ? ` ${formatData(extra)}` : "";
-  console.log(`\x1b[36m[${formatTime()}] 📥 ${method} ${path}${dataStr}\x1b[0m`);
+  console.log(
+    `\x1b[36m[${formatTime()}] 📥 ${method} ${path}${dataStr}\x1b[0m`,
+  );
 }
 
 export function response(status, duration, extra) {

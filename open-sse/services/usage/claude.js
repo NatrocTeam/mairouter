@@ -28,14 +28,18 @@ export async function getClaudeUsage(accessToken, proxyOptions = null) {
     }
 
     // Primary: OAuth usage endpoint (Claude Code consumer OAuth tokens)
-    const oauthResponse = await proxyAwareFetch(CLAUDE_CONFIG.oauthUsageUrl, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "anthropic-beta": "oauth-2025-04-20",
-        "anthropic-version": CLAUDE_CONFIG.apiVersion,
+    const oauthResponse = await proxyAwareFetch(
+      CLAUDE_CONFIG.oauthUsageUrl,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "anthropic-beta": "oauth-2025-04-20",
+          "anthropic-version": CLAUDE_CONFIG.apiVersion,
+        },
       },
-    }, proxyOptions);
+      proxyOptions,
+    );
 
     if (oauthResponse.ok) {
       const data = await oauthResponse.json();
@@ -43,7 +47,9 @@ export async function getClaudeUsage(accessToken, proxyOptions = null) {
 
       // utilization = % USED (e.g. 87 means 87% used, 13% remaining)
       const hasUtilization = (window) =>
-        window && typeof window === "object" && typeof window.utilization === "number";
+        window &&
+        typeof window === "object" &&
+        typeof window.utilization === "number";
 
       const createQuotaObject = (window) => {
         const used = window.utilization;
@@ -68,7 +74,11 @@ export async function getClaudeUsage(accessToken, proxyOptions = null) {
 
       // Parse model-specific weekly windows (e.g. seven_day_sonnet, seven_day_opus)
       for (const [key, value] of Object.entries(data)) {
-        if (key.startsWith("seven_day_") && key !== "seven_day" && hasUtilization(value)) {
+        if (
+          key.startsWith("seven_day_") &&
+          key !== "seven_day" &&
+          hasUtilization(value)
+        ) {
           const modelName = key.replace("seven_day_", "");
           quotas[`weekly ${modelName} (7d)`] = createQuotaObject(value);
         }
@@ -87,10 +97,14 @@ export async function getClaudeUsage(accessToken, proxyOptions = null) {
     }
 
     // Fallback: legacy settings + org usage endpoint
-    console.warn(`[Claude Usage] OAuth endpoint returned ${oauthResponse.status}, falling back to legacy`);
+    console.warn(
+      `[Claude Usage] OAuth endpoint returned ${oauthResponse.status}, falling back to legacy`,
+    );
     return await getClaudeUsageLegacy(accessToken, proxyOptions);
   } catch (error) {
-    return { message: `Claude connected. Unable to fetch usage: ${error.message}` };
+    return {
+      message: `Claude connected. Unable to fetch usage: ${error.message}`,
+    };
   }
 }
 
@@ -99,13 +113,17 @@ export async function getClaudeUsage(accessToken, proxyOptions = null) {
  */
 async function getClaudeUsageLegacy(accessToken, proxyOptions = null) {
   try {
-    const settingsResponse = await proxyAwareFetch(CLAUDE_CONFIG.settingsUrl, {
-      method: "GET",
-      headers: {
-        "Authorization": `Bearer ${accessToken}`,
-        "anthropic-version": CLAUDE_CONFIG.apiVersion,
+    const settingsResponse = await proxyAwareFetch(
+      CLAUDE_CONFIG.settingsUrl,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "anthropic-version": CLAUDE_CONFIG.apiVersion,
+        },
       },
-    }, proxyOptions);
+      proxyOptions,
+    );
 
     if (settingsResponse.ok) {
       const settings = await settingsResponse.json();
@@ -116,11 +134,11 @@ async function getClaudeUsageLegacy(accessToken, proxyOptions = null) {
           {
             method: "GET",
             headers: {
-              "Authorization": `Bearer ${accessToken}`,
+              Authorization: `Bearer ${accessToken}`,
               "anthropic-version": CLAUDE_CONFIG.apiVersion,
             },
           },
-          proxyOptions
+          proxyOptions,
         );
 
         if (usageResponse.ok) {
@@ -140,8 +158,12 @@ async function getClaudeUsageLegacy(accessToken, proxyOptions = null) {
       };
     }
 
-    return { message: "Claude connected. Usage API requires admin permissions." };
+    return {
+      message: "Claude connected. Usage API requires admin permissions.",
+    };
   } catch (error) {
-    return { message: `Claude connected. Unable to fetch usage: ${error.message}` };
+    return {
+      message: `Claude connected. Unable to fetch usage: ${error.message}`,
+    };
   }
 }

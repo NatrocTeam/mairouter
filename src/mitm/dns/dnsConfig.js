@@ -4,7 +4,10 @@ const path = require("path");
 const _os = require("os");
 const { log, err } = require("../logger");
 const { TOOL_HOSTS } = require("../../shared/constants/mitmToolHosts.js");
-const { runElevatedPowerShell, isAdmin: _isAdmin } = require("../winElevated.js");
+const {
+  runElevatedPowerShell,
+  isAdmin: _isAdmin,
+} = require("../winElevated.js");
 
 /**
  * Atomic-ish write for Windows hosts file with rollback on failure.

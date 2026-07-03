@@ -2,9 +2,7 @@ export default {
   id: "runwayml",
   priority: 80,
   alias: "runwayml",
-  aliases: [
-    "runway",
-  ],
+  aliases: ["runway"],
   uiAlias: "runway",
   display: {
     name: "Runway ML",
@@ -21,7 +19,12 @@ export default {
   transport: null,
   models: [
     { id: "gen4_image", name: "Gen-4 Image", params: ["size"], kind: "image" },
-    { id: "gen4_image_turbo", name: "Gen-4 Image Turbo", params: ["size"], kind: "image" },
+    {
+      id: "gen4_image_turbo",
+      name: "Gen-4 Image Turbo",
+      params: ["size"],
+      kind: "image",
+    },
     { id: "gen4_turbo", name: "Gen-4 Turbo", params: [], kind: "video" },
     { id: "gen3a_turbo", name: "Gen-3 Alpha Turbo", params: [], kind: "video" },
   ],

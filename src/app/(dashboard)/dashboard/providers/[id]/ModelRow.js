@@ -1,33 +1,65 @@
 import PropTypes from "prop-types";
 import { CapacityBadges } from "@/shared/components";
 
-export default function ModelRow({ model, fullModel, alias: _alias, copied, onCopy, testStatus, isCustom, isFree: _isFree, onDeleteAlias, onTest, isTesting, onDisable, caps }) {
-  const borderColor = testStatus === "ok"
-    ? "border-green-500/40"
-    : testStatus === "error"
-    ? "border-red-500/40"
-    : "border-border";
+export default function ModelRow({
+  model,
+  fullModel,
+  alias: _alias,
+  copied,
+  onCopy,
+  testStatus,
+  isCustom,
+  isFree: _isFree,
+  onDeleteAlias,
+  onTest,
+  isTesting,
+  onDisable,
+  caps,
+}) {
+  const borderColor =
+    testStatus === "ok"
+      ? "border-green-500/40"
+      : testStatus === "error"
+        ? "border-red-500/40"
+        : "border-border";
 
-  const iconColor = testStatus === "ok"
-    ? "#22c55e"
-    : testStatus === "error"
-    ? "#ef4444"
-    : undefined;
+  const iconColor =
+    testStatus === "ok"
+      ? "#22c55e"
+      : testStatus === "error"
+        ? "#ef4444"
+        : undefined;
 
   return (
-    <div className={`group min-w-0 max-w-full rounded-lg border px-3 py-2 ${borderColor} hover:bg-sidebar/50`}>
+    <div
+      className={`group min-w-0 max-w-full rounded-lg border px-3 py-2 ${borderColor} hover:bg-sidebar/50`}
+    >
       <div className="flex min-w-0 items-start gap-2 sm:items-center">
         <span
           className="material-symbols-outlined shrink-0 text-base"
           style={iconColor ? { color: iconColor } : undefined}
         >
-          {testStatus === "ok" ? "check_circle" : testStatus === "error" ? "cancel" : "smart_toy"}
+          {testStatus === "ok"
+            ? "check_circle"
+            : testStatus === "error"
+              ? "cancel"
+              : "smart_toy"}
         </span>
         <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <code className="max-w-[72vw] truncate rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs text-text-muted sm:max-w-[360px]">{fullModel}</code>
+          <code className="max-w-[72vw] truncate rounded bg-sidebar px-1.5 py-0.5 font-mono text-xs text-text-muted sm:max-w-[360px]">
+            {fullModel}
+          </code>
           <span className="flex min-w-0 items-center text-[9px] gap-1 pl-1">
-            {model.name && <span className="truncate text-[9px] italic text-text-muted/70">{model.name}</span>}
-            <CapacityBadges caps={caps} colorOverride="text-text-muted/70" size={12} />
+            {model.name && (
+              <span className="truncate text-[9px] italic text-text-muted/70">
+                {model.name}
+              </span>
+            )}
+            <CapacityBadges
+              caps={caps}
+              colorOverride="text-text-muted/70"
+              size={12}
+            />
           </span>
         </div>
         {onTest && (
@@ -37,7 +69,14 @@ export default function ModelRow({ model, fullModel, alias: _alias, copied, onCo
               disabled={isTesting}
               className={`rounded p-0.5 text-text-muted transition-opacity hover:bg-sidebar hover:text-primary ${isTesting ? "opacity-100" : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100"}`}
             >
-              <span className="material-symbols-outlined text-sm" style={isTesting ? { animation: "spin 1s linear infinite" } : undefined}>
+              <span
+                className="material-symbols-outlined text-sm"
+                style={
+                  isTesting
+                    ? { animation: "spin 1s linear infinite" }
+                    : undefined
+                }
+              >
                 {isTesting ? "progress_activity" : "science"}
               </span>
             </button>

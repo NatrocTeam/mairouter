@@ -9,13 +9,23 @@ export default function createOpenAIAdapter(providerId) {
   return {
     buildUrl: () => imageUrl(providerId),
     buildHeaders: (creds) => {
-      const headers = { "Content-Type": "application/json", ...(cfg.headers || {}) };
+      const headers = {
+        "Content-Type": "application/json",
+        ...(cfg.headers || {}),
+      };
       const key = creds?.apiKey || creds?.accessToken;
       if (key) headers["Authorization"] = `Bearer ${key}`;
       return headers;
     },
     buildBody: (model, body) => {
-      const { prompt, n = 1, size = "1024x1024", quality, style, response_format } = body;
+      const {
+        prompt,
+        n = 1,
+        size = "1024x1024",
+        quality,
+        style,
+        response_format,
+      } = body;
       const full = { model, prompt, n, size };
       if (quality) full.quality = quality;
       if (style) full.style = style;
@@ -23,7 +33,8 @@ export default function createOpenAIAdapter(providerId) {
       // bodyFields whitelist (e.g. xAI accepts only model/prompt/n/response_format)
       if (Array.isArray(cfg.bodyFields)) {
         const req = {};
-        for (const f of cfg.bodyFields) if (full[f] !== undefined) req[f] = full[f];
+        for (const f of cfg.bodyFields)
+          if (full[f] !== undefined) req[f] = full[f];
         return req;
       }
       return full;

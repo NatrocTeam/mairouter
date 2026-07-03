@@ -15,11 +15,11 @@ function extractContent(content) {
   if (typeof content === "string") return content;
   if (Array.isArray(content)) {
     return content
-      .filter(part => {
+      .filter((part) => {
         if (!part || typeof part !== "object") return false;
         return part.type === OPENAI_BLOCK.TEXT && typeof part.text === "string";
       })
-      .map(part => part.text || "")
+      .map((part) => part.text || "")
       .join("");
   }
   return "";
@@ -29,15 +29,24 @@ function sanitizeToolResultText(text) {
   // Strip non-printable control chars that can produce backend request errors
   return text
     .split("")
-    .filter(char => {
+    .filter((char) => {
       const code = char.charCodeAt(0);
-      return !((code >= 0 && code <= 8) || code === 11 || code === 12 || (code >= 14 && code <= 31) || code === 127);
+      return !(
+        (code >= 0 && code <= 8) ||
+        code === 11 ||
+        code === 12 ||
+        (code >= 14 && code <= 31) ||
+        code === 127
+      );
     })
     .join("");
 }
 
 function escapeXml(text) {
-  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
 }
 
 function buildToolResultBlock(toolName, toolCallId, resultText) {
@@ -47,7 +56,7 @@ function buildToolResultBlock(toolName, toolCallId, resultText) {
     `<tool_name>${escapeXml(toolName || "tool")}</tool_name>`,
     `<tool_call_id>${escapeXml(toolCallId || "")}</tool_call_id>`,
     `<result>${escapeXml(cleanResult)}</result>`,
-    "</tool_result>"
+    "</tool_result>",
   ].join("\n");
 }
 
@@ -57,7 +66,7 @@ function normalizeToolCallId(id) {
 
 function convertMessages(messages) {
   const result = [];
-  
+
   // Build a map of tool_call_id -> tool name from assistant tool calls
   const toolCallMetaMap = new Map();
   const rememberToolMeta = (toolCallId, toolName) => {
@@ -90,7 +99,7 @@ function convertMessages(messages) {
     if (msg.role === ROLE.SYSTEM) {
       result.push({
         role: ROLE.USER,
-        content: `[System Instructions]\n${extractContent(msg.content)}`
+        content: `[System Instructions]\n${extractContent(msg.content)}`,
       });
       continue;
     }
@@ -102,7 +111,7 @@ function convertMessages(messages) {
       const toolName = msg.name || toolMeta.name || "tool";
       result.push({
         role: ROLE.USER,
-        content: buildToolResultBlock(toolName, toolCallId, toolContent)
+        content: buildToolResultBlock(toolName, toolCallId, toolContent),
       });
       continue;
     }
@@ -135,9 +144,13 @@ function convertMessages(messages) {
 
       const content = extractContent(msg.content);
 
-      if (msg.role === ROLE.ASSISTANT && msg.tool_calls && msg.tool_calls.length > 0) {
+      if (
+        msg.role === ROLE.ASSISTANT &&
+        msg.tool_calls &&
+        msg.tool_calls.length > 0
+      ) {
         const assistantMsg = { role: ROLE.ASSISTANT, content: content || "" };
-        assistantMsg.tool_calls = msg.tool_calls.map(tc => {
+        assistantMsg.tool_calls = msg.tool_calls.map((tc) => {
           const rest = { ...(tc || {}) };
           delete rest.index;
           return rest;
@@ -145,22 +158,22 @@ function convertMessages(messages) {
         result.push(assistantMsg);
       } else if (msg.role === ROLE.ASSISTANT && Array.isArray(msg.content)) {
         const extractedToolCalls = msg.content
-          .filter(b => b?.type === CLAUDE_BLOCK.TOOL_USE)
-          .map(b => ({
+          .filter((b) => b?.type === CLAUDE_BLOCK.TOOL_USE)
+          .map((b) => ({
             id: b.id || "",
             type: OPENAI_BLOCK.FUNCTION,
             function: {
               name: b.name || "tool",
-              arguments: JSON.stringify(b.input || {})
-            }
+              arguments: JSON.stringify(b.input || {}),
+            },
           }))
-          .filter(tc => tc.id);
+          .filter((tc) => tc.id);
 
         if (extractedToolCalls.length > 0) {
           result.push({
             role: ROLE.ASSISTANT,
             content: content || "",
-            tool_calls: extractedToolCalls
+            tool_calls: extractedToolCalls,
           });
         } else if (content) {
           result.push({ role: ROLE.ASSISTANT, content });
@@ -190,7 +203,7 @@ export function openaiToCursorRequest(model, body, _stream, _credentials) {
   return {
     ...rest,
     messages,
-    max_tokens: DEFAULT_MIN_TOKENS
+    max_tokens: DEFAULT_MIN_TOKENS,
   };
 }
 

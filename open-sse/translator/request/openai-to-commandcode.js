@@ -22,7 +22,8 @@ function flattenText(content) {
     const parts = [];
     for (const p of content) {
       if (typeof p === "string") parts.push(p);
-      else if (p && typeof p === "object" && typeof p.text === "string") parts.push(p.text);
+      else if (p && typeof p === "object" && typeof p.text === "string")
+        parts.push(p.text);
     }
     return parts.join("\n");
   }
@@ -31,7 +32,8 @@ function flattenText(content) {
 
 function toContentBlocks(content) {
   if (content == null) return [{ type: OPENAI_BLOCK.TEXT, text: "" }];
-  if (typeof content === "string") return [{ type: OPENAI_BLOCK.TEXT, text: content }];
+  if (typeof content === "string")
+    return [{ type: OPENAI_BLOCK.TEXT, text: content }];
   if (Array.isArray(content)) {
     const blocks = [];
     for (const part of content) {
@@ -40,7 +42,10 @@ function toContentBlocks(content) {
       } else if (part && typeof part === "object") {
         if (part.type === OPENAI_BLOCK.TEXT && typeof part.text === "string") {
           blocks.push({ type: OPENAI_BLOCK.TEXT, text: part.text });
-        } else if (part.type === OPENAI_BLOCK.IMAGE_URL || part.type === OPENAI_BLOCK.IMAGE) {
+        } else if (
+          part.type === OPENAI_BLOCK.IMAGE_URL ||
+          part.type === OPENAI_BLOCK.IMAGE
+        ) {
           blocks.push({ type: OPENAI_BLOCK.TEXT, text: "[image omitted]" });
         } else if (typeof part.text === "string") {
           blocks.push({ type: OPENAI_BLOCK.TEXT, text: part.text });
@@ -55,7 +60,11 @@ function toContentBlocks(content) {
 function safeParseJson(s) {
   if (s == null) return {};
   if (typeof s !== "string") return s;
-  try { return JSON.parse(s); } catch { return {}; }
+  try {
+    return JSON.parse(s);
+  } catch {
+    return {};
+  }
 }
 
 function convertMessages(messages = []) {
@@ -73,15 +82,18 @@ function convertMessages(messages = []) {
     }
 
     if (role === ROLE.TOOL) {
-      const value = typeof m.content === "string" ? m.content : flattenText(m.content);
+      const value =
+        typeof m.content === "string" ? m.content : flattenText(m.content);
       out.push({
         role: ROLE.TOOL,
-        content: [{
-          type: "tool-result",
-          toolCallId: m.tool_call_id || "",
-          toolName: m.name || "",
-          output: { type: "text", value },
-        }],
+        content: [
+          {
+            type: "tool-result",
+            toolCallId: m.tool_call_id || "",
+            toolName: m.name || "",
+            output: { type: "text", value },
+          },
+        ],
       });
       continue;
     }
@@ -101,7 +113,12 @@ function convertMessages(messages = []) {
           });
         }
       }
-      out.push({ role: ROLE.ASSISTANT, content: blocks.length ? blocks : [{ type: OPENAI_BLOCK.TEXT, text: "" }] });
+      out.push({
+        role: ROLE.ASSISTANT,
+        content: blocks.length
+          ? blocks
+          : [{ type: OPENAI_BLOCK.TEXT, text: "" }],
+      });
       continue;
     }
 
@@ -133,7 +150,11 @@ function convertTools(tools) {
   return result.length ? result : undefined;
 }
 
-export function openaiToCommandCodeRequest(model, body, stream /* , credentials */) {
+export function openaiToCommandCodeRequest(
+  model,
+  body,
+  stream /* , credentials */,
+) {
   const { messages, system } = convertMessages(body.messages);
   const params = {
     model,

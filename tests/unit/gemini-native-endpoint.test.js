@@ -25,7 +25,8 @@ vi.mock("@/lib/localDb", () => ({
 }));
 
 const { GET } = await import("../../src/app/api/v1beta/models/route.js");
-const { POST } = await import("../../src/app/api/v1beta/models/[...path]/route.js");
+const { POST } =
+  await import("../../src/app/api/v1beta/models/[...path]/route.js");
 
 function makeGeminiRequest(path, body, headers = {}, signal) {
   return new Request(`https://router.test/v1beta/models/${path}`, {
@@ -69,13 +70,20 @@ describe("Gemini native v1beta endpoint", () => {
     });
     mocks.markAccountUnavailable.mockResolvedValue({ shouldFallback: false });
     global.fetch = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      })
+      new Response(
+        JSON.stringify({
+          candidates: [{ content: { parts: [{ text: "ok" }] } }],
+        }),
+        {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
     );
     mocks.handleChat.mockResolvedValue(
-      Response.json({ candidates: [{ content: { parts: [{ text: "chat" }] } }] })
+      Response.json({
+        candidates: [{ content: { parts: [{ text: "chat" }] } }],
+      }),
     );
   });
 
@@ -91,15 +99,20 @@ describe("Gemini native v1beta endpoint", () => {
 
   it("passes Gemini AUDIO generateContent requests through to Google's native endpoint", async () => {
     const body = audioBody();
-    const response = await POST(makeGeminiRequest("gemini-3.1-flash-tts-preview:generateContent", body), {
-      params: Promise.resolve({ path: ["gemini-3.1-flash-tts-preview:generateContent"] }),
-    });
+    const response = await POST(
+      makeGeminiRequest("gemini-3.1-flash-tts-preview:generateContent", body),
+      {
+        params: Promise.resolve({
+          path: ["gemini-3.1-flash-tts-preview:generateContent"],
+        }),
+      },
+    );
 
     expect(response.status).toBe(200);
     expect(mocks.handleChat).not.toHaveBeenCalled();
     expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(global.fetch.mock.calls[0][0]).toBe(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent"
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-tts-preview:generateContent",
     );
 
     const options = global.fetch.mock.calls[0][1];
@@ -116,15 +129,21 @@ describe("Gemini native v1beta endpoint", () => {
       {
         Authorization: "",
         "x-goog-api-key": "client-router-key",
-      }
+      },
     );
     await POST(request, {
-      params: Promise.resolve({ path: ["gemini-2.5-flash-preview-tts:generateContent"] }),
+      params: Promise.resolve({
+        path: ["gemini-2.5-flash-preview-tts:generateContent"],
+      }),
     });
 
     expect(mocks.isValidApiKey).toHaveBeenCalledWith("client-router-key");
-    expect(global.fetch.mock.calls[0][1].headers["x-goog-api-key"]).toBe("real-gemini-key");
-    expect(global.fetch.mock.calls[0][1].headers["x-goog-api-key"]).not.toBe("client-router-key");
+    expect(global.fetch.mock.calls[0][1].headers["x-goog-api-key"]).toBe(
+      "real-gemini-key",
+    );
+    expect(global.fetch.mock.calls[0][1].headers["x-goog-api-key"]).not.toBe(
+      "client-router-key",
+    );
   });
 
   it("does not forward stale compression headers from native upstream responses", async () => {
@@ -136,12 +155,20 @@ describe("Gemini native v1beta endpoint", () => {
           "Content-Encoding": "gzip",
           "Content-Length": "123",
         },
-      })
+      }),
     );
 
-    const response = await POST(makeGeminiRequest("gemini-3.1-flash-tts-preview:generateContent", audioBody()), {
-      params: Promise.resolve({ path: ["gemini-3.1-flash-tts-preview:generateContent"] }),
-    });
+    const response = await POST(
+      makeGeminiRequest(
+        "gemini-3.1-flash-tts-preview:generateContent",
+        audioBody(),
+      ),
+      {
+        params: Promise.resolve({
+          path: ["gemini-3.1-flash-tts-preview:generateContent"],
+        }),
+      },
+    );
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-encoding")).toBeNull();
@@ -150,7 +177,10 @@ describe("Gemini native v1beta endpoint", () => {
 
   it("falls back to the next Gemini credential when native fetch times out before headers", async () => {
     const timeoutError = new TypeError("fetch failed");
-    timeoutError.cause = { code: "UND_ERR_HEADERS_TIMEOUT", name: "HeadersTimeoutError" };
+    timeoutError.cause = {
+      code: "UND_ERR_HEADERS_TIMEOUT",
+      name: "HeadersTimeoutError",
+    };
 
     mocks.getProviderCredentials
       .mockResolvedValueOnce({
@@ -165,47 +195,76 @@ describe("Gemini native v1beta endpoint", () => {
         connectionName: "Second Gemini",
         providerSpecificData: {},
       });
-    mocks.markAccountUnavailable.mockResolvedValueOnce({ shouldFallback: true });
-    global.fetch
-      .mockRejectedValueOnce(timeoutError)
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ candidates: [{ content: { parts: [{ inlineData: { data: "pcm" } }] } }] }), {
+    mocks.markAccountUnavailable.mockResolvedValueOnce({
+      shouldFallback: true,
+    });
+    global.fetch.mockRejectedValueOnce(timeoutError).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          candidates: [
+            { content: { parts: [{ inlineData: { data: "pcm" } }] } },
+          ],
+        }),
+        {
           status: 200,
           headers: { "Content-Type": "application/json" },
-        })
-      );
+        },
+      ),
+    );
 
-    const response = await POST(makeGeminiRequest("gemini-3.1-flash-tts-preview:generateContent", audioBody()), {
-      params: Promise.resolve({ path: ["gemini-3.1-flash-tts-preview:generateContent"] }),
-    });
+    const response = await POST(
+      makeGeminiRequest(
+        "gemini-3.1-flash-tts-preview:generateContent",
+        audioBody(),
+      ),
+      {
+        params: Promise.resolve({
+          path: ["gemini-3.1-flash-tts-preview:generateContent"],
+        }),
+      },
+    );
 
     expect(response.status).toBe(200);
     expect(global.fetch).toHaveBeenCalledTimes(2);
-    expect(global.fetch.mock.calls[0][1].headers["x-goog-api-key"]).toBe("first-gemini-key");
-    expect(global.fetch.mock.calls[1][1].headers["x-goog-api-key"]).toBe("second-gemini-key");
+    expect(global.fetch.mock.calls[0][1].headers["x-goog-api-key"]).toBe(
+      "first-gemini-key",
+    );
+    expect(global.fetch.mock.calls[1][1].headers["x-goog-api-key"]).toBe(
+      "second-gemini-key",
+    );
     expect(mocks.markAccountUnavailable).toHaveBeenCalledWith(
       "first-conn",
       504,
       expect.stringContaining("UND_ERR_HEADERS_TIMEOUT"),
       "gemini",
-      "gemini-3.1-flash-tts-preview"
+      "gemini-3.1-flash-tts-preview",
     );
     expect(mocks.clearAccountError).toHaveBeenCalledWith(
       "second-conn",
       expect.objectContaining({ apiKey: "second-gemini-key" }),
-      "gemini-3.1-flash-tts-preview"
+      "gemini-3.1-flash-tts-preview",
     );
   });
 
   it("returns 502 for native fetch failures when credential fallback is not allowed", async () => {
     const networkError = new TypeError("fetch failed");
     networkError.cause = { code: "ECONNRESET" };
-    mocks.markAccountUnavailable.mockResolvedValueOnce({ shouldFallback: false });
+    mocks.markAccountUnavailable.mockResolvedValueOnce({
+      shouldFallback: false,
+    });
     global.fetch.mockRejectedValueOnce(networkError);
 
-    const response = await POST(makeGeminiRequest("gemini-3.1-flash-tts-preview:generateContent", audioBody()), {
-      params: Promise.resolve({ path: ["gemini-3.1-flash-tts-preview:generateContent"] }),
-    });
+    const response = await POST(
+      makeGeminiRequest(
+        "gemini-3.1-flash-tts-preview:generateContent",
+        audioBody(),
+      ),
+      {
+        params: Promise.resolve({
+          path: ["gemini-3.1-flash-tts-preview:generateContent"],
+        }),
+      },
+    );
     const body = await response.json();
 
     expect(response.status).toBe(502);
@@ -215,20 +274,29 @@ describe("Gemini native v1beta endpoint", () => {
       502,
       expect.stringContaining("ECONNRESET"),
       "gemini",
-      "gemini-3.1-flash-tts-preview"
+      "gemini-3.1-flash-tts-preview",
     );
   });
 
   it("does not mark Gemini credentials unavailable when the native client aborts", async () => {
     const controller = new AbortController();
     controller.abort();
-    global.fetch.mockRejectedValueOnce(new DOMException("The operation was aborted", "AbortError"));
+    global.fetch.mockRejectedValueOnce(
+      new DOMException("The operation was aborted", "AbortError"),
+    );
 
     const response = await POST(
-      makeGeminiRequest("gemini-3.1-flash-tts-preview:generateContent", audioBody(), {}, controller.signal),
+      makeGeminiRequest(
+        "gemini-3.1-flash-tts-preview:generateContent",
+        audioBody(),
+        {},
+        controller.signal,
+      ),
       {
-        params: Promise.resolve({ path: ["gemini-3.1-flash-tts-preview:generateContent"] }),
-      }
+        params: Promise.resolve({
+          path: ["gemini-3.1-flash-tts-preview:generateContent"],
+        }),
+      },
     );
 
     expect(response.status).toBe(499);
@@ -250,9 +318,14 @@ describe("Gemini native v1beta endpoint", () => {
   });
 
   it("does not hijack provider-prefixed non-Gemini audio requests", async () => {
-    await POST(makeGeminiRequest("openai/gpt-4o-mini-tts:generateContent", audioBody()), {
-      params: Promise.resolve({ path: ["openai", "gpt-4o-mini-tts:generateContent"] }),
-    });
+    await POST(
+      makeGeminiRequest("openai/gpt-4o-mini-tts:generateContent", audioBody()),
+      {
+        params: Promise.resolve({
+          path: ["openai", "gpt-4o-mini-tts:generateContent"],
+        }),
+      },
+    );
 
     expect(mocks.handleChat).toHaveBeenCalledTimes(1);
     expect(global.fetch).not.toHaveBeenCalled();

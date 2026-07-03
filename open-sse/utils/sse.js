@@ -3,7 +3,13 @@ export function sseChunk(data) {
 }
 
 // Build OpenAI chat.completion.chunk SSE frame. Key order: id, object, created, model, choices.
-export function chatChunkSse({ id, created, model, delta, finishReason = null }) {
+export function chatChunkSse({
+  id,
+  created,
+  model,
+  delta,
+  finishReason = null,
+}) {
   return sseChunk({
     id,
     object: "chat.completion.chunk",

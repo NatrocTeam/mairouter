@@ -22,16 +22,16 @@ mairouter [options]
 
 ### Options
 
-| Option | Alias | Description | Default |
-|--------|-------|-------------|---------|
-| `--port` | `-p` | Port to run the server | `12890` |
-| `--host` | `-H` | Host to bind | `0.0.0.0` |
-| `--no-browser` | `-n` | Don't open browser automatically | — |
-| `--log` | `-l` | Show server logs (hidden by default) | — |
-| `--tray` | `-t` | Run in system tray mode (background) | — |
-| `--skip-update` | — | Skip auto-update check | — |
-| `--help` | `-h` | Show help message | — |
-| `--version` | `-v` | Show version | — |
+| Option          | Alias | Description                          | Default   |
+| --------------- | ----- | ------------------------------------ | --------- |
+| `--port`        | `-p`  | Port to run the server               | `12890`   |
+| `--host`        | `-H`  | Host to bind                         | `0.0.0.0` |
+| `--no-browser`  | `-n`  | Don't open browser automatically     | —         |
+| `--log`         | `-l`  | Show server logs (hidden by default) | —         |
+| `--tray`        | `-t`  | Run in system tray mode (background) | —         |
+| `--skip-update` | —     | Skip auto-update check               | —         |
+| `--help`        | `-h`  | Show help message                    | —         |
+| `--version`     | `-v`  | Show version                         | —         |
 
 ## Terminal UI
 
@@ -77,13 +77,13 @@ SQLite dependencies (`sql.js`, `better-sqlite3`) are installed into `~/.mairoute
 
 ## What You Can Do From the CLI
 
-| Menu | Actions |
-|------|---------|
-| **Providers** | List, add, remove, reconnect OAuth providers |
-| **API Keys** | View keys, copy to clipboard, generate new keys |
-| **Combos** | Create/delete model combos (fallback chains) |
+| Menu          | Actions                                                             |
+| ------------- | ------------------------------------------------------------------- |
+| **Providers** | List, add, remove, reconnect OAuth providers                        |
+| **API Keys**  | View keys, copy to clipboard, generate new keys                     |
+| **Combos**    | Create/delete model combos (fallback chains)                        |
 | **CLI Tools** | Configure tool-specific settings (Claude Code, Codex, Cursor, etc.) |
-| **Settings** | Toggle tunnel, RTK/Headroom token savers, reset password |
+| **Settings**  | Toggle tunnel, RTK/Headroom token savers, reset password            |
 
 ## Attribution
 

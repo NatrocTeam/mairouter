@@ -2,9 +2,7 @@ export default {
   id: "deepgram",
   priority: 20,
   alias: "deepgram",
-  aliases: [
-    "dg",
-  ],
+  aliases: ["dg"],
   uiAlias: "dg",
   display: {
     name: "Deepgram",
@@ -25,9 +23,19 @@ export default {
   models: [
     { id: "nova-3", name: "Nova 3", params: ["language"], kind: "stt" },
     { id: "nova-2", name: "Nova 2", params: ["language"], kind: "stt" },
-    { id: "whisper-large", name: "Whisper Large", params: ["language"], kind: "stt" },
+    {
+      id: "whisper-large",
+      name: "Whisper Large",
+      params: ["language"],
+      kind: "stt",
+    },
     { id: "nova", name: "Nova", kind: "stt" },
   ],
   serviceKinds: ["stt"],
-  sttConfig: { baseUrl: "https://api.deepgram.com/v1/listen", authType: "apikey", authHeader: "token", format: "deepgram" },
+  sttConfig: {
+    baseUrl: "https://api.deepgram.com/v1/listen",
+    authType: "apikey",
+    authHeader: "token",
+    format: "deepgram",
+  },
 };

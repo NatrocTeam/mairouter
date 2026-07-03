@@ -11,7 +11,10 @@ export async function dedupRefresh(provider, oldToken, fn, log) {
       return hit.promise;
     }
     if (hit.expiresAt > Date.now()) {
-      log?.info?.("TOKEN_REFRESH", `Reusing recent refresh result for ${provider}`);
+      log?.info?.(
+        "TOKEN_REFRESH",
+        `Reusing recent refresh result for ${provider}`,
+      );
       return hit.result;
     }
     refreshDedupCache.delete(key);
@@ -19,7 +22,10 @@ export async function dedupRefresh(provider, oldToken, fn, log) {
   const promise = (async () => {
     try {
       const result = await fn();
-      refreshDedupCache.set(key, { result, expiresAt: Date.now() + REFRESH_RESULT_TTL_MS });
+      refreshDedupCache.set(key, {
+        result,
+        expiresAt: Date.now() + REFRESH_RESULT_TTL_MS,
+      });
       return result;
     } catch (err) {
       refreshDedupCache.delete(key);

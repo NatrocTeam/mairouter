@@ -38,14 +38,16 @@ describe("kiro API-key auth (KiroService.validateApiKey)", () => {
     expect(url).toBe("https://codewhisperer.us-east-1.amazonaws.com");
     expect(init.headers.Authorization).toBe("Bearer my-secret-key");
     expect(init.headers["x-amz-target"]).toBe(
-      "AmazonCodeWhispererService.ListAvailableProfiles"
+      "AmazonCodeWhispererService.ListAvailableProfiles",
     );
   });
 
   it("rejects an empty API key without a network call", async () => {
     const fetchMock = vi.spyOn(globalThis, "fetch");
     const svc = new KiroService();
-    await expect(svc.validateApiKey("   ")).rejects.toThrow("API key is required");
+    await expect(svc.validateApiKey("   ")).rejects.toThrow(
+      "API key is required",
+    );
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -57,7 +59,7 @@ describe("kiro API-key auth (KiroService.validateApiKey)", () => {
     });
     const svc = new KiroService();
     await expect(svc.validateApiKey("bad-key")).rejects.toThrow(
-      /API key validation failed/
+      /API key validation failed/,
     );
   });
 });

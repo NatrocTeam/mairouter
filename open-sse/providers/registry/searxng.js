@@ -6,13 +6,11 @@ export default {
     icon: "saved_search",
     color: "#3B82F6",
     textIcon: "SX",
-    website: "https://docs.searxng.org"
+    website: "https://docs.searxng.org",
   },
   category: "freeTier",
   authType: "none",
-  serviceKinds: [
-    "webSearch"
-  ],
+  serviceKinds: ["webSearch"],
   noAuth: true,
   searchConfig: {
     baseUrl: "http://localhost:8888/search",
@@ -21,13 +19,10 @@ export default {
     authHeader: "none",
     costPerQuery: 0,
     freeMonthlyQuota: 999999,
-    searchTypes: [
-      "web",
-      "news"
-    ],
+    searchTypes: ["web", "news"],
     defaultMaxResults: 5,
     maxMaxResults: 50,
     timeoutMs: 10000,
-    cacheTTLMs: 180000
-  }
+    cacheTTLMs: 180000,
+  },
 };

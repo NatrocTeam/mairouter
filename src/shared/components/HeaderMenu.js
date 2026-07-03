@@ -16,7 +16,9 @@ function MenuItem({ icon, label, onClick, trailing, danger }) {
           : "text-text-main hover:bg-black/5 dark:hover:bg-white/5"
       }`}
     >
-      <span className={`material-symbols-outlined text-[20px] ${danger ? "" : "text-text-muted"}`}>
+      <span
+        className={`material-symbols-outlined text-[20px] ${danger ? "" : "text-text-muted"}`}
+      >
         {icon}
       </span>
       <span className="flex-1 text-left">{label}</span>
@@ -60,7 +62,8 @@ export default function HeaderMenu({ onLogout }) {
     };
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () =>
+        document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isOpen]);
 
@@ -82,30 +85,45 @@ export default function HeaderMenu({ onLogout }) {
             <MenuItem
               icon="history"
               label="Change Log"
-              onClick={() => { close(); setChangelogOpen(true); }}
+              onClick={() => {
+                close();
+                setChangelogOpen(true);
+              }}
             />
             <MenuItem
               icon={isDark ? "light_mode" : "dark_mode"}
               label="Theme"
-              onClick={() => { toggleTheme(); close(); }}
+              onClick={() => {
+                toggleTheme();
+                close();
+              }}
             />
             <MenuItem
               icon="power_settings_new"
               label="Shutdown"
               danger
-              onClick={() => { close(); setShutdownOpen(true); }}
+              onClick={() => {
+                close();
+                setShutdownOpen(true);
+              }}
             />
             <MenuItem
               icon="logout"
               label="Logout"
               danger
-              onClick={() => { close(); onLogout(); }}
+              onClick={() => {
+                close();
+                onLogout();
+              }}
             />
           </div>
         )}
       </div>
 
-      <ChangelogModal isOpen={changelogOpen} onClose={() => setChangelogOpen(false)} />
+      <ChangelogModal
+        isOpen={changelogOpen}
+        onClose={() => setChangelogOpen(false)}
+      />
       <ConfirmModal
         isOpen={shutdownOpen}
         onClose={() => setShutdownOpen(false)}

@@ -36,7 +36,8 @@ export function getProviderCustomModelRows({
 
   const prefix = `${providerAlias}/`;
   for (const [alias, fullModel] of Object.entries(modelAliases || {})) {
-    if (typeof fullModel !== "string" || !fullModel.startsWith(prefix)) continue;
+    if (typeof fullModel !== "string" || !fullModel.startsWith(prefix))
+      continue;
     const id = fullModel.slice(prefix.length);
     if (!id || builtInIds.has(id) || seenFullModels.has(fullModel)) continue;
 

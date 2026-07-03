@@ -54,7 +54,8 @@ export async function getOllamaUsage(accessToken, providerSpecificData) {
     const plan = providerSpecificData?.plan || "Free";
     return {
       plan,
-      message: "Ollama Cloud uses a free tier with light usage limits (resets every 5h & 7d). For detailed usage tracking, visit ollama.com/settings/keys.",
+      message:
+        "Ollama Cloud uses a free tier with light usage limits (resets every 5h & 7d). For detailed usage tracking, visit ollama.com/settings/keys.",
       quotas: [],
     };
   } catch {
@@ -74,12 +75,16 @@ export async function getGlmUsage(apiKey, provider, proxyOptions = null) {
   const quotaUrl = GLM_QUOTA_URLS[region];
 
   try {
-    const response = await proxyAwareFetch(quotaUrl, {
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        Accept: "application/json",
+    const response = await proxyAwareFetch(
+      quotaUrl,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: "application/json",
+        },
       },
-    }, proxyOptions);
+      proxyOptions,
+    );
 
     if (!response.ok) {
       if (response.status === 401) {
@@ -139,13 +144,17 @@ export async function getVercelAiGatewayUsage(apiKey, proxyOptions = null) {
   }
 
   try {
-    const response = await proxyAwareFetch(VERCEL_AI_GATEWAY_CREDITS_URL, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        Accept: "application/json",
+    const response = await proxyAwareFetch(
+      VERCEL_AI_GATEWAY_CREDITS_URL,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          Accept: "application/json",
+        },
       },
-    }, proxyOptions);
+      proxyOptions,
+    );
 
     if (response.status === 401 || response.status === 403) {
       return { message: "Vercel AI Gateway API key invalid or expired." };
@@ -154,7 +163,9 @@ export async function getVercelAiGatewayUsage(apiKey, proxyOptions = null) {
     if (!response.ok) {
       const errorText = await response.text().catch(() => "");
       const trimmed = errorText ? `: ${errorText.slice(0, 200)}` : "";
-      return { message: `Vercel AI Gateway credits API error (${response.status})${trimmed}` };
+      return {
+        message: `Vercel AI Gateway credits API error (${response.status})${trimmed}`,
+      };
     }
 
     const data = await response.json();
@@ -171,7 +182,8 @@ export async function getVercelAiGatewayUsage(apiKey, proxyOptions = null) {
     if (balance <= 0 && totalUsed <= 0) {
       return {
         plan: "Pay-as-you-go",
-        message: "Vercel AI Gateway connected. No credit allocation found (BYOK or unfunded account).",
+        message:
+          "Vercel AI Gateway connected. No credit allocation found (BYOK or unfunded account).",
         quotas: {},
       };
     }
@@ -219,7 +231,9 @@ export async function getQoderUsage(accessToken, proxyOptions = null) {
       proxyOptions,
     );
     if (!response.ok) {
-      return { message: `Qoder connected. Usage fetch returned ${response.status}.` };
+      return {
+        message: `Qoder connected. Usage fetch returned ${response.status}.`,
+      };
     }
     const body = await response.json().catch(() => null);
     if (!body) {
@@ -233,9 +247,10 @@ export async function getQoderUsage(accessToken, proxyOptions = null) {
     // Qoder publishes a single absolute reset timestamp (`expiresAt` in ms);
     // surface it on every quota record as ISO so the table can render
     // "resets at" alongside used/total.
-    const expiresAtMs = Number.isFinite(Number(body.expiresAt)) && Number(body.expiresAt) > 0
-      ? Number(body.expiresAt)
-      : null;
+    const expiresAtMs =
+      Number.isFinite(Number(body.expiresAt)) && Number(body.expiresAt) > 0
+        ? Number(body.expiresAt)
+        : null;
     const resetAt = expiresAtMs ? new Date(expiresAtMs).toISOString() : null;
     const quotas = {
       user: {
@@ -260,6 +275,8 @@ export async function getQoderUsage(accessToken, proxyOptions = null) {
       expiresAt: expiresAtMs,
     };
   } catch (error) {
-    return { message: `Qoder connected. Unable to fetch usage: ${error.message}` };
+    return {
+      message: `Qoder connected. Unable to fetch usage: ${error.message}`,
+    };
   }
 }

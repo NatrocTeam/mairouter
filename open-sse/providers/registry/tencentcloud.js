@@ -30,7 +30,10 @@ export default {
     { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro" },
     { id: "deepseek-v4-pro-202606", name: "DeepSeek V4 Pro (Vendor Direct)" },
     { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash" },
-    { id: "deepseek-v4-flash-202605", name: "DeepSeek V4 Flash (Vendor Direct)" },
+    {
+      id: "deepseek-v4-flash-202605",
+      name: "DeepSeek V4 Flash (Vendor Direct)",
+    },
     { id: "kimi-k2.7-code", name: "Kimi K2.7 Code" },
     { id: "kimi-k2.6", name: "Kimi K2.6" },
     { id: "kimi-k2.5", name: "Kimi K2.5" },

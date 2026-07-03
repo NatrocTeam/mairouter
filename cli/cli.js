@@ -725,21 +725,17 @@ function startServer(latestVersion) {
   function spawnServer() {
     serverStartTime = Date.now();
     crashLog = [];
-    const child = spawn(
-      RUNTIME,
-      ["--max-old-space-size=6144", serverPath],
-      {
-        cwd: standaloneDir,
-        stdio: showLog ? "inherit" : ["ignore", "ignore", "pipe"],
-        detached: true,
-        windowsHide: true,
-        env: {
-          ...buildEnvWithRuntime(process.env),
-          PORT: port.toString(),
-          HOSTNAME: host,
-        },
+    const child = spawn(RUNTIME, ["--max-old-space-size=6144", serverPath], {
+      cwd: standaloneDir,
+      stdio: showLog ? "inherit" : ["ignore", "ignore", "pipe"],
+      detached: true,
+      windowsHide: true,
+      env: {
+        ...buildEnvWithRuntime(process.env),
+        PORT: port.toString(),
+        HOSTNAME: host,
       },
-    );
+    });
     if (!showLog && child.stderr) {
       child.stderr.on("data", (data) => {
         const lines = data.toString().split("\n").filter(Boolean);

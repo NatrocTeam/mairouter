@@ -16,23 +16,33 @@ const GITHUB_CONFIG = {
  * GitHub Copilot Usage
  * Uses GitHub accessToken (not copilotToken) to call copilot_internal/user API
  */
-export async function getGitHubUsage(accessToken, providerSpecificData, proxyOptions = null) {
+export async function getGitHubUsage(
+  accessToken,
+  providerSpecificData,
+  proxyOptions = null,
+) {
   try {
     if (!accessToken) {
-      throw new Error("No GitHub access token available. Please re-authorize the connection.");
+      throw new Error(
+        "No GitHub access token available. Please re-authorize the connection.",
+      );
     }
 
     // copilot_internal/user API requires GitHub OAuth token, not copilotToken
-    const response = await proxyAwareFetch(U("github").url, {
-      headers: {
-        "Authorization": `token ${accessToken}`,
-        "Accept": "application/json",
-        "X-GitHub-Api-Version": GITHUB_CONFIG.apiVersion,
-        "User-Agent": GITHUB_CONFIG.userAgent,
-        "Editor-Version": "vscode/1.100.0",
-        "Editor-Plugin-Version": "copilot-chat/0.26.7",
+    const response = await proxyAwareFetch(
+      U("github").url,
+      {
+        headers: {
+          Authorization: `token ${accessToken}`,
+          Accept: "application/json",
+          "X-GitHub-Api-Version": GITHUB_CONFIG.apiVersion,
+          "User-Agent": GITHUB_CONFIG.userAgent,
+          "Editor-Version": "vscode/1.100.0",
+          "Editor-Plugin-Version": "copilot-chat/0.26.7",
+        },
       },
-    }, proxyOptions);
+      proxyOptions,
+    );
 
     if (!response.ok) {
       const error = await response.text();
@@ -52,8 +62,14 @@ export async function getGitHubUsage(accessToken, providerSpecificData, proxyOpt
         resetDate: data.quota_reset_date,
         quotas: {
           chat: { ...formatGitHubQuotaSnapshot(snapshots.chat), resetAt },
-          completions: { ...formatGitHubQuotaSnapshot(snapshots.completions), resetAt },
-          premium_interactions: { ...formatGitHubQuotaSnapshot(snapshots.premium_interactions), resetAt },
+          completions: {
+            ...formatGitHubQuotaSnapshot(snapshots.completions),
+            resetAt,
+          },
+          premium_interactions: {
+            ...formatGitHubQuotaSnapshot(snapshots.premium_interactions),
+            resetAt,
+          },
         },
       };
     } else if (data.monthly_quotas || data.limited_user_quotas) {

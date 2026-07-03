@@ -12,14 +12,21 @@ const REGISTRY_DIR = path.join(ROOT, "open-sse/providers/registry");
 
 // ── 1. Build DISPLAY map từ providersDisplay.js (parse thủ công để không cần import) ──
 // Đọc file, eval trong sandbox đơn giản
-const displaySrc = fs.readFileSync(path.join(ROOT, "src/shared/constants/providersDisplay.js"), "utf8");
-const RISK_NOTICE = "⚠️ Risk Notice: This provider uses a subscription/OAuth session not officially licensed for proxy/router use. Account may be restricted or banned. Use at your own risk.";
+const displaySrc = fs.readFileSync(
+  path.join(ROOT, "src/shared/constants/providersDisplay.js"),
+  "utf8",
+);
+const RISK_NOTICE =
+  "⚠️ Risk Notice: This provider uses a subscription/OAuth session not officially licensed for proxy/router use. Account may be restricted or banned. Use at your own risk.";
 // strip export keywords + inject RISK_NOTICE as param so no redeclaration
 const displayBody = displaySrc
   .replace(/^export const /gm, "const ")
   .replace(/^export function /gm, "function ")
   .replace(/^const RISK_NOTICE\s*=.*$/m, ""); // remove redeclaration
-const getDisplay = new Function("RISK_NOTICE", `${displayBody}; return PROVIDER_DISPLAY;`);
+const getDisplay = new Function(
+  "RISK_NOTICE",
+  `${displayBody}; return PROVIDER_DISPLAY;`,
+);
 const DISPLAY = getDisplay(RISK_NOTICE);
 
 // ── 2. Build CATEGORY + EXTRA map từ providers.js ──
@@ -27,7 +34,10 @@ const DISPLAY = getDisplay(RISK_NOTICE);
 const CATEGORY_MAP = {};
 
 // Đọc providers.js source để extract thủ công từng dòng
-const provSrc = fs.readFileSync(path.join(ROOT, "src/shared/constants/providers.js"), "utf8");
+const provSrc = fs.readFileSync(
+  path.join(ROOT, "src/shared/constants/providers.js"),
+  "utf8",
+);
 
 // Detect category blocks
 const CATEGORIES = {
@@ -40,8 +50,15 @@ const CATEGORIES = {
 
 // THINKING_CONFIG values để inline
 const THINKING_CONFIG = {
-  extended: { options: ["auto", "on", "off"], defaultMode: "auto", defaultBudgetTokens: 10000 },
-  effort: { options: ["auto", "none", "low", "medium", "high"], defaultMode: "auto" },
+  extended: {
+    options: ["auto", "on", "off"],
+    defaultMode: "auto",
+    defaultBudgetTokens: 10000,
+  },
+  effort: {
+    options: ["auto", "none", "low", "medium", "high"],
+    defaultMode: "auto",
+  },
 };
 
 // Parse thủ công từng category block
@@ -51,7 +68,9 @@ for (const [cat, re] of Object.entries(CATEGORIES)) {
   const block = match[1];
 
   // Tìm tất cả entry lines (không comment)
-  const lines = block.split("\n").filter(l => l.trim() && !l.trim().startsWith("//"));
+  const lines = block
+    .split("\n")
+    .filter((l) => l.trim() && !l.trim().startsWith("//"));
   for (const line of lines) {
     // Extract id từ id: "xxx"
     const idM = line.match(/\bid:\s*["']([\w-]+)["']/);
@@ -64,11 +83,14 @@ for (const [cat, re] of Object.entries(CATEGORIES)) {
     const extra = {};
 
     // thinkingConfig
-    if (line.includes("THINKING_CONFIG.effort")) extra.thinkingConfig = THINKING_CONFIG.effort;
-    else if (line.includes("THINKING_CONFIG.extended")) extra.thinkingConfig = THINKING_CONFIG.extended;
+    if (line.includes("THINKING_CONFIG.effort"))
+      extra.thinkingConfig = THINKING_CONFIG.effort;
+    else if (line.includes("THINKING_CONFIG.extended"))
+      extra.thinkingConfig = THINKING_CONFIG.extended;
 
     // hasProviderSpecificData
-    if (line.includes("hasProviderSpecificData: true")) extra.hasProviderSpecificData = true;
+    if (line.includes("hasProviderSpecificData: true"))
+      extra.hasProviderSpecificData = true;
 
     // hasOAuth
     if (line.includes("hasOAuth: true")) extra.hasOAuth = true;
@@ -76,7 +98,9 @@ for (const [cat, re] of Object.entries(CATEGORIES)) {
     // authModes
     const authModesM = line.match(/authModes:\s*(\[[^\]]+\])/);
     if (authModesM) {
-      try { extra.authModes = JSON.parse(authModesM[1].replace(/'/g, '"')); } catch {
+      try {
+        extra.authModes = JSON.parse(authModesM[1].replace(/'/g, '"'));
+      } catch {
         // Ignore malformed optional metadata and leave authModes unset.
       }
     }
@@ -93,12 +117,15 @@ for (const [cat, re] of Object.entries(CATEGORIES)) {
     if (line.includes("noAuth: true")) extra.noAuth = true;
 
     // passthroughModels
-    if (line.includes("passthroughModels: true")) extra.passthroughModels = true;
+    if (line.includes("passthroughModels: true"))
+      extra.passthroughModels = true;
 
     // hiddenKinds
     const hiddenKindsM = line.match(/hiddenKinds:\s*(\[[^\]]+\])/);
     if (hiddenKindsM) {
-      try { extra.hiddenKinds = JSON.parse(hiddenKindsM[1].replace(/'/g, '"')); } catch {
+      try {
+        extra.hiddenKinds = JSON.parse(hiddenKindsM[1].replace(/'/g, '"'));
+      } catch {
         // Ignore malformed optional metadata and leave hiddenKinds unset.
       }
     }
@@ -106,7 +133,9 @@ for (const [cat, re] of Object.entries(CATEGORIES)) {
     // regions (xiaomi-tokenplan)
     const regionsM = line.match(/regions:\s*(\[[\s\S]*?\])/);
     if (regionsM) {
-      try { extra.regions = JSON.parse(regionsM[1].replace(/'/g, '"')); } catch {
+      try {
+        extra.regions = JSON.parse(regionsM[1].replace(/'/g, '"'));
+      } catch {
         // Ignore malformed optional metadata and leave regions unset.
       }
     }
@@ -118,9 +147,10 @@ for (const [cat, re] of Object.entries(CATEGORIES)) {
 }
 
 // ── 3. Inject vào từng registry file ──
-const registryFiles = fs.readdirSync(REGISTRY_DIR)
-  .filter(f => f.endsWith(".js") && f !== "index.js")
-  .map(f => f.replace(".js", ""));
+const registryFiles = fs
+  .readdirSync(REGISTRY_DIR)
+  .filter((f) => f.endsWith(".js") && f !== "index.js")
+  .map((f) => f.replace(".js", ""));
 
 let injected = 0;
 let skipped = 0;
@@ -152,8 +182,10 @@ for (const id of registryFiles) {
     const d = { ...display };
     // Thay RISK_NOTICE string về const reference khi serialize
     const RISK = RISK_NOTICE;
-    const displayJson = JSON.stringify(d, null, 4)
-      .replace(new RegExp(JSON.stringify(RISK).slice(1, -1), "g"), "RISK_NOTICE");
+    const displayJson = JSON.stringify(d, null, 4).replace(
+      new RegExp(JSON.stringify(RISK).slice(1, -1), "g"),
+      "RISK_NOTICE",
+    );
 
     displayBlock = `  display: ${displayJson.replace(/^/gm, "  ").trimStart()},\n`;
   }

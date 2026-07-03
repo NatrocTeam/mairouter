@@ -2,9 +2,7 @@ export default {
   id: "assemblyai",
   priority: 30,
   alias: "assemblyai",
-  aliases: [
-    "aai",
-  ],
+  aliases: ["aai"],
   uiAlias: "aai",
   display: {
     name: "AssemblyAI",
@@ -23,8 +21,18 @@ export default {
     validateUrl: "https://api.assemblyai.com/v1/account",
   },
   models: [
-    { id: "universal-3-pro", name: "Universal 3 Pro", params: ["language"], kind: "stt" },
-    { id: "universal-2", name: "Universal 2", params: ["language"], kind: "stt" },
+    {
+      id: "universal-3-pro",
+      name: "Universal 3 Pro",
+      params: ["language"],
+      kind: "stt",
+    },
+    {
+      id: "universal-2",
+      name: "Universal 2",
+      params: ["language"],
+      kind: "stt",
+    },
     { id: "best", name: "Best (Nano + Universal)", kind: "stt" },
     { id: "nano", name: "Nano (Fast)", kind: "stt" },
   ],

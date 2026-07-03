@@ -135,7 +135,13 @@ function RouterNode({ data }) {
         className="!bg-transparent !border-0 !w-0 !h-0"
       />
 
-      <Image src="/favicon.svg" alt="mairouter" width={24} height={24} className="mr-2" />
+      <Image
+        src="/favicon.svg"
+        alt="mairouter"
+        width={24}
+        height={24}
+        className="mr-2"
+      />
       <span className="text-sm font-bold text-primary">mairouter</span>
       {data.activeCount > 0 && (
         <span className="ml-2 px-1.5 py-0.5 rounded-full bg-primary text-white text-xs font-bold">
@@ -343,10 +349,13 @@ export default function ProviderTopology({
   const rfInstance = useRef(null);
   const containerRef = useRef(null);
   const fitOpts = useMemo(() => ({ padding: 0.2, duration: 200 }), []);
-  const onInit = useCallback((instance) => {
-    rfInstance.current = instance;
-    setTimeout(() => instance.fitView(fitOpts), 50);
-  }, [fitOpts]);
+  const onInit = useCallback(
+    (instance) => {
+      rfInstance.current = instance;
+      setTimeout(() => instance.fitView(fitOpts), 50);
+    },
+    [fitOpts],
+  );
 
   // Re-fit on container resize
   useEffect(() => {

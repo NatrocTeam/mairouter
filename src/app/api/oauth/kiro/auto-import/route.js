@@ -65,7 +65,8 @@ export async function GET() {
     if (!refreshToken) {
       return NextResponse.json({
         found: false,
-        error: "Kiro token not found in AWS SSO cache. Please login to Kiro IDE first.",
+        error:
+          "Kiro token not found in AWS SSO cache. Please login to Kiro IDE first.",
       });
     }
 
@@ -79,7 +80,10 @@ export async function GET() {
     if (tokenData?.clientIdHash) {
       const clientFile = `${tokenData.clientIdHash}.json`;
       try {
-        const clientContent = await readFile(join(cachePath, clientFile), "utf-8");
+        const clientContent = await readFile(
+          join(cachePath, clientFile),
+          "utf-8",
+        );
         const clientData = JSON.parse(clientContent);
         if (clientData.clientId && clientData.clientSecret) {
           clientId = clientData.clientId;
@@ -95,8 +99,23 @@ export async function GET() {
     // of the IDC region, so we normalize the region in the ARN to us-east-1.
     let profileArn = null;
     const kiroProfilePaths = [
-      join(process.env.APPDATA || join(homedir(), "AppData", "Roaming"), "Kiro", "User", "globalStorage", "kiro.kiroagent", "profile.json"),
-      join(homedir(), ".config", "Kiro", "User", "globalStorage", "kiro.kiroagent", "profile.json"),
+      join(
+        process.env.APPDATA || join(homedir(), "AppData", "Roaming"),
+        "Kiro",
+        "User",
+        "globalStorage",
+        "kiro.kiroagent",
+        "profile.json",
+      ),
+      join(
+        homedir(),
+        ".config",
+        "Kiro",
+        "User",
+        "globalStorage",
+        "kiro.kiroagent",
+        "profile.json",
+      ),
     ];
     for (const profilePath of kiroProfilePaths) {
       try {
@@ -104,7 +123,10 @@ export async function GET() {
         const profileData = JSON.parse(profileContent);
         if (profileData.arn) {
           // Normalize region to us-east-1 for the runtime gateway
-          profileArn = profileData.arn.replace(/arn:aws:codewhisperer:[^:]+:/, "arn:aws:codewhisperer:us-east-1:");
+          profileArn = profileData.arn.replace(
+            /arn:aws:codewhisperer:[^:]+:/,
+            "arn:aws:codewhisperer:us-east-1:",
+          );
           break;
         }
       } catch (_error) {
@@ -126,7 +148,7 @@ export async function GET() {
     console.log("Kiro auto-import error:", error);
     return NextResponse.json(
       { found: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

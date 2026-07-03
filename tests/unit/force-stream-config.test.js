@@ -91,7 +91,11 @@ vi.mock("../../open-sse/handlers/chatCore/requestDetail.js", () => ({
 }));
 
 vi.mock("../../open-sse/utils/error.js", () => ({
-  createErrorResult: vi.fn((status, message) => ({ success: false, status, error: message })),
+  createErrorResult: vi.fn((status, message) => ({
+    success: false,
+    status,
+    error: message,
+  })),
   formatProviderError: vi.fn((error) => error.message),
   parseUpstreamError: vi.fn(),
 }));
@@ -142,12 +146,16 @@ describe("forceStream provider config", () => {
     }
   });
 
-  it.each([undefined, false])( "keeps forced-stream providers streaming for JSON clients when body.stream is %s", async (bodyStream) => {
-    const { handleChatCore } = await import("../../open-sse/handlers/chatCore.js");
+  it.each([undefined, false])(
+    "keeps forced-stream providers streaming for JSON clients when body.stream is %s",
+    async (bodyStream) => {
+      const { handleChatCore } =
+        await import("../../open-sse/handlers/chatCore.js");
 
-    await handleChatCore(makeOptions(bodyStream));
+      await handleChatCore(makeOptions(bodyStream));
 
-    expect(executeMock).toHaveBeenCalledTimes(1);
-    expect(executeMock.mock.calls[0][0].stream).toBe(true);
-  });
+      expect(executeMock).toHaveBeenCalledTimes(1);
+      expect(executeMock.mock.calls[0][0].stream).toBe(true);
+    },
+  );
 });

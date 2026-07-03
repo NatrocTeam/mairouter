@@ -1,14 +1,19 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 
 const mocks = vi.hoisted(() => ({
-  execSync: vi.fn(() => { throw new Error("not found"); }),
+  execSync: vi.fn(() => {
+    throw new Error("not found");
+  }),
 }));
 
 vi.mock("child_process", () => ({
   execSync: mocks.execSync,
 }));
 
-import { getHeadroomStatus, isLoopbackHeadroomUrl } from "../../src/lib/headroom/detect.js";
+import {
+  getHeadroomStatus,
+  isLoopbackHeadroomUrl,
+} from "../../src/lib/headroom/detect.js";
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -24,7 +29,10 @@ describe("headroom detect", () => {
     expect(status.running).toBe(true);
     expect(status.localUrl).toBe(false);
     expect(status.canStart).toBe(false);
-    expect(global.fetch).toHaveBeenCalledWith("http://headroom:8787/health", expect.any(Object));
+    expect(global.fetch).toHaveBeenCalledWith(
+      "http://headroom:8787/health",
+      expect.any(Object),
+    );
   });
 
   it("recognizes loopback URLs for managed local mode", () => {

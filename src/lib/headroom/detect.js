@@ -25,13 +25,29 @@ const EXTRA_BINS = IS_WIN
       "/bin",
     ];
 
-const EXTENDED_PATH = [...EXTRA_BINS, process.env.PATH || ""].filter(Boolean).join(path.delimiter);
-const PYTHON_CANDIDATES = ["python3.13", "python3.12", "python3.11", "python3.10", "python3", "python"];
+const EXTENDED_PATH = [...EXTRA_BINS, process.env.PATH || ""]
+  .filter(Boolean)
+  .join(path.delimiter);
+const PYTHON_CANDIDATES = [
+  "python3.13",
+  "python3.12",
+  "python3.11",
+  "python3.10",
+  "python3",
+  "python",
+];
 const MIN_VERSION = [3, 10];
 const HEADROOM_HEALTH_TIMEOUT_MS = 1500;
-const LOOPBACK_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]", "0.0.0.0"]);
+const LOOPBACK_HOSTS = new Set([
+  "localhost",
+  "127.0.0.1",
+  "::1",
+  "[::1]",
+  "0.0.0.0",
+]);
 
-export const DEFAULT_HEADROOM_URL = process.env.HEADROOM_URL || "http://localhost:8787";
+export const DEFAULT_HEADROOM_URL =
+  process.env.HEADROOM_URL || "http://localhost:8787";
 
 // Detect whether the headroom CLI is installed and where its binary lives.
 export function findHeadroomBinary() {
@@ -40,7 +56,9 @@ export function findHeadroomBinary() {
       stdio: ["ignore", "pipe", "ignore"],
       windowsHide: true,
       env: { ...process.env, PATH: EXTENDED_PATH },
-    }).toString().trim();
+    })
+      .toString()
+      .trim();
     // Windows `where` may return multiple lines — take the first.
     return out ? out.split(/\r?\n/)[0].trim() : null;
   } catch {
@@ -56,11 +74,16 @@ export function findPython310() {
         stdio: ["ignore", "pipe", "ignore"],
         windowsHide: true,
         env: { ...process.env, PATH: EXTENDED_PATH },
-      }).toString().trim();
+      })
+        .toString()
+        .trim();
       const match = ver.match(/(\d+)\.(\d+)/);
       if (!match) continue;
       const [major, minor] = [parseInt(match[1], 10), parseInt(match[2], 10)];
-      if (major > MIN_VERSION[0] || (major === MIN_VERSION[0] && minor >= MIN_VERSION[1])) {
+      if (
+        major > MIN_VERSION[0] ||
+        (major === MIN_VERSION[0] && minor >= MIN_VERSION[1])
+      ) {
         return candidate;
       }
     } catch {
@@ -75,7 +98,9 @@ export async function probeProxyRunning(url) {
   if (!url) return false;
   const base = String(url).replace(/\/$/, "");
   try {
-    const res = await fetch(`${base}/health`, { signal: AbortSignal.timeout(HEADROOM_HEALTH_TIMEOUT_MS) });
+    const res = await fetch(`${base}/health`, {
+      signal: AbortSignal.timeout(HEADROOM_HEALTH_TIMEOUT_MS),
+    });
     return res.ok;
   } catch {
     return false;
@@ -98,5 +123,12 @@ export async function getHeadroomStatus(url) {
   const installed = Boolean(path);
   const running = await probeProxyRunning(url);
   const localUrl = isLoopbackHeadroomUrl(url);
-  return { installed, path, running, python, localUrl, canStart: installed && localUrl };
+  return {
+    installed,
+    path,
+    running,
+    python,
+    localUrl,
+    canStart: installed && localUrl,
+  };
 }

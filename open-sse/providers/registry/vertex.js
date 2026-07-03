@@ -2,9 +2,7 @@ export default {
   id: "vertex",
   priority: 40,
   alias: "vertex",
-  aliases: [
-    "vx",
-  ],
+  aliases: ["vx"],
   uiAlias: "vx",
   display: {
     name: "Vertex AI",
@@ -24,9 +22,12 @@ export default {
   },
   models: [
     { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview" },
-    { id: "gemini-3.1-flash-lite-preview", name: "Gemini 3.1 Flash Lite Preview" },
+    {
+      id: "gemini-3.1-flash-lite-preview",
+      name: "Gemini 3.1 Flash Lite Preview",
+    },
     { id: "gemini-3-flash-preview", name: "Gemini 3 Flash Preview" },
     { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" },
   ],
-  serviceKinds: ["llm","imageToText"],
+  serviceKinds: ["llm", "imageToText"],
 };

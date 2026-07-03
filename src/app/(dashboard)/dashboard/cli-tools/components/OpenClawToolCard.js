@@ -32,7 +32,9 @@ export default function OpenClawToolCard({
   const [applying, setApplying] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [message, setMessage] = useState(null);
-  const [selectedApiKey, setSelectedApiKey] = useState(() => apiKeys?.[0]?.key ?? "");
+  const [selectedApiKey, setSelectedApiKey] = useState(
+    () => apiKeys?.[0]?.key ?? "",
+  );
   const [selectedModel, setSelectedModel] = useState("");
   const [agentModels, setAgentModels] = useState({}); // { [agentId]: modelId }
   const [agentModalFor, setAgentModalFor] = useState(null); // agentId opening modal
@@ -92,8 +94,7 @@ export default function OpenClawToolCard({
       checkOpenclawStatus();
       fetchModelAliases();
     }
-    if (isExpanded)
-      fetchModelAliases();
+    if (isExpanded) fetchModelAliases();
   }, [isExpanded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {

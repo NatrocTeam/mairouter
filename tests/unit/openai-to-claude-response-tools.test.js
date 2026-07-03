@@ -6,27 +6,61 @@ function createState() {
 }
 
 function getInputJsonDelta(events) {
-  return events.find((event) => event.type === "content_block_delta" && event.delta?.type === "input_json_delta")?.delta.partial_json;
+  return events.find(
+    (event) =>
+      event.type === "content_block_delta" &&
+      event.delta?.type === "input_json_delta",
+  )?.delta.partial_json;
 }
 
 describe("openaiToClaudeResponse tool argument sanitization", () => {
   it("drops invalid Read pages and clamps numeric bounds", () => {
     const state = createState();
 
-    openaiToClaudeResponse({
-      id: "chatcmpl-test-read",
-      model: "test-model",
-      choices: [{ delta: { tool_calls: [{ index: 0, id: "toolu_read", function: { name: "Read" } }] } }],
-    }, state);
+    openaiToClaudeResponse(
+      {
+        id: "chatcmpl-test-read",
+        model: "test-model",
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                { index: 0, id: "toolu_read", function: { name: "Read" } },
+              ],
+            },
+          },
+        ],
+      },
+      state,
+    );
 
-    const events = openaiToClaudeResponse({
-      id: "chatcmpl-test-read",
-      model: "test-model",
-      choices: [{
-        delta: { tool_calls: [{ index: 0, function: { arguments: JSON.stringify({ file_path: "F:/repo/file.js", offset: -5, limit: 999999999, pages: "" }) } }] },
-        finish_reason: "tool_calls",
-      }],
-    }, state);
+    const events = openaiToClaudeResponse(
+      {
+        id: "chatcmpl-test-read",
+        model: "test-model",
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                {
+                  index: 0,
+                  function: {
+                    arguments: JSON.stringify({
+                      file_path: "F:/repo/file.js",
+                      offset: -5,
+                      limit: 999999999,
+                      pages: "",
+                    }),
+                  },
+                },
+              ],
+            },
+            finish_reason: "tool_calls",
+          },
+        ],
+      },
+      state,
+    );
 
     expect(JSON.parse(getInputJsonDelta(events))).toEqual({
       file_path: "F:/repo/file.js",
@@ -47,19 +81,24 @@ describe("openaiToClaudeResponse tool argument sanitization", () => {
     const r1 = openaiToClaudeResponse(chunk1, state);
 
     // Should NOT emit content_block_start yet (name is pending)
-    const blockStart1 = r1?.find(e => e.type === "content_block_start");
+    const blockStart1 = r1?.find((e) => e.type === "content_block_start");
     expect(blockStart1).toBeUndefined();
 
     // Second chunk: name arrives (GLM 5.2 pattern)
     const chunk2 = {
       id: "chatcmpl-test-glm",
       model: "glm-5.2",
-      choices: [{ delta: { tool_calls: [{ index: 0, function: { name: "Read" } }] } }],
+      choices: [
+        { delta: { tool_calls: [{ index: 0, function: { name: "Read" } }] } },
+      ],
     };
     const r2 = openaiToClaudeResponse(chunk2, state);
 
     // Should emit content_block_start with the name now
-    const blockStart2 = r2?.find(e => e.type === "content_block_start" && e.content_block?.name === "Read");
+    const blockStart2 = r2?.find(
+      (e) =>
+        e.type === "content_block_start" && e.content_block?.name === "Read",
+    );
     expect(blockStart2).toBeDefined();
     expect(blockStart2.content_block.id).toBe("call_abc123");
 
@@ -67,10 +106,21 @@ describe("openaiToClaudeResponse tool argument sanitization", () => {
     const chunk3 = {
       id: "chatcmpl-test-glm",
       model: "glm-5.2",
-      choices: [{
-        delta: { tool_calls: [{ index: 0, function: { arguments: JSON.stringify({ file_path: "/tmp/test.js" }) } }] },
-        finish_reason: "tool_calls",
-      }],
+      choices: [
+        {
+          delta: {
+            tool_calls: [
+              {
+                index: 0,
+                function: {
+                  arguments: JSON.stringify({ file_path: "/tmp/test.js" }),
+                },
+              },
+            ],
+          },
+          finish_reason: "tool_calls",
+        },
+      ],
     };
     const r3 = openaiToClaudeResponse(chunk3, state);
 
@@ -83,28 +133,45 @@ describe("openaiToClaudeResponse tool argument sanitization", () => {
     const state = createState();
 
     // GLM 5.2: id only (no name)
-    openaiToClaudeResponse({
-      id: "chatcmpl-test",
-      model: "glm-5.2",
-      choices: [{ delta: { tool_calls: [{ index: 0, id: "call_xyz" }] } }],
-    }, state);
+    openaiToClaudeResponse(
+      {
+        id: "chatcmpl-test",
+        model: "glm-5.2",
+        choices: [{ delta: { tool_calls: [{ index: 0, id: "call_xyz" }] } }],
+      },
+      state,
+    );
 
     // Name + arguments + finish in same chunk (GLM 5.2 edge case)
-    const events = openaiToClaudeResponse({
-      id: "chatcmpl-test",
-      model: "glm-5.2",
-      choices: [{
-        delta: {
-          tool_calls: [
-            { index: 0, function: { name: "Read", arguments: JSON.stringify({ file_path: "/tmp/test.js" }) } }
-          ]
-        },
-        finish_reason: "tool_calls",
-      }],
-    }, state);
+    const events = openaiToClaudeResponse(
+      {
+        id: "chatcmpl-test",
+        model: "glm-5.2",
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                {
+                  index: 0,
+                  function: {
+                    name: "Read",
+                    arguments: JSON.stringify({ file_path: "/tmp/test.js" }),
+                  },
+                },
+              ],
+            },
+            finish_reason: "tool_calls",
+          },
+        ],
+      },
+      state,
+    );
 
     // content_block_start should be emitted (deferred name flushed)
-    const blockStart = events?.find(e => e.type === "content_block_start" && e.content_block?.name === "Read");
+    const blockStart = events?.find(
+      (e) =>
+        e.type === "content_block_start" && e.content_block?.name === "Read",
+    );
     expect(blockStart).toBeDefined();
     expect(blockStart.content_block.id).toBe("call_xyz");
 
@@ -116,20 +183,48 @@ describe("openaiToClaudeResponse tool argument sanitization", () => {
   it("keeps valid PDF pages", () => {
     const state = createState();
 
-    openaiToClaudeResponse({
-      id: "chatcmpl-test-pdf",
-      model: "test-model",
-      choices: [{ delta: { tool_calls: [{ index: 0, id: "toolu_pdf", function: { name: "proxy_Read" } }] } }],
-    }, state);
+    openaiToClaudeResponse(
+      {
+        id: "chatcmpl-test-pdf",
+        model: "test-model",
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                { index: 0, id: "toolu_pdf", function: { name: "proxy_Read" } },
+              ],
+            },
+          },
+        ],
+      },
+      state,
+    );
 
-    const events = openaiToClaudeResponse({
-      id: "chatcmpl-test-pdf",
-      model: "test-model",
-      choices: [{
-        delta: { tool_calls: [{ index: 0, function: { arguments: JSON.stringify({ file_path: "F:/repo/doc.pdf", pages: "1-3" }) } }] },
-        finish_reason: "tool_calls",
-      }],
-    }, state);
+    const events = openaiToClaudeResponse(
+      {
+        id: "chatcmpl-test-pdf",
+        model: "test-model",
+        choices: [
+          {
+            delta: {
+              tool_calls: [
+                {
+                  index: 0,
+                  function: {
+                    arguments: JSON.stringify({
+                      file_path: "F:/repo/doc.pdf",
+                      pages: "1-3",
+                    }),
+                  },
+                },
+              ],
+            },
+            finish_reason: "tool_calls",
+          },
+        ],
+      },
+      state,
+    );
 
     expect(JSON.parse(getInputJsonDelta(events))).toEqual({
       file_path: "F:/repo/doc.pdf",

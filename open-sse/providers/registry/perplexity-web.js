@@ -2,9 +2,7 @@ export default {
   id: "perplexity-web",
   priority: 220,
   alias: "perplexity-web",
-  aliases: [
-    "pw",
-  ],
+  aliases: ["pw"],
   uiAlias: "pw",
   display: {
     name: "Perplexity Web (Pro/Max)",
@@ -15,7 +13,8 @@ export default {
   },
   category: "webCookie",
   authType: "cookie",
-  authHint: "Paste your __Secure-next-auth.session-token cookie value from perplexity.ai",
+  authHint:
+    "Paste your __Secure-next-auth.session-token cookie value from perplexity.ai",
   transport: {
     baseUrl: "https://www.perplexity.ai/rest/sse/perplexity_ask",
     format: "perplexity-web",

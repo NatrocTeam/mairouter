@@ -14,17 +14,29 @@ export function parseDataUri(url) {
 
 import { lookup } from "node:dns/promises";
 import { Agent } from "undici";
-import { MAX_IMAGE_BYTES, FETCH_TIMEOUT_MS, IMAGE_SIGNATURES, BLOCKED_HOSTS } from "../../config/mediaConfig.js";
+import {
+  MAX_IMAGE_BYTES,
+  FETCH_TIMEOUT_MS,
+  IMAGE_SIGNATURES,
+  BLOCKED_HOSTS,
+} from "../../config/mediaConfig.js";
 
 // True if an IPv4/IPv6 address is private/reserved (SSRF target).
 function isPrivateIp(ip) {
   if (!ip) return true;
   // IPv6 loopback / unique-local / link-local
-  if (ip === "::1" || ip.startsWith("fc") || ip.startsWith("fd") || ip.startsWith("fe80")) return true;
+  if (
+    ip === "::1" ||
+    ip.startsWith("fc") ||
+    ip.startsWith("fd") ||
+    ip.startsWith("fe80")
+  )
+    return true;
   // IPv4-mapped IPv6 (::ffff:a.b.c.d) -> extract tail
   const v4 = ip.includes(".") ? ip.split(":").pop() : ip;
   const parts = v4.split(".").map((n) => Number.parseInt(n, 10));
-  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n))) return ip.includes(":") ? false : true;
+  if (parts.length !== 4 || parts.some((n) => Number.isNaN(n)))
+    return ip.includes(":") ? false : true;
   const [a, b] = parts;
   if (a === 10 || a === 127 || a === 0) return true;
   if (a === 172 && b >= 16 && b <= 31) return true;
@@ -40,7 +52,8 @@ async function resolvePinnedIps(hostname) {
   if (!hostname || BLOCKED_HOSTS.has(hostname.toLowerCase())) return null;
   try {
     const records = await lookup(hostname, { all: true });
-    if (!records.length || records.some((r) => isPrivateIp(r.address))) return null;
+    if (!records.length || records.some((r) => isPrivateIp(r.address)))
+      return null;
     return records;
   } catch {
     return null;
@@ -53,11 +66,24 @@ function detectImageMime(buf) {
     if (buf.length < offset + sig.length) continue;
     let match = true;
     for (let i = 0; i < sig.length; i++) {
-      if (buf[offset + i] !== sig[i]) { match = false; break; }
+      if (buf[offset + i] !== sig[i]) {
+        match = false;
+        break;
+      }
     }
     if (!match) continue;
     // WEBP: RIFF....WEBP — bytes 8..11 must be "WEBP".
-    if (verifyWebp && !(buf.length >= 12 && buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50)) continue;
+    if (
+      verifyWebp &&
+      !(
+        buf.length >= 12 &&
+        buf[8] === 0x57 &&
+        buf[9] === 0x45 &&
+        buf[10] === 0x42 &&
+        buf[11] === 0x50
+      )
+    )
+      continue;
     return mime;
   }
   return null;
@@ -74,28 +100,50 @@ function detectImageMime(buf) {
  * @returns {Promise<{url: string, mimeType: string}|null>}
  */
 export async function fetchImageAsBase64(imageUrl, options = {}) {
-  const { signal, timeoutMs = FETCH_TIMEOUT_MS, maxBytes = MAX_IMAGE_BYTES } = options;
-  if (!imageUrl || (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://"))) {
+  const {
+    signal,
+    timeoutMs = FETCH_TIMEOUT_MS,
+    maxBytes = MAX_IMAGE_BYTES,
+  } = options;
+  if (
+    !imageUrl ||
+    (!imageUrl.startsWith("http://") && !imageUrl.startsWith("https://"))
+  ) {
     return null;
   }
 
   let url;
-  try { url = new URL(imageUrl); } catch { return null; }
+  try {
+    url = new URL(imageUrl);
+  } catch {
+    return null;
+  }
   const pinnedIps = await resolvePinnedIps(url.hostname);
   if (!pinnedIps) return null;
 
   const controller = new AbortController();
-  const timeout = signal ? null : setTimeout(() => controller.abort(), timeoutMs);
+  const timeout = signal
+    ? null
+    : setTimeout(() => controller.abort(), timeoutMs);
   const fetchSignal = signal || controller.signal;
 
   // Pin connect to the validated IP so no second DNS resolution can rebind (TOCTOU fix).
   const dispatcher = new Agent({
-    connect: { lookup: (_h, _o, cb) => cb(null, [{ address: pinnedIps[0].address, family: pinnedIps[0].family }]) },
+    connect: {
+      lookup: (_h, _o, cb) =>
+        cb(null, [
+          { address: pinnedIps[0].address, family: pinnedIps[0].family },
+        ]),
+    },
   });
 
   try {
     // redirect:"manual" prevents a public URL redirecting to a private one (SSRF bypass).
-    const response = await fetch(imageUrl, { signal: fetchSignal, redirect: "manual", dispatcher });
+    const response = await fetch(imageUrl, {
+      signal: fetchSignal,
+      redirect: "manual",
+      dispatcher,
+    });
     if (!response.ok || !response.body) return null;
 
     // Stream-read with a hard byte cap to avoid loading huge payloads into memory.
@@ -106,7 +154,14 @@ export async function fetchImageAsBase64(imageUrl, options = {}) {
       const { done, value } = await reader.read();
       if (done) break;
       total += value.length;
-      if (total > maxBytes) { try { await reader.cancel(); } catch { /* ignore */ } return null; }
+      if (total > maxBytes) {
+        try {
+          await reader.cancel();
+        } catch {
+          /* ignore */
+        }
+        return null;
+      }
       chunks.push(value);
     }
 
@@ -114,7 +169,10 @@ export async function fetchImageAsBase64(imageUrl, options = {}) {
     const mimeType = detectImageMime(buf);
     if (!mimeType) return null; // not a recognized image — reject disguised payloads
 
-    return { url: `data:${mimeType};base64,${buf.toString("base64")}`, mimeType };
+    return {
+      url: `data:${mimeType};base64,${buf.toString("base64")}`,
+      mimeType,
+    };
   } catch {
     return null;
   } finally {

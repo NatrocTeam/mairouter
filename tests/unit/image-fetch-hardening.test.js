@@ -13,7 +13,10 @@ function mockFetchOnce(bytes, ok = true) {
     getReader() {
       let sent = false;
       return {
-        read: async () => sent ? { done: true } : (sent = true, { done: false, value: new Uint8Array(bytes) }),
+        read: async () =>
+          sent
+            ? { done: true }
+            : ((sent = true), { done: false, value: new Uint8Array(bytes) }),
         cancel: async () => {},
       };
     },
@@ -25,7 +28,9 @@ beforeEach(() => {
   lookupMock.mockReset();
   lookupMock.mockResolvedValue({ address: "93.184.216.34" }); // public by default
 });
-afterEach(() => { vi.restoreAllMocks(); });
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 describe("fetchImageAsBase64 hardening", () => {
   it("rejects non-http url", async () => {
@@ -35,7 +40,9 @@ describe("fetchImageAsBase64 hardening", () => {
 
   it("SSRF: rejects private IP (10.x)", async () => {
     lookupMock.mockResolvedValue({ address: "10.0.0.5" });
-    expect(await fetchImageAsBase64("http://internal.example/x.png")).toBeNull();
+    expect(
+      await fetchImageAsBase64("http://internal.example/x.png"),
+    ).toBeNull();
   });
 
   it("SSRF: rejects cloud metadata 169.254.169.254", async () => {
@@ -67,7 +74,11 @@ describe("fetchImageAsBase64 hardening", () => {
 
   it("rejects payload over size cap", async () => {
     mockFetchOnce(Buffer.alloc(1024));
-    expect(await fetchImageAsBase64("https://example.com/big.png", { maxBytes: 100 })).toBeNull();
+    expect(
+      await fetchImageAsBase64("https://example.com/big.png", {
+        maxBytes: 100,
+      }),
+    ).toBeNull();
   });
 
   it("returns null when fetch not ok", async () => {

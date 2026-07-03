@@ -1,6 +1,11 @@
 import { register } from "../index.js";
 import { FORMATS } from "../formats.js";
-import { ROLE, OPENAI_BLOCK, CLAUDE_BLOCK, OPENAI_FINISH } from "../schema/index.js";
+import {
+  ROLE,
+  OPENAI_BLOCK,
+  CLAUDE_BLOCK,
+  OPENAI_FINISH,
+} from "../schema/index.js";
 import { buildChunk } from "../concerns/chunk.js";
 import { toOpenAIUsage } from "../concerns/usage.js";
 import { reasoningDelta } from "../concerns/reasoning.js";
@@ -9,9 +14,13 @@ import { toOpenAIFinish } from "../concerns/finishReason.js";
 // Create OpenAI chunk helper
 function createChunk(state, delta, finishReason = null) {
   return buildChunk(
-    { id: `chatcmpl-${state.messageId}`, created: Math.floor(Date.now() / 1000), model: state.model },
+    {
+      id: `chatcmpl-${state.messageId}`,
+      created: Math.floor(Date.now() / 1000),
+      model: state.model,
+    },
     delta,
-    finishReason
+    finishReason,
   );
 }
 
@@ -57,8 +66,8 @@ export function claudeToOpenAIResponse(chunk, state) {
           type: OPENAI_BLOCK.FUNCTION,
           function: {
             name: toolName,
-            arguments: ""
-          }
+            arguments: "",
+          },
         };
         state.toolCalls.set(chunk.index, toolCall);
         results.push(createChunk(state, { tool_calls: [toolCall] }));
@@ -78,13 +87,17 @@ export function claudeToOpenAIResponse(chunk, state) {
         const toolCall = state.toolCalls.get(chunk.index);
         if (toolCall) {
           toolCall.function.arguments += delta.partial_json;
-          results.push(createChunk(state, {
-            tool_calls: [{
-              index: toolCall.index,
-              id: toolCall.id,
-              function: { arguments: delta.partial_json }
-            }]
-          }));
+          results.push(
+            createChunk(state, {
+              tool_calls: [
+                {
+                  index: toolCall.index,
+                  id: toolCall.id,
+                  function: { arguments: delta.partial_json },
+                },
+              ],
+            }),
+          );
         }
       }
       break;
@@ -109,24 +122,39 @@ export function claudeToOpenAIResponse(chunk, state) {
       // Extract usage from message_delta event (Claude native format)
       // Normalize to OpenAI format (prompt_tokens/completion_tokens) for consistent logging
       if (chunk.usage && typeof chunk.usage === "object") {
-        const inputTokens = typeof chunk.usage.input_tokens === "number" ? chunk.usage.input_tokens : 0;
-        const outputTokens = typeof chunk.usage.output_tokens === "number" ? chunk.usage.output_tokens : 0;
-        const cacheReadTokens = typeof chunk.usage.cache_read_input_tokens === "number" ? chunk.usage.cache_read_input_tokens : 0;
-        const cacheCreationTokens = typeof chunk.usage.cache_creation_input_tokens === "number" ? chunk.usage.cache_creation_input_tokens : 0;
+        const inputTokens =
+          typeof chunk.usage.input_tokens === "number"
+            ? chunk.usage.input_tokens
+            : 0;
+        const outputTokens =
+          typeof chunk.usage.output_tokens === "number"
+            ? chunk.usage.output_tokens
+            : 0;
+        const cacheReadTokens =
+          typeof chunk.usage.cache_read_input_tokens === "number"
+            ? chunk.usage.cache_read_input_tokens
+            : 0;
+        const cacheCreationTokens =
+          typeof chunk.usage.cache_creation_input_tokens === "number"
+            ? chunk.usage.cache_creation_input_tokens
+            : 0;
 
         // prompt_tokens = input_tokens + cache_read + cache_creation (all prompt-side tokens)
-        const promptTokens = inputTokens + cacheReadTokens + cacheCreationTokens;
+        const promptTokens =
+          inputTokens + cacheReadTokens + cacheCreationTokens;
 
         state.usage = {
           prompt_tokens: promptTokens,
           completion_tokens: outputTokens,
           total_tokens: promptTokens + outputTokens,
           input_tokens: inputTokens,
-          output_tokens: outputTokens
+          output_tokens: outputTokens,
         };
 
-        if (cacheReadTokens > 0) state.usage.cache_read_input_tokens = cacheReadTokens;
-        if (cacheCreationTokens > 0) state.usage.cache_creation_input_tokens = cacheCreationTokens;
+        if (cacheReadTokens > 0)
+          state.usage.cache_read_input_tokens = cacheReadTokens;
+        if (cacheCreationTokens > 0)
+          state.usage.cache_creation_input_tokens = cacheCreationTokens;
       }
 
       if (chunk.delta?.stop_reason) {
@@ -145,14 +173,23 @@ export function claudeToOpenAIResponse(chunk, state) {
 
     case "message_stop": {
       if (!state.finishReasonSent) {
-        const finishReason = state.finishReason || (state.toolCalls?.size > 0 ? OPENAI_FINISH.TOOL_CALLS : OPENAI_FINISH.STOP);
-        const usageObj = (state.usage && typeof state.usage === 'object') ? {
-          usage: {
-            prompt_tokens: state.usage.input_tokens || 0,
-            completion_tokens: state.usage.output_tokens || 0,
-            total_tokens: (state.usage.input_tokens || 0) + (state.usage.output_tokens || 0)
-          }
-        } : {};
+        const finishReason =
+          state.finishReason ||
+          (state.toolCalls?.size > 0
+            ? OPENAI_FINISH.TOOL_CALLS
+            : OPENAI_FINISH.STOP);
+        const usageObj =
+          state.usage && typeof state.usage === "object"
+            ? {
+                usage: {
+                  prompt_tokens: state.usage.input_tokens || 0,
+                  completion_tokens: state.usage.output_tokens || 0,
+                  total_tokens:
+                    (state.usage.input_tokens || 0) +
+                    (state.usage.output_tokens || 0),
+                },
+              }
+            : {};
         results.push({ ...createChunk(state, {}, finishReason), ...usageObj });
         state.finishReasonSent = true;
       }
@@ -167,4 +204,3 @@ const convertStopReason = (reason) => toOpenAIFinish(reason, "claude");
 
 // Register
 register(FORMATS.CLAUDE, FORMATS.OPENAI, null, claudeToOpenAIResponse);
-

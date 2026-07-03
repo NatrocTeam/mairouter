@@ -6,7 +6,13 @@ function normalizeTools(tools) {
   const executor = new CodexExecutor();
   const body = {
     model: "gpt-5.5",
-    input: [{ type: "message", role: "user", content: [{ type: "input_text", text: "probe" }] }],
+    input: [
+      {
+        type: "message",
+        role: "user",
+        content: [{ type: "input_text", text: "probe" }],
+      },
+    ],
     tools,
     stream: true,
   };
@@ -32,7 +38,13 @@ describe("CodexExecutor tool normalization", () => {
     };
     const body = {
       model: "gpt-5.4-mini",
-      input: [{ type: "message", role: "user", content: [{ type: "input_text", text: "test for session title" }] }],
+      input: [
+        {
+          type: "message",
+          role: "user",
+          content: [{ type: "input_text", text: "test for session title" }],
+        },
+      ],
       stream: true,
       metadata: { unsupported: true },
       text: {
@@ -102,10 +114,19 @@ describe("CodexExecutor tool normalization", () => {
     const tools = normalizeTools([
       { type: "web_search", search_context_size: "medium" },
       { type: "image_generation", size: "1024x1024" },
-      { type: "mcp", server_label: "docs", server_url: "https://example.com/mcp" },
+      {
+        type: "mcp",
+        server_label: "docs",
+        server_url: "https://example.com/mcp",
+      },
       { type: "local_shell" },
       { type: "code_interpreter", container: { type: "auto" } },
-      { type: "computer", display_width: 1024, display_height: 768, environment: "browser" },
+      {
+        type: "computer",
+        display_width: 1024,
+        display_height: 768,
+        environment: "browser",
+      },
     ]);
 
     expect(tools.map((tool) => tool.type)).toEqual([

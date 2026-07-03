@@ -33,15 +33,22 @@ function initWinTray(options) {
       "powershell.exe",
       [
         "-NoProfile",
-        "-ExecutionPolicy", "Bypass",
-        "-WindowStyle", "Hidden",
-        "-InputFormat", "Text",
-        "-OutputFormat", "Text",
-        "-File", scriptPath,
-        "-IconPath", iconPath,
-        "-Tooltip", tooltip
+        "-ExecutionPolicy",
+        "Bypass",
+        "-WindowStyle",
+        "Hidden",
+        "-InputFormat",
+        "Text",
+        "-OutputFormat",
+        "Text",
+        "-File",
+        scriptPath,
+        "-IconPath",
+        iconPath,
+        "-Tooltip",
+        tooltip,
       ],
-      { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] }
+      { windowsHide: true, stdio: ["pipe", "pipe", "pipe"] },
     );
   } catch {
     return null;
@@ -64,7 +71,12 @@ function initWinTray(options) {
 
   // Send initial menu items
   items.forEach((item, index) => {
-    sendCommand({ action: "add-item", index, title: item.title, enabled: item.enabled });
+    sendCommand({
+      action: "add-item",
+      index,
+      title: item.title,
+      enabled: item.enabled,
+    });
   });
 
   return {
@@ -90,7 +102,7 @@ function initWinTray(options) {
         }
         psProcess = null;
       }, 300);
-    }
+    },
   };
 }
 

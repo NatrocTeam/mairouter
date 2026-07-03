@@ -24,7 +24,10 @@ export default {
     { id: "deepseek-ai/DeepSeek-V3.2", name: "DeepSeek V3.2" },
     { id: "deepseek-ai/DeepSeek-V3.2-Exp", name: "DeepSeek V3.2 Exp" },
     { id: "deepseek-ai/DeepSeek-V3.1", name: "DeepSeek V3.1" },
-    { id: "deepseek-ai/DeepSeek-V3.1-Terminus", name: "DeepSeek V3.1 Terminus" },
+    {
+      id: "deepseek-ai/DeepSeek-V3.1-Terminus",
+      name: "DeepSeek V3.1 Terminus",
+    },
     { id: "deepseek-ai/DeepSeek-R1", name: "DeepSeek R1" },
     { id: "Qwen/Qwen3.5-397B-A17B", name: "Qwen 3.5 397B A17B" },
     { id: "Qwen/Qwen3.5-122B-A10B", name: "Qwen 3.5 122B A10B" },

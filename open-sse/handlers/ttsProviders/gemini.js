@@ -21,7 +21,8 @@ function parseGeminiModelVoice(input) {
   if (!input) return { modelId: DEFAULT_MODEL, voiceId: DEFAULT_VOICE };
   for (const id of KNOWN_MODELS) {
     if (input === id) return { modelId: id, voiceId: DEFAULT_VOICE };
-    if (input.startsWith(`${id}/`)) return { modelId: id, voiceId: input.slice(id.length + 1) };
+    if (input.startsWith(`${id}/`))
+      return { modelId: id, voiceId: input.slice(id.length + 1) };
   }
   return { modelId: DEFAULT_MODEL, voiceId: input };
 }
@@ -33,8 +34,8 @@ const BITS_PER_SAMPLE = 16;
 // Build WAV header for raw PCM payload
 function pcmToWav(pcmBuffer) {
   const dataSize = pcmBuffer.length;
-  const byteRate = SAMPLE_RATE * CHANNELS * BITS_PER_SAMPLE / 8;
-  const blockAlign = CHANNELS * BITS_PER_SAMPLE / 8;
+  const byteRate = (SAMPLE_RATE * CHANNELS * BITS_PER_SAMPLE) / 8;
+  const blockAlign = (CHANNELS * BITS_PER_SAMPLE) / 8;
   const header = Buffer.alloc(44);
   header.write("RIFF", 0);
   header.writeUInt32LE(36 + dataSize, 4);
@@ -70,19 +71,30 @@ export default {
         contents: [{ parts: [{ text: buildPrompt(text, opts.language) }] }],
         generationConfig: {
           responseModalities: ["AUDIO"],
-          speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voiceId } } },
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: voiceId } },
+          },
         },
       }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error?.message || `Gemini TTS failed: ${res.status}`);
+      throw new Error(
+        err?.error?.message || `Gemini TTS failed: ${res.status}`,
+      );
     }
     const data = await res.json();
-    const b64 = data?.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data)?.inlineData?.data;
+    const b64 = data?.candidates?.[0]?.content?.parts?.find(
+      (p) => p.inlineData?.data,
+    )?.inlineData?.data;
     if (!b64) {
-      const reason = data?.candidates?.[0]?.finishReason || data?.promptFeedback?.blockReason || "unknown";
-      throw new Error(`Gemini TTS returned no audio (finishReason: ${reason}, voice: ${voiceId}, model: ${modelId})`);
+      const reason =
+        data?.candidates?.[0]?.finishReason ||
+        data?.promptFeedback?.blockReason ||
+        "unknown";
+      throw new Error(
+        `Gemini TTS returned no audio (finishReason: ${reason}, voice: ${voiceId}, model: ${modelId})`,
+      );
     }
     const wav = pcmToWav(Buffer.from(b64, "base64"));
     return { base64: wav.toString("base64"), format: "wav" };
@@ -124,5 +136,9 @@ const PREBUILT_VOICES = [
 ];
 
 export async function fetchGeminiVoices() {
-  return PREBUILT_VOICES.map((v) => ({ voice_id: v.id, name: v.id, labels: { language: v.lang, gender: v.gender } }));
+  return PREBUILT_VOICES.map((v) => ({
+    voice_id: v.id,
+    name: v.id,
+    labels: { language: v.lang, gender: v.gender },
+  }));
 }

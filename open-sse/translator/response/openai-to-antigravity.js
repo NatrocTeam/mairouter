@@ -59,14 +59,18 @@ export function openaiToAntigravityResponse(chunk, state) {
     for (const idx of indices) {
       const accum = state._toolCallAccum[idx];
       let args = {};
-      try { args = JSON.parse(accum.arguments); } catch { /* empty */ }
+      try {
+        args = JSON.parse(accum.arguments);
+      } catch {
+        /* empty */
+      }
       // Restore original tool name if it was prefixed during cloaking
       const originalName = state.toolNameMap?.get(accum.name) || accum.name;
       parts.push({
         functionCall: {
           name: originalName,
-          args
-        }
+          args,
+        },
       });
     }
   }
@@ -88,7 +92,7 @@ export function openaiToAntigravityResponse(chunk, state) {
       [OPENAI_FINISH.STOP]: GEMINI_FINISH.STOP,
       [OPENAI_FINISH.LENGTH]: GEMINI_FINISH.MAX_TOKENS,
       [OPENAI_FINISH.TOOL_CALLS]: GEMINI_FINISH.STOP,
-      [OPENAI_FINISH.CONTENT_FILTER]: GEMINI_FINISH.SAFETY
+      [OPENAI_FINISH.CONTENT_FILTER]: GEMINI_FINISH.SAFETY,
     };
     candidate.finishReason = reasonMap[finishReason] || GEMINI_FINISH.STOP;
   }
@@ -97,7 +101,7 @@ export function openaiToAntigravityResponse(chunk, state) {
   const response = {
     candidates: [candidate],
     modelVersion: state._modelVersion,
-    responseId: state._responseId
+    responseId: state._responseId,
   };
 
   // Usage metadata
@@ -106,13 +110,15 @@ export function openaiToAntigravityResponse(chunk, state) {
     response.usageMetadata = {
       promptTokenCount: usage.prompt_tokens || 0,
       candidatesTokenCount: usage.completion_tokens || 0,
-      totalTokenCount: usage.total_tokens || 0
+      totalTokenCount: usage.total_tokens || 0,
     };
     if (usage.completion_tokens_details?.reasoning_tokens) {
-      response.usageMetadata.thoughtsTokenCount = usage.completion_tokens_details.reasoning_tokens;
+      response.usageMetadata.thoughtsTokenCount =
+        usage.completion_tokens_details.reasoning_tokens;
     }
     if (usage.prompt_tokens_details?.cached_tokens) {
-      response.usageMetadata.cachedContentTokenCount = usage.prompt_tokens_details.cached_tokens;
+      response.usageMetadata.cachedContentTokenCount =
+        usage.prompt_tokens_details.cached_tokens;
     }
   }
 
@@ -120,4 +126,9 @@ export function openaiToAntigravityResponse(chunk, state) {
 }
 
 // Register
-register(FORMATS.OPENAI, FORMATS.ANTIGRAVITY, null, openaiToAntigravityResponse);
+register(
+  FORMATS.OPENAI,
+  FORMATS.ANTIGRAVITY,
+  null,
+  openaiToAntigravityResponse,
+);

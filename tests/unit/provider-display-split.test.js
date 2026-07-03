@@ -5,7 +5,8 @@ const DISPLAY_FIELDS = ["name", "icon", "color"];
 
 describe("provider display split (E1)", () => {
   it("AI_PROVIDERS entries still carry merged display + transport", async () => {
-    const { AI_PROVIDERS } = await import("../../src/shared/constants/providers.js");
+    const { AI_PROVIDERS } =
+      await import("../../src/shared/constants/providers.js");
     const kiro = AI_PROVIDERS.kiro;
     // display merged
     expect(kiro.name).toBe("Kiro AI");
@@ -19,8 +20,10 @@ describe("provider display split (E1)", () => {
   });
 
   it("display fields source from providersDisplay.js", async () => {
-    const { PROVIDER_DISPLAY } = await import("../../src/shared/constants/providersDisplay.js");
-    const { AI_PROVIDERS } = await import("../../src/shared/constants/providers.js");
+    const { PROVIDER_DISPLAY } =
+      await import("../../src/shared/constants/providersDisplay.js");
+    const { AI_PROVIDERS } =
+      await import("../../src/shared/constants/providers.js");
     for (const f of DISPLAY_FIELDS) {
       expect(PROVIDER_DISPLAY.kiro[f]).toBe(AI_PROVIDERS.kiro[f]);
     }

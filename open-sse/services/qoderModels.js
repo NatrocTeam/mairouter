@@ -41,7 +41,11 @@ const inflight = new Map();
  */
 function cacheKey(credentials) {
   const psd = credentials?.providerSpecificData || {};
-  const seed = psd.userId || credentials?.refreshToken || credentials?.accessToken || "anonymous";
+  const seed =
+    psd.userId ||
+    credentials?.refreshToken ||
+    credentials?.accessToken ||
+    "anonymous";
   return createHash("sha256").update(`qoder:${seed}`).digest("hex");
 }
 
@@ -103,7 +107,8 @@ async function fetchQoderCatalogRaw(credentials, signal, proxyOptions = null) {
     );
   } finally {
     if (timer) clearTimeout(timer);
-    if (signal && abortListener) signal.removeEventListener("abort", abortListener);
+    if (signal && abortListener)
+      signal.removeEventListener("abort", abortListener);
   }
 
   if (!response.ok) {
@@ -120,16 +125,19 @@ async function fetchQoderCatalogRaw(credentials, signal, proxyOptions = null) {
   // Try common response shapes: `chat` array (current Qoder format),
   // `data` array (OpenAI-compatible), `models` array, or a flat array.
   const modelArray = (() => {
-    if (Array.isArray(body.data?.models)) return body.data.models;          // { data: { models: [...] } }
-    if (Array.isArray(body.chat)) return body.chat;                         // { chat: [...] }
-    if (Array.isArray(body.data)) return body.data;                         // { data: [...] }
-    if (Array.isArray(body.models)) return body.models;                     // { models: [...] }
-    if (Array.isArray(body.result)) return body.result;                     // { result: [...] }
-    if (Array.isArray(body)) return body;                                   // [...] (flat)
+    if (Array.isArray(body.data?.models)) return body.data.models; // { data: { models: [...] } }
+    if (Array.isArray(body.chat)) return body.chat; // { chat: [...] }
+    if (Array.isArray(body.data)) return body.data; // { data: [...] }
+    if (Array.isArray(body.models)) return body.models; // { models: [...] }
+    if (Array.isArray(body.result)) return body.result; // { result: [...] }
+    if (Array.isArray(body)) return body; // [...] (flat)
     return null;
   })();
   if (!modelArray || modelArray.length === 0) {
-    console.warn("qoder: model list returned empty or unrecognized format", Object.keys(body));
+    console.warn(
+      "qoder: model list returned empty or unrecognized format",
+      Object.keys(body),
+    );
     return null;
   }
 
@@ -237,7 +245,11 @@ export async function resolveQoderModels(credentials, options = {}) {
   }
 
   const fetchPromise = (async () => {
-    const fetched = await fetchQoderCatalogRaw(credentials, options.signal, options.proxyOptions);
+    const fetched = await fetchQoderCatalogRaw(
+      credentials,
+      options.signal,
+      options.proxyOptions,
+    );
     if (!fetched) return null;
     const entry = {
       expiresAt: Date.now() + CACHE_TTL_MS,

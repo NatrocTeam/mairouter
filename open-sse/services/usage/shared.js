@@ -22,15 +22,19 @@ export function parseResetTime(resetValue) {
     }
 
     // Unix timestamps from provider APIs may be seconds or milliseconds.
-    if (typeof resetValue === 'number') {
-      return new Date(resetValue < 1e12 ? resetValue * 1000 : resetValue).toISOString();
+    if (typeof resetValue === "number") {
+      return new Date(
+        resetValue < 1e12 ? resetValue * 1000 : resetValue,
+      ).toISOString();
     }
 
     // If it's a numeric string, treat it like a Unix timestamp too.
-    if (typeof resetValue === 'string') {
+    if (typeof resetValue === "string") {
       if (/^\d+$/.test(resetValue)) {
         const timestamp = Number(resetValue);
-        return new Date(timestamp < 1e12 ? timestamp * 1000 : timestamp).toISOString();
+        return new Date(
+          timestamp < 1e12 ? timestamp * 1000 : timestamp,
+        ).toISOString();
       }
       return new Date(resetValue).toISOString();
     }
@@ -53,17 +57,30 @@ export function toFiniteNumber(value, fallback = 0) {
 
 export function normalizeCloudCodeProjectId(project) {
   if (typeof project === "string") return project.trim() || null;
-  if (project && typeof project === "object" && typeof project.id === "string") {
+  if (
+    project &&
+    typeof project === "object" &&
+    typeof project.id === "string"
+  ) {
     return project.id.trim() || null;
   }
   return null;
 }
 
-export async function fetchWithTimeout(url, opts, ms = 10000, proxyOptions = null) {
+export async function fetchWithTimeout(
+  url,
+  opts,
+  ms = 10000,
+  proxyOptions = null,
+) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), ms);
   try {
-    return await proxyAwareFetch(url, { ...opts, signal: controller.signal }, proxyOptions);
+    return await proxyAwareFetch(
+      url,
+      { ...opts, signal: controller.signal },
+      proxyOptions,
+    );
   } finally {
     clearTimeout(timeoutId);
   }

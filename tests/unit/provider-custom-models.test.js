@@ -4,11 +4,23 @@ import { getProviderCustomModelRows } from "@/shared/utils/providerCustomModels.
 describe("provider custom model rows", () => {
   it("keeps identical model IDs separate per provider", () => {
     const customModels = [
-      { providerAlias: "ollama", id: "minimax-m2.5", type: "llm", name: "MiniMax M2.5" },
-      { providerAlias: "opencode-go", id: "minimax-m2.5", type: "llm", name: "MiniMax M2.5" },
+      {
+        providerAlias: "ollama",
+        id: "minimax-m2.5",
+        type: "llm",
+        name: "MiniMax M2.5",
+      },
+      {
+        providerAlias: "opencode-go",
+        id: "minimax-m2.5",
+        type: "llm",
+        name: "MiniMax M2.5",
+      },
     ];
 
-    expect(getProviderCustomModelRows({ customModels, providerAlias: "ollama" })).toEqual([
+    expect(
+      getProviderCustomModelRows({ customModels, providerAlias: "ollama" }),
+    ).toEqual([
       {
         id: "minimax-m2.5",
         name: "MiniMax M2.5",
@@ -17,7 +29,12 @@ describe("provider custom model rows", () => {
         type: "llm",
       },
     ]);
-    expect(getProviderCustomModelRows({ customModels, providerAlias: "opencode-go" })).toEqual([
+    expect(
+      getProviderCustomModelRows({
+        customModels,
+        providerAlias: "opencode-go",
+      }),
+    ).toEqual([
       {
         id: "minimax-m2.5",
         name: "MiniMax M2.5",
@@ -31,7 +48,12 @@ describe("provider custom model rows", () => {
   it("keeps legacy alias-backed models visible without duplicating custom models", () => {
     const rows = getProviderCustomModelRows({
       customModels: [
-        { providerAlias: "ollama", id: "custom-a", type: "llm", name: "Custom A" },
+        {
+          providerAlias: "ollama",
+          id: "custom-a",
+          type: "llm",
+          name: "Custom A",
+        },
       ],
       modelAliases: {
         "custom-a": "ollama/custom-a",
@@ -63,8 +85,18 @@ describe("provider custom model rows", () => {
     const rows = getProviderCustomModelRows({
       customModels: [
         { providerAlias: "ollama", id: "llama3", type: "llm", name: "Llama 3" },
-        { providerAlias: "ollama", id: "custom-image", type: "image", name: "Custom Image" },
-        { providerAlias: "ollama", id: "custom-llm", type: "llm", name: "Custom LLM" },
+        {
+          providerAlias: "ollama",
+          id: "custom-image",
+          type: "image",
+          name: "Custom Image",
+        },
+        {
+          providerAlias: "ollama",
+          id: "custom-llm",
+          type: "llm",
+          name: "Custom LLM",
+        },
       ],
       providerAlias: "ollama",
       builtInModels: [{ id: "llama3" }],

@@ -13,7 +13,11 @@ import { toOpenAIFinish } from "../concerns/finishReason.js";
 
 // Build chunk meta for current kiro state
 function chunkMeta(state) {
-  return { id: state.responseId, created: state.created, model: state.model || "kiro" };
+  return {
+    id: state.responseId,
+    created: state.created,
+    model: state.model || "kiro",
+  };
 }
 
 /**
@@ -21,14 +25,13 @@ function chunkMeta(state) {
  * Kiro events: assistantResponseEvent, codeEvent, supplementaryWebLinksEvent, etc.
  */
 export function kiroToOpenAIResponse(chunk, state) {
-  
   if (!chunk) return null;
 
   // If chunk is already in OpenAI format (from executor transform), return as-is
   if (chunk.object === "chat.completion.chunk" && chunk.choices) {
     return chunk;
   }
-  
+
   // Handle string chunk (raw SSE data)
   let data = chunk;
   if (typeof chunk === "string") {
@@ -77,10 +80,14 @@ export function kiroToOpenAIResponse(chunk, state) {
     const content = data.assistantResponseEvent?.content || data.content || "";
     if (!content) return null;
 
-    const openaiChunk = buildChunk(chunkMeta(state), {
-      ...(state.chunkIndex === 0 ? { role: ROLE.ASSISTANT } : {}),
-      content: content
-    }, null);
+    const openaiChunk = buildChunk(
+      chunkMeta(state),
+      {
+        ...(state.chunkIndex === 0 ? { role: ROLE.ASSISTANT } : {}),
+        content: content,
+      },
+      null,
+    );
 
     state.chunkIndex++;
     return openaiChunk;
@@ -93,12 +100,17 @@ export function kiroToOpenAIResponse(chunk, state) {
   // it to Claude thinking blocks / Anthropic reasoning / etc.
   if (eventType === "reasoningContentEvent" || data.reasoningContentEvent) {
     const reasoning = data.reasoningContentEvent || data;
-    const content = (typeof reasoning === "string")
-      ? reasoning
-      : (reasoning.text || reasoning.content || data.content || "");
+    const content =
+      typeof reasoning === "string"
+        ? reasoning
+        : reasoning.text || reasoning.content || data.content || "";
     if (!content) return null;
 
-    const openaiChunk = buildChunk(chunkMeta(state), reasoningDelta(content, state.chunkIndex === 0), null);
+    const openaiChunk = buildChunk(
+      chunkMeta(state),
+      reasoningDelta(content, state.chunkIndex === 0),
+      null,
+    );
 
     state.chunkIndex++;
     return openaiChunk;
@@ -112,27 +124,40 @@ export function kiroToOpenAIResponse(chunk, state) {
     const toolName = toolUse.name || "";
     const toolInput = toolUse.input || {};
 
-    const openaiChunk = buildChunk(chunkMeta(state), {
-      ...(state.chunkIndex === 0 ? { role: ROLE.ASSISTANT } : {}),
-      tool_calls: [{
-        index: 0,
-        id: toolCallId,
-        type: OPENAI_BLOCK.FUNCTION,
-        function: {
-          name: toolName,
-          arguments: JSON.stringify(toolInput)
-        }
-      }]
-    }, null);
+    const openaiChunk = buildChunk(
+      chunkMeta(state),
+      {
+        ...(state.chunkIndex === 0 ? { role: ROLE.ASSISTANT } : {}),
+        tool_calls: [
+          {
+            index: 0,
+            id: toolCallId,
+            type: OPENAI_BLOCK.FUNCTION,
+            function: {
+              name: toolName,
+              arguments: JSON.stringify(toolInput),
+            },
+          },
+        ],
+      },
+      null,
+    );
 
     state.chunkIndex++;
     return openaiChunk;
   }
 
   // Handle completion/done events
-  if (eventType === "messageStopEvent" || eventType === "done" || data.messageStopEvent) {
+  if (
+    eventType === "messageStopEvent" ||
+    eventType === "done" ||
+    data.messageStopEvent
+  ) {
     // tool_calls when a tool was used this turn, else stop (kiro upstream has no explicit reason)
-    const finishReason = toOpenAIFinish(state.hadToolUse ? "tool_use" : "stop", "kiro");
+    const finishReason = toOpenAIFinish(
+      state.hadToolUse ? "tool_use" : "stop",
+      "kiro",
+    );
     state.finishReason = finishReason; // Mark for usage injection in stream.js
 
     const openaiChunk = buildChunk(chunkMeta(state), {}, finishReason);
@@ -145,7 +170,7 @@ export function kiroToOpenAIResponse(chunk, state) {
     return openaiChunk;
   }
 
-// Handle usage events
+  // Handle usage events
   if (eventType === "usageEvent" || data.usageEvent) {
     const usage = toOpenAIUsage(data.usageEvent || data, "kiro");
     if (usage) state.usage = usage;

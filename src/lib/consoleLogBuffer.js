@@ -46,7 +46,7 @@ function toLogLine(level, args) {
 }
 
 // Strip ANSI escape codes so terminal colors don't bleed into UI
-const ANSI_RE = new RegExp(String.fromCharCode(27) + '\\[[0-9;]*m', 'g');
+const ANSI_RE = new RegExp(String.fromCharCode(27) + "\\[[0-9;]*m", "g");
 
 function stripAnsi(str) {
   return str.replace(ANSI_RE, "");
@@ -54,7 +54,8 @@ function stripAnsi(str) {
 
 function formatArg(arg) {
   if (typeof arg === "string") return stripAnsi(arg);
-  if (arg instanceof Error) return stripAnsi(arg.stack || arg.message || String(arg));
+  if (arg instanceof Error)
+    return stripAnsi(arg.stack || arg.message || String(arg));
   try {
     return stripAnsi(JSON.stringify(arg));
   } catch {

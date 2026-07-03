@@ -7,9 +7,11 @@ export default {
     icon: "cloud",
     color: "#0078D4",
     textIcon: "AZ",
-    website: "https://azure.microsoft.com/en-us/products/ai-services/openai-service",
+    website:
+      "https://azure.microsoft.com/en-us/products/ai-services/openai-service",
     notice: {
-      apiKeyUrl: "https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/OpenAI",
+      apiKeyUrl:
+        "https://portal.azure.com/#view/Microsoft_Azure_ProjectOxford/CognitiveServicesHub/~/OpenAI",
     },
   },
   category: "apikey",

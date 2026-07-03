@@ -36,30 +36,40 @@ function refillCadence(acc) {
   const start = parseResetTime(acc.CycleStartTime);
   const end = parseResetTime(acc.CycleEndTime);
   if (start && end) {
-    const days = (new Date(end).getTime() - new Date(start).getTime()) / 86400000;
+    const days =
+      (new Date(end).getTime() - new Date(start).getTime()) / 86400000;
     if (days <= 1.5) return "Daily";
     if (days <= 10) return "Weekly";
   }
   return "Monthly";
 }
 
-export async function getCodeBuddyCnUsage(accessToken, apiKey, providerSpecificData, proxyOptions = null) {
+export async function getCodeBuddyCnUsage(
+  accessToken,
+  apiKey,
+  providerSpecificData,
+  proxyOptions = null,
+) {
   const token = accessToken || apiKey;
   if (!token) {
     return { message: "CodeBuddy CN credential not available." };
   }
 
   try {
-    const response = await proxyAwareFetch(U(PROVIDER_ID).url, {
-      method: "POST",
-      headers: {
-        ...(PROVIDERS[PROVIDER_ID]?.headers || {}),
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-        Accept: "application/json",
+    const response = await proxyAwareFetch(
+      U(PROVIDER_ID).url,
+      {
+        method: "POST",
+        headers: {
+          ...(PROVIDERS[PROVIDER_ID]?.headers || {}),
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: "{}",
       },
-      body: "{}",
-    }, proxyOptions);
+      proxyOptions,
+    );
 
     if (response.status === 401 || response.status === 403) {
       return { message: "CodeBuddy CN credential invalid or expired." };
@@ -89,7 +99,9 @@ export async function getCodeBuddyCnUsage(accessToken, apiKey, providerSpecificD
     const isRefill = (acc) => {
       const ce = cycleEndMs(acc);
       const de = Number(acc.DeductionEndTime);
-      return Number.isFinite(ce) && Number.isFinite(de) && de - ce > REFILL_GAP_MS;
+      return (
+        Number.isFinite(ce) && Number.isFinite(de) && de - ce > REFILL_GAP_MS
+      );
     };
     const byExpiry = (a, b) => cycleEndMs(a) - cycleEndMs(b);
 
@@ -122,7 +134,8 @@ export async function getCodeBuddyCnUsage(accessToken, apiKey, providerSpecificD
     });
 
     const basePkg = refills[0] || accounts[0] || {};
-    const plan = basePkg.PackageName || basePkg.SubProductName || "CodeBuddy CN";
+    const plan =
+      basePkg.PackageName || basePkg.SubProductName || "CodeBuddy CN";
 
     return { plan, quotas };
   } catch (error) {

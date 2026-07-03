@@ -5,7 +5,10 @@ import {
   ANTHROPIC_COMPAT_BASE,
   ANTHROPIC_API_VERSION,
 } from "../../open-sse/providers/shared.js";
-import { DEFAULT_MAX_TOKENS, DEFAULT_MIN_TOKENS } from "../../open-sse/config/runtimeConfig.js";
+import {
+  DEFAULT_MAX_TOKENS,
+  DEFAULT_MIN_TOKENS,
+} from "../../open-sse/config/runtimeConfig.js";
 import mimoFree from "../../open-sse/providers/registry/mimo-free.js";
 import opencode from "../../open-sse/providers/registry/opencode.js";
 import antigravity from "../../open-sse/providers/registry/antigravity.js";
@@ -31,7 +34,9 @@ describe("default token limits", () => {
 
 describe("provider baseUrl const (full path, no trailing slash)", () => {
   it("mimo-free full path", () => {
-    expect(mimoFree.transport.baseUrl).toBe("https://api.xiaomimimo.com/api/free-ai/openai/chat");
+    expect(mimoFree.transport.baseUrl).toBe(
+      "https://api.xiaomimimo.com/api/free-ai/openai/chat",
+    );
   });
   it("opencode no trailing slash", () => {
     expect(opencode.transport.baseUrl).toBe("https://opencode.ai");

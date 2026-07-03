@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { PROVIDER_MODELS, getModelTargetFormat } from "../../open-sse/config/providerModels.js";
+import {
+  PROVIDER_MODELS,
+  getModelTargetFormat,
+} from "../../open-sse/config/providerModels.js";
 import { OpenCodeGoExecutor } from "../../open-sse/executors/opencode-go.js";
 
 const CHAT_MODELS = [
@@ -49,7 +52,9 @@ describe("OpenCode Go endpoint routing", () => {
     const executor = new OpenCodeGoExecutor();
 
     for (const model of MESSAGES_MODELS) {
-      expect(executor.buildUrl(model)).toBe("https://opencode.ai/zen/go/v1/messages");
+      expect(executor.buildUrl(model)).toBe(
+        "https://opencode.ai/zen/go/v1/messages",
+      );
       const headers = executor.buildHeaders({ apiKey: "sk-test" }, false);
       expect(headers["x-api-key"]).toBe("sk-test");
       expect(headers["anthropic-version"]).toBeDefined();
@@ -61,7 +66,9 @@ describe("OpenCode Go endpoint routing", () => {
     const executor = new OpenCodeGoExecutor();
 
     for (const model of CHAT_MODELS) {
-      expect(executor.buildUrl(model)).toBe("https://opencode.ai/zen/go/v1/chat/completions");
+      expect(executor.buildUrl(model)).toBe(
+        "https://opencode.ai/zen/go/v1/chat/completions",
+      );
       const headers = executor.buildHeaders({ apiKey: "sk-test" }, false);
       expect(headers.Authorization).toBe("Bearer sk-test");
       expect(headers["x-api-key"]).toBeUndefined();

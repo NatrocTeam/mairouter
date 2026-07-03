@@ -186,17 +186,14 @@ export default function TokenSaverClient() {
           : "External";
   const headroomLocalUrl = headroomStatus.localUrl !== false;
   const headroomCanStart = !!headroomStatus.canStart;
-  const headroomManaged =
-    headroomLocalUrl && !!headroomStatus.managedPid;
+  const headroomManaged = headroomLocalUrl && !!headroomStatus.managedPid;
 
   return (
     <div className="space-y-6 p-6">
       <Card id="rtk">
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-lg font-semibold flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">
-              bolt
-            </span>
+            <span className="material-symbols-outlined text-primary">bolt</span>
             Token Saver
           </h2>
         </div>
@@ -296,10 +293,7 @@ export default function TokenSaverClient() {
                   ))}
                 </div>
                 <p className="text-xs text-primary">
-                  {
-                    CAVEMAN_LEVELS.find((lvl) => lvl.id === cavemanLevel)
-                      ?.desc
-                  }
+                  {CAVEMAN_LEVELS.find((lvl) => lvl.id === cavemanLevel)?.desc}
                 </p>
               </div>
             )}
@@ -323,8 +317,8 @@ export default function TokenSaverClient() {
               </a>
             </p>
             <p className="text-sm text-text-muted">
-              Bias the model toward minimal code: YAGNI, reuse stdlib,
-              deletion over addition
+              Bias the model toward minimal code: YAGNI, reuse stdlib, deletion
+              over addition
             </p>
           </div>
           <div className="flex items-center gap-3 shrink-0">
@@ -370,9 +364,7 @@ export default function TokenSaverClient() {
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between text-sm">
             <span>Status</span>
-            <span
-              className={headroomRunning ? "text-success" : "text-warning"}
-            >
+            <span className={headroomRunning ? "text-success" : "text-warning"}>
               {headroomStatusLabel}
             </span>
           </div>
@@ -430,9 +422,7 @@ export default function TokenSaverClient() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  onClick={() =>
-                    copy(`pip install "headroom-ai[proxy]"`)
-                  }
+                  onClick={() => copy(`pip install "headroom-ai[proxy]"`)}
                 >
                   {copied ? "Copied" : "Copy"}
                 </Button>

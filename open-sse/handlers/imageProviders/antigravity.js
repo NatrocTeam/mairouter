@@ -12,7 +12,11 @@ function resolveImageInput(input) {
     return { inlineData: { mimeType: dataUriMatch[1], data: dataUriMatch[2] } };
   }
   // Raw base64 string (assume PNG)
-  if (/^[A-Za-z0-9+/]/.test(input) && input.length > 100 && !input.startsWith("http")) {
+  if (
+    /^[A-Za-z0-9+/]/.test(input) &&
+    input.length > 100 &&
+    !input.startsWith("http")
+  ) {
     return { inlineData: { mimeType: "image/png", data: input } };
   }
   return null;
@@ -33,7 +37,8 @@ export default {
 
     // Build parts: text prompt + optional input image for editing
     const parts = [{ text: body.prompt }];
-    const imageInput = body.image || (Array.isArray(body.images) && body.images[0]);
+    const imageInput =
+      body.image || (Array.isArray(body.images) && body.images[0]);
     if (imageInput) {
       const inlineData = resolveImageInput(imageInput);
       if (inlineData) parts.unshift(inlineData);
@@ -60,14 +65,18 @@ export default {
   },
 
   normalize: (responseBody, prompt) => {
-    const candidates = responseBody.candidates || responseBody.response?.candidates || [];
+    const candidates =
+      responseBody.candidates || responseBody.response?.candidates || [];
     const parts = candidates[0]?.content?.parts || [];
-    const images = parts.filter((p) => p.inlineData?.data).map((p) => ({
-      b64_json: p.inlineData.data,
-    }));
+    const images = parts
+      .filter((p) => p.inlineData?.data)
+      .map((p) => ({
+        b64_json: p.inlineData.data,
+      }));
     return {
       created: nowSec(),
-      data: images.length > 0 ? images : [{ b64_json: "", revised_prompt: prompt }],
+      data:
+        images.length > 0 ? images : [{ b64_json: "", revised_prompt: prompt }],
     };
   },
 };

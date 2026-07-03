@@ -12,8 +12,14 @@ function titleCase(s) {
 
 // Ordered: first match wins. Keep specific patterns above generic ones.
 export const NAME_PATTERNS = [
-  [/^kimi-k(\d+(?:\.\d+)?)(-thinking)?$/i, (m) => `Kimi K${m[1]}${m[2] ? " Thinking" : ""}`],
-  [/^glm-(\d+(?:\.\d+)?)(v)?$/i, (m) => `GLM ${m[1]}${m[2] ? "V (Vision)" : ""}`],
+  [
+    /^kimi-k(\d+(?:\.\d+)?)(-thinking)?$/i,
+    (m) => `Kimi K${m[1]}${m[2] ? " Thinking" : ""}`,
+  ],
+  [
+    /^glm-(\d+(?:\.\d+)?)(v)?$/i,
+    (m) => `GLM ${m[1]}${m[2] ? "V (Vision)" : ""}`,
+  ],
   [/^minimax-m(\d+(?:\.\d+)?)$/i, (m) => `MiniMax M${m[1]}`],
   [/^gpt-(.+)$/i, (m) => `GPT ${titleCase(m[1])}`],
   [/^gemini-(.+)$/i, (m) => `Gemini ${titleCase(m[1])}`],

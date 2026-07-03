@@ -15,7 +15,11 @@ export default function createOpenAIEmbeddingAdapter(providerId) {
   return {
     buildUrl: () => embedUrl(providerId),
     buildHeaders: (creds) => {
-      return { "Content-Type": "application/json", ...bearerAuth(creds), ...(cfg.headers || {}) };
+      return {
+        "Content-Type": "application/json",
+        ...bearerAuth(creds),
+        ...(cfg.headers || {}),
+      };
     },
     buildBody: (model, { input, encoding_format, dimensions }) => {
       const body = { model, input };
