@@ -548,8 +548,8 @@ export default function ConnectionsCard({ providerId, isOAuth }) {
     }
   }, [providerId]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetch_();
   }, [fetch_]);
 

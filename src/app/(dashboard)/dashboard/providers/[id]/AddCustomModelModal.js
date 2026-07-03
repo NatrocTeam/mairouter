@@ -16,10 +16,10 @@ export default function AddCustomModelModal({
   const [testError, setTestError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  // Reset state when modal opens
+  // Reset state when modal opens — deliberate setState in effect for prop-driven reset
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setModelId("");
       setTestStatus(null);
       setTestError("");
