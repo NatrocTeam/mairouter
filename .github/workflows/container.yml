@@ -3,11 +3,21 @@ name: Publish to GitHub Container Registry
 on:
   release:
     types: [published]
+
   workflow_dispatch:
+    inputs:
+      git_tag:
+        description: "Git tag, example: v1.1.0 or v1.1.0-alpha.1"
+        required: true
+        type: string
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.git_tag || github.event.release.tag_name }}
+  cancel-in-progress: true
 
 jobs:
   build-and-push:
@@ -19,29 +29,44 @@ jobs:
       packages: write
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repository from git tag
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.git_tag }}
 
-      - name: Set release version from git tag
+      - name: Set version from git tag
         id: version
         shell: bash
+        env:
+          RAW_TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.git_tag }}
         run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            RAW_TAG="${{ github.event.release.tag_name }}"
-          else
-            RAW_TAG="${GITHUB_REF_NAME}"
-          fi
-
-          VERSION="${RAW_TAG#v}"
-
-          if ! echo "$VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+(\.[0-9]+)?)?$'; then
-            echo "Invalid version tag: $RAW_TAG"
-            echo "Expected: vX.Y.Z or vX.Y.Z-alpha.1 / vX.Y.Z-beta.1 / vX.Y.Z-rc.1"
+          if [ -z "$RAW_TAG" ]; then
+            echo "Git tag is empty."
+            echo "Expected: vX.Y.Z or vX.Y.Z-alpha.1"
             exit 1
           fi
 
+          if ! echo "$RAW_TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[a-z]+(\.[0-9]+)?)?$'; then
+            echo "Invalid git tag: $RAW_TAG"
+            echo "Expected:"
+            echo "  vX.Y.Z"
+            echo "  vX.Y.Z-alpha.1"
+            echo "  vX.Y.Z-beta.1"
+            echo "  vX.Y.Z-rc.1"
+            exit 1
+          fi
+
+          VERSION="${RAW_TAG#v}"
+          IMAGE_NAME_LOWER="$(echo "$IMAGE_NAME" | tr '[:upper:]' '[:lower:]')"
+          IMAGE="${REGISTRY}/${IMAGE_NAME_LOWER}"
+
+          echo "raw_tag=$RAW_TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "image=${REGISTRY}/${IMAGE_NAME,,}" >> "$GITHUB_OUTPUT"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+          echo "Git tag: $RAW_TAG"
+          echo "Container version: $VERSION"
+          echo "Container image: $IMAGE"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -56,20 +81,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ steps.version.outputs.image }}
-          tags: |
-            type=raw,value=${{ steps.version.outputs.version }}
-          labels: |
-            org.opencontainers.image.title=mairouter
-            org.opencontainers.image.description=Local AI routing gateway
-            org.opencontainers.image.vendor=NatrocTeam
-            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
-            org.opencontainers.image.version=${{ steps.version.outputs.version }}
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -78,10 +89,15 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-            linux/arm64/v8
             linux/arm/v7
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ steps.version.outputs.image }}:${{ steps.version.outputs.version }}
+          labels: |
+            org.opencontainers.image.title=mairouter
+            org.opencontainers.image.description=Local AI routing gateway
+            org.opencontainers.image.vendor=NatrocTeam
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.version.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
           provenance: false
           sbom: false
           cache-from: type=gha
