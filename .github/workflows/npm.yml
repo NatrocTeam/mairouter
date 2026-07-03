@@ -27,39 +27,43 @@ jobs:
         run: npm ci
 
       - name: Set version from release tag
+        id: version
         env:
-          TAG_NAME: ${{ github.event.release.tag_name || 'v0.0.0-dispatch' }}
+          TAG_NAME: ${{ github.event.release.tag_name || '' }}
           IS_PRERELEASE: ${{ github.event.release.prerelease || false }}
         run: |
-          # Strip leading "v" from tag to get npm version
-          NPM_VERSION="${TAG_NAME#v}"
-
-          # Override package version
+          if [ -z "${TAG_NAME}" ]; then
+            echo "No release tag — using local package version"
+            NPM_VERSION=$(node -p "require('./package.json').version")
+          else
+            # Strip leading "v" from tag
+            NPM_VERSION="${TAG_NAME#v}"
+          fi
           npm pkg set version="${NPM_VERSION}"
-
-          echo "VERSION=${NPM_VERSION}" >> "$GITHUB_ENV"
-          echo "IS_PRERELEASE=${IS_PRERELEASE}" >> "$GITHUB_ENV"
+          echo "version=${NPM_VERSION}" >> "$GITHUB_OUTPUT"
+          echo "is_prerelease=${IS_PRERELEASE}" >> "$GITHUB_OUTPUT"
+          echo "VERSION=${NPM_VERSION}"
+          echo "IS_PRERELEASE=${IS_PRERELEASE}"
 
       - name: Build CLI (esbuild)
         run: npm run build
 
       - name: Publish — latest
-        if: env.IS_PRERELEASE != 'true'
+        if: steps.version.outputs.is_prerelease != 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          echo "Publishing latest: version=${VERSION}, npm-tag=latest"
+          echo "Publishing latest: version=${{ steps.version.outputs.version }}, npm-tag=latest"
           npm publish --tag latest
 
       - name: Publish — prerelease
-        if: env.IS_PRERELEASE == 'true'
+        if: steps.version.outputs.is_prerelease == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
-          # Extract pre-release tag from version after first "-"
-          # e.g. "1.1.2-beta.1" → prerelease-id="beta.1" → tag="beta"
+          VERSION="${{ steps.version.outputs.version }}"
+          # Extract pre-release tag, e.g. "1.1.2-beta.1" → "beta"
           PRERELEASE_ID="${VERSION#*-}"
           PRERELEASE_TAG="${PRERELEASE_ID%%.*}"
-
           echo "Publishing prerelease: version=${VERSION}, npm-tag=${PRERELEASE_TAG}"
           npm publish --tag "${PRERELEASE_TAG}"
