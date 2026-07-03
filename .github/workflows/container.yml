@@ -68,6 +68,31 @@ jobs:
           echo "Container version: $VERSION"
           echo "Container image: $IMAGE"
 
+      - name: Set Docker tags
+        id: docker_tags
+        shell: bash
+        env:
+          IMAGE: ${{ steps.version.outputs.image }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          {
+            echo "tags<<EOF"
+            echo "${IMAGE}:${VERSION}"
+
+            if ! echo "$VERSION" | grep -q '-'; then
+              echo "${IMAGE}:latest"
+            fi
+
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "Docker tags:"
+          echo "${IMAGE}:${VERSION}"
+
+          if ! echo "$VERSION" | grep -q '-'; then
+            echo "${IMAGE}:latest"
+          fi
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -89,7 +114,7 @@ jobs:
           platforms: |
             linux/amd64
             linux/arm64
-          tags: ${{ steps.version.outputs.image }}:${{ steps.version.outputs.version }}
+          tags: ${{ steps.docker_tags.outputs.tags }}
           labels: |
             org.opencontainers.image.title=mairouter
             org.opencontainers.image.description=Local AI routing gateway

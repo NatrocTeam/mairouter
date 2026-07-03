@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.2.0 2026-07-03 [(fa700a5)](https://github.com/NatrocTeam/mairouter/commit/fa700a5c2122a2c0c71190745225eafcba111b41)
+
+### Added
+
+- **New model capabilities** — added `claude-fable-5` with vision, reasoning, search, and adaptive thinking support
+- **NVIDIA NIM provider** — replaced `minimaxai/minimax-m3` with `nvidia/nemotron-3-ultra-550b-a55b`; added `deepseek-ai/deepseek-v4-flash` and `deepseek-ai/deepseek-v4-pro` models; updated `z-ai/glm4.7` to `z-ai/glm-5.2`; replaced `nv-embedqa-e5-v5` with `nv-embed-v1`; added `stt` (speech-to-text) service kind
+- **Anthropic Beta headers** — added `task-budgets-2026-03-13` and synced extended capabilities across both API and CLI spoof headers
+
 ## v1.1.0 2026-07-03 [(4beea7e)](https://github.com/NatrocTeam/mairouter/commit/4beea7ea3f53cf68cc45589a2da1fb9400441d5a)
 
 ### Added
