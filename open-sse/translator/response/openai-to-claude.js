@@ -2,7 +2,7 @@ import { register } from "../index.js";
 import { FORMATS } from "../formats.js";
 import { ROLE, CLAUDE_BLOCK, MODEL_FALLBACK } from "../schema/index.js";
 import { fromOpenAIFinish } from "../concerns/finishReason.js";
-import { asClaudeReasoningContext, extractReasoningText } from "../concerns/reasoning.js";
+import { extractReasoningText } from "../concerns/reasoning.js";
 
 // Legacy "proxy_" prefix used by older request translators. Response strips it
 // defensively so tool names from such turns resolve back (e.g. proxy_Read → Read
@@ -46,8 +46,8 @@ function isValidPdfPagesArg(filePath, pages) {
     /^\d+(?:-\d+)?$/.test(pages);
 }
 
-// Non-Anthropic reasoning has no Anthropic signature. Emit it as a separate
-// text block so Claude clients can round-trip it without forging thinking.
+// Non-Anthropic reasoning has no Anthropic signature. Emit it as a native
+// thinking block so Claude clients render it in the thinking panel.
 function stopReasoningTextBlock(state, results) {
   if (!state.reasoningTextBlockStarted) return;
   results.push({
@@ -147,19 +147,14 @@ export function openaiToClaudeResponse(chunk, state) {
       results.push({
         type: "content_block_start",
         index: state.reasoningTextBlockIndex,
-        content_block: { type: CLAUDE_BLOCK.TEXT, text: "" }
-      });
-      results.push({
-        type: "content_block_delta",
-        index: state.reasoningTextBlockIndex,
-        delta: { type: "text_delta", text: asClaudeReasoningContext("") }
+        content_block: { type: CLAUDE_BLOCK.THINKING, thinking: "" }
       });
     }
 
     results.push({
       type: "content_block_delta",
       index: state.reasoningTextBlockIndex,
-      delta: { type: "text_delta", text: reasoningContent }
+      delta: { type: "thinking_delta", thinking: reasoningContent }
     });
   }
 

@@ -15,7 +15,7 @@
  */
 import { register } from "../index.js";
 import { FORMATS } from "../formats.js";
-import { asClaudeReasoningContext } from "../concerns/reasoning.js";
+import { CLAUDE_BLOCK } from "../schema/index.js";
 
 function stopReasoningTextBlock(state, results) {
   if (!state.reasoningTextBlockStarted) return;
@@ -111,18 +111,13 @@ export function kiroToClaudeResponse(chunk, state) {
       results.push({
         type: "content_block_start",
         index: state.reasoningTextBlockIndex,
-        content_block: { type: "text", text: "" },
-      });
-      results.push({
-        type: "content_block_delta",
-        index: state.reasoningTextBlockIndex,
-        delta: { type: "text_delta", text: asClaudeReasoningContext("") },
+        content_block: { type: CLAUDE_BLOCK.THINKING, thinking: "" },
       });
     }
     results.push({
       type: "content_block_delta",
       index: state.reasoningTextBlockIndex,
-      delta: { type: "text_delta", text: reasoningContent },
+      delta: { type: "thinking_delta", thinking: reasoningContent },
     });
   }
 
@@ -228,7 +223,7 @@ export function kiroToClaudeNonStreaming(data) {
 
   const reasoningContent = message.reasoning_content || message.reasoning;
   if (reasoningContent) {
-    content.push({ type: "text", text: asClaudeReasoningContext(reasoningContent) });
+    content.push({ type: CLAUDE_BLOCK.THINKING, thinking: reasoningContent });
   }
   if (message.content) {
     content.push({ type: "text", text: message.content });

@@ -22,8 +22,9 @@ export function adjustMaxTokens(body) {
     maxTokens = body.thinking.budget_tokens + 1024;
   }
 
-  // Never exceed the global ceiling
-  if (maxTokens > DEFAULT_MAX_TOKENS) maxTokens = DEFAULT_MAX_TOKENS;
+  // Respect explicit client-requested max_tokens up to 300k (output-300k).
+  // This allows Claude clients to request >128k output via /v1/messages.
+  if (maxTokens > 300000) maxTokens = 300000;
 
   return maxTokens;
 }

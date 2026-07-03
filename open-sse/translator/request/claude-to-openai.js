@@ -165,6 +165,22 @@ function convertClaudeMessage(msg) {
           parts.push({ type: OPENAI_BLOCK.TEXT, text: "[Redacted thinking block]" });
           break;
 
+        case CLAUDE_BLOCK.DOCUMENT:
+          // Claude document block → OpenAI file block (PDF passthrough)
+          if (block.source?.type === "base64" && block.source?.media_type === "application/pdf") {
+            parts.push({
+              type: OPENAI_BLOCK.FILE,
+              file: {
+                file_data: `data:${block.source.media_type};base64,${block.source.data}`,
+                file_name: block.source.file_name || "document.pdf"
+              }
+            });
+          } else if (block.source?.type === "base64") {
+            // Non-PDF document → text fallback
+            parts.push({ type: OPENAI_BLOCK.TEXT, text: `[Document: ${block.source.media_type || "unknown type"}]` });
+          }
+          break;
+
         case CLAUDE_BLOCK.IMAGE:
           if (block.source?.type === "base64") {
             parts.push({
