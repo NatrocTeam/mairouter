@@ -30,11 +30,11 @@ Then ask normally — _"generate an image of a cat"_, _"transcribe this URL"_, e
 ## Configure your shell once
 
 ```bash
-export NINEROUTER_URL="http://localhost:12890"   # local default, or your VPS / tunnel URL
+export MAIROUTER_URL="http://localhost:12890"   # local default, or your VPS / tunnel URL
 export NINEROUTER_KEY="sk-..."                   # from Dashboard → Keys (only if requireApiKey=true)
 ```
 
-Verify: `curl $NINEROUTER_URL/api/health` → `{"ok":true}`.
+Verify: `curl $MAIROUTER_URL/api/health` → `{"ok":true}`.
 
 ## Links
 

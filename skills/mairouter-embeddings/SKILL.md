@@ -5,19 +5,19 @@ description: Generate vector embeddings via mairouter /v1/embeddings using OpenA
 
 # mairouter — Embeddings
 
-Requires `NINEROUTER_URL` (and `NINEROUTER_KEY` if auth enabled). See https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter/SKILL.md for setup.
+Requires `MAIROUTER_URL` (and `NINEROUTER_KEY` if auth enabled). See https://raw.githubusercontent.com/NatrocTeam/mairouter/refs/heads/master/skills/mairouter/SKILL.md for setup.
 
 ## Discover
 
 ```bash
-curl $NINEROUTER_URL/v1/models/embedding | jq '.data[].id'
+curl $MAIROUTER_URL/v1/models/embedding | jq '.data[].id'
 # Per-model dimensions
-curl "$NINEROUTER_URL/v1/models/info?id=openai/text-embedding-3-small"
+curl "$MAIROUTER_URL/v1/models/info?id=openai/text-embedding-3-small"
 ```
 
 ## Endpoint
 
-`POST $NINEROUTER_URL/v1/embeddings`
+`POST $MAIROUTER_URL/v1/embeddings`
 
 | Field             | Required | Notes                        |
 | ----------------- | -------- | ---------------------------- |
@@ -29,7 +29,7 @@ curl "$NINEROUTER_URL/v1/models/info?id=openai/text-embedding-3-small"
 ## Examples
 
 ```bash
-curl -X POST $NINEROUTER_URL/v1/embeddings \
+curl -X POST $MAIROUTER_URL/v1/embeddings \
   -H "Authorization: Bearer $NINEROUTER_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"openai/text-embedding-3-small","input":["hello","world"]}'
@@ -38,7 +38,7 @@ curl -X POST $NINEROUTER_URL/v1/embeddings \
 JS:
 
 ```js
-const r = await fetch(`${process.env.NINEROUTER_URL}/v1/embeddings`, {
+const r = await fetch(`${process.env.MAIROUTER_URL}/v1/embeddings`, {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.NINEROUTER_KEY}`,

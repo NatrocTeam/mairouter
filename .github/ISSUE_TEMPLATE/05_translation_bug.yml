@@ -1,0 +1,116 @@
+name: Format Translation Issue
+description: Report a problem with request/response format translation between providers
+title: "[Translation] "
+labels: [translation, bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mairouter translates between AI provider formats automatically (Claude ↔ OpenAI ↔ Gemini ↔ Kiro ↔ Cursor ↔ Ollama, etc.).
+        Use this template to report issues where the translation produces incorrect output.
+
+  - type: dropdown
+    id: source_format
+    attributes:
+      label: Source format
+      description: The format of the incoming request (from your client)
+      multiple: false
+      options:
+        - OpenAI chat completions
+        - OpenAI Responses API
+        - Anthropic Claude
+        - Google Gemini
+        - Google Gemini CLI
+        - Google Vertex AI
+        - Antigravity
+        - Kiro
+        - Cursor
+        - Ollama
+        - CommandCode
+        - Codex
+        - Other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: target_format
+    attributes:
+      label: Target format
+      description: The format being sent to the upstream provider
+      multiple: false
+      options:
+        - OpenAI chat completions
+        - OpenAI Responses API
+        - Anthropic Claude
+        - Google Gemini
+        - Google Gemini CLI
+        - Google Vertex AI
+        - Antigravity
+        - Kiro
+        - Cursor
+        - Ollama
+        - CommandCode
+        - Codex
+        - Other
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        **Translation direction**: Request translation (client → upstream) converts your request into the provider's format.
+        Response translation (upstream → client) converts the provider's response back to your client's format.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Issue description
+      description: What is wrong with the translation? Be specific about which fields or blocks are incorrect.
+      placeholder: |
+        - Missing fields: [...]
+        - Wrong format: [...]
+        - Broken streaming: [...]
+        - Thinking blocks not rendering: [...]
+        - Tool calls malformed: [...]
+        - Content blocks reordered: [...]
+        - Usage data incorrect: [...]
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: |
+        Include the full request body, provider, model, and what you received vs what you expected.
+        Remove any sensitive information (API keys, tokens).
+      placeholder: |
+        Request:
+        POST /v1/chat/completions
+        { "model": "...", "messages": [...] }
+
+        Expected response: [...]
+        Actual response: [...]
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: raw_upstream
+    attributes:
+      label: Raw upstream response (if available)
+      description: |
+        The response received directly from the upstream provider before mairouter translates it.
+        This helps identify whether the issue is in the request translation, provider response, or response translation.
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have checked this is not a general bug (use Bug Report for non-translation issues)
+          required: true
+        - label: I have included both the raw upstream response and the translated output if available
+          required: false
+        - label: I have verified this is not a provider-specific issue by testing with another client or provider
+          required: false

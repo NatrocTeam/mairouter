@@ -1,10 +1,10 @@
-# 9Router Architecture
+# mairouter Architecture
 
-_Last updated: 2026-02-06_
+_Last updated: 2026-07-03_
 
 ## Executive Summary
 
-9Router is a local AI routing gateway and dashboard built on Next.js.
+Mairouter is a local AI routing gateway and dashboard built on Next.js.
 It provides a single OpenAI-compatible endpoint (`/v1/*`) and routes traffic across multiple upstream providers with translation, fallback, token refresh, and usage tracking.
 
 Core capabilities:
@@ -52,17 +52,17 @@ flowchart LR
         BROWSER[Browser Dashboard]
     end
 
-    subgraph Router[9Router Local Process]
+    subgraph Router[mairouter Local Process]
         API[V1 Compatibility API\n/v1/*]
         DASH[Dashboard + Management API\n/api/*]
         CORE[SSE + Translation Core\nopen-sse + src/sse]
-        DB[(db.json)]
+        DB[(SQLite: data.sqlite)]
         UDB[(usage.json + log.txt)]
     end
 
     subgraph Upstreams[Upstream Providers]
-        P1[OAuth Providers\nClaude/Codex/Gemini/Qwen/iFlow/GitHub/Kiro/Cursor/Antigravity]
-        P2[API Key Providers\nOpenAI/Anthropic/OpenRouter/GLM/Kimi/MiniMax]
+        P1[OAuth Providers\nClaude/Codex/Gemini/Qwen/GitHub/Kiro/Cursor/xAI/Antigravity]
+        P2[API Key Providers\nOpenAI/Anthropic/OpenRouter/DeepSeek/GLM/Kimi/MiniMax]
         P3[Compatible Nodes\nOpenAI-compatible / Anthropic-compatible]
     end
 
@@ -105,6 +105,10 @@ Important compatibility routes:
 - `src/app/api/v1/responses/route.js`
 - `src/app/api/v1/models/route.js`
 - `src/app/api/v1/messages/count_tokens/route.js`
+- `src/app/api/v1/embeddings/route.js`
+- `src/app/api/v1/audio/speech/route.js`
+- `src/app/api/v1/audio/transcriptions/route.js`
+- `src/app/api/v1/images/generations/route.js`
 - `src/app/api/v1beta/models/route.js`
 - `src/app/api/v1beta/models/[...path]/route.js`
 
@@ -118,6 +122,9 @@ Management domains:
 - Usage: `src/app/api/usage/*`
 - Sync/cloud: `src/app/api/sync/*`, `src/app/api/cloud/*`
 - CLI tooling helpers: `src/app/api/cli-tools/*`
+- MCP bridge: `src/app/api/mcp/*`
+- Tunnels: `src/app/api/tunnel/*`
+- Proxy pools: `src/app/api/proxy-pools*`
 
 ## 2) SSE + Translation Core
 
@@ -129,6 +136,7 @@ Main flow modules:
 - Format detection/provider config: `open-sse/services/provider.js`
 - Model parse/resolve: `src/sse/services/model.js`, `open-sse/services/model.js`
 - Account fallback logic: `open-sse/services/accountFallback.js`
+- Combo model routing: `open-sse/services/combo.js`
 - Translation registry: `open-sse/translator/index.js`
 - Stream transformations: `open-sse/utils/stream.js`, `open-sse/utils/streamHandler.js`
 - Usage extraction/normalization: `open-sse/utils/usageTracking.js`
@@ -137,15 +145,17 @@ Main flow modules:
 
 Primary state DB:
 
-- `src/lib/localDb.js`
-- file: `${DATA_DIR}/db.json` (or `~/.9router/db.json` when `DATA_DIR` is unset)
+- `src/lib/db/` — SQLite database layer with schema migration, multiple driver support
+- `src/lib/localDb.js` — backward-compatible shim that delegates to `src/lib/db/`
+- runtime: `${DATA_DIR}/db/data.sqlite` (or `~/.mairouter/db/data.sqlite` when `DATA_DIR` is unset)
+- drivers: `better-sqlite3` (preferred), `sql.js` (fallback), `node:sqlite` (experimental)
 - entities: providerConnections, providerNodes, modelAliases, combos, apiKeys, settings, pricing
 
 Usage DB:
 
 - `src/lib/usageDb.js`
-- files: `~/.9router/usage.json`, `~/.9router/log.txt`
-- note: currently independent from `DATA_DIR`
+- files: `${DATA_DIR}/usage.json`, `${DATA_DIR}/log.txt`
+- also tracks per-request usage in the SQLite DB
 
 ## 4) Auth + Security Surfaces
 
@@ -159,6 +169,34 @@ Usage DB:
 - Scheduler init: `src/lib/initCloudSync.js`, `src/shared/services/initializeCloudSync.js`
 - Periodic task: `src/shared/services/cloudSyncScheduler.js`
 - Control route: `src/app/api/sync/cloud/route.js`
+
+## 6) Agent Skills
+
+Mairouter ships with drop-in agent skills for AI assistants. These are markdown skill files that agents read to learn how to use the mairouter API:
+
+- `skills/mairouter/SKILL.md` — entry skill with setup and capability index
+- `skills/mairouter-chat/SKILL.md` — chat/completions
+- `skills/mairouter-image/SKILL.md` — image generation
+- `skills/mairouter-tts/SKILL.md` — text-to-speech
+- `skills/mairouter-stt/SKILL.md` — speech-to-text
+- `skills/mairouter-embeddings/SKILL.md` — embeddings
+- `skills/mairouter-web-search/SKILL.md` — web search
+- `skills/mairouter-web-fetch/SKILL.md` — URL fetch to markdown
+
+## 7) MCP Bridge
+
+Mairouter includes an SSE-based MCP bridge that allows MCP plugins to communicate through the gateway:
+
+- `src/app/api/mcp/[plugin]/sse/route.js` — SSE connection for MCP
+- `src/app/api/mcp/[plugin]/message/route.js` — message passing
+
+## 8) MITM Proxy
+
+A TLS-intercepting proxy for CLI tools that cannot be configured via environment variables:
+
+- `src/mitm/` — MITM proxy source
+- Supports: Antigravity, Copilot, Cursor, Kiro
+- Built as a standalone binary via `cli/scripts/buildMitm.js`
 
 ## Request Lifecycle (`/v1/chat/completions`)
 
@@ -247,7 +285,7 @@ sequenceDiagram
     participant UI as Dashboard UI
     participant OAuth as /api/oauth/[provider]/[action]
     participant ProvAuth as Provider Auth Server
-    participant DB as localDb
+    participant DB as SQLite DB
     participant Test as /api/providers/[id]/test
     participant Exec as Provider Executor
 
@@ -278,7 +316,7 @@ sequenceDiagram
     autonumber
     participant UI as Endpoint Page UI
     participant Sync as /api/sync/cloud
-    participant DB as localDb
+    participant DB as SQLite DB
     participant Cloud as External Cloud Sync
     participant Claude as ~/.claude/settings.json
 
@@ -377,9 +415,9 @@ erDiagram
 
 Physical storage files:
 
-- main state: `${DATA_DIR}/db.json` (or `~/.9router/db.json`)
-- usage stats: `~/.9router/usage.json`
-- request log lines: `~/.9router/log.txt`
+- main state: `${DATA_DIR}/db/data.sqlite` (SQLite, via `src/lib/db/`)
+- usage stats: `${DATA_DIR}/usage.json`
+- request log lines: `${DATA_DIR}/log.txt`
 - optional translator/request debug sessions: `<repo>/logs/...`
 
 ## Deployment Topology
@@ -391,10 +429,10 @@ flowchart LR
         Browser[Dashboard Browser]
     end
 
-    subgraph ContainerOrProcess[9Router Runtime]
+    subgraph ContainerOrProcess[mairouter Runtime]
         Next[Next.js Server\nPORT=12890]
         Core[SSE Core + Executors]
-        MainDB[(db.json)]
+        MainDB[(SQLite: data.sqlite)]
         UsageDB[(usage.json/log.txt)]
     end
 
@@ -423,11 +461,17 @@ flowchart LR
 - `src/app/api/oauth/*`: OAuth/device-code flows
 - `src/app/api/keys*`: local API key lifecycle
 - `src/app/api/models/alias`: alias management
+- `src/app/api/models/custom`: custom model management
+- `src/app/api/models/disabled`: disabled model management
 - `src/app/api/combos*`: fallback combo management
 - `src/app/api/pricing`: pricing overrides for cost calculation
 - `src/app/api/usage/*`: usage and logs APIs
 - `src/app/api/sync/*` + `src/app/api/cloud/*`: cloud sync and cloud-facing helpers
 - `src/app/api/cli-tools/*`: local CLI config writers/checkers
+- `src/app/api/mcp/*`: MCP plugin bridge
+- `src/app/api/tunnel/*`: Cloudflare Tunnel and Tailscale management
+- `src/app/api/proxy-pools*`: Cloudflare Workers / Vercel Edge / Deno Deploy relay management
+- `src/app/api/headroom/*`: external token compression proxy
 
 ### Routing and Execution Core
 
@@ -444,12 +488,18 @@ flowchart LR
 
 ### Persistence
 
-- `src/lib/localDb.js`: persistent config/state
+- `src/lib/db/`: SQLite database layer (primary)
+- `src/lib/localDb.js`: backward-compatible shim delegating to `src/lib/db/`
 - `src/lib/usageDb.js`: usage history and rolling request logs
+
+### Token Optimization (RTK)
+
+- `open-sse/rtk/`: tool_result compression, content-type filters, caveman/ponytail style injection
+- Configurable via dashboard settings
 
 ## Provider Executor Coverage
 
-Specialized executors:
+Specialized executors for providers with unique auth or transport requirements:
 
 - `antigravity`
 - `gemini-cli`
@@ -470,6 +520,14 @@ Detected source formats include:
 - `openai-responses`
 - `claude`
 - `gemini`
+- `gemini-cli`
+- `vertex`
+- `antigravity`
+- `kiro`
+- `cursor`
+- `ollama`
+- `commandcode`
+- `codex`
 
 Target formats include:
 
@@ -478,44 +536,46 @@ Target formats include:
 - Gemini/Gemini-CLI/Antigravity envelope
 - Kiro
 - Cursor
+- Ollama
+- CommandCode
 
-Translations are selected dynamically based on source payload shape and provider target format.
+Translations are selected dynamically based on source payload shape and provider target format. The translation engine supports both request translation (client → upstream) and response translation (upstream → client), with direct pair registration for common routes and OpenAI pivot for less common ones.
 
 ## Failure Modes and Resilience
 
-## 1) Account/Provider Availability
+### 1) Account/Provider Availability
 
 - provider account cooldown on transient/rate/auth errors
 - account fallback before failing request
 - combo model fallback when current model/provider path is exhausted
 
-## 2) Token Expiry
+### 2) Token Expiry
 
 - pre-check and refresh with retry for refreshable providers
 - 401/403 retry after refresh attempt in core path
 
-## 3) Stream Safety
+### 3) Stream Safety
 
 - disconnect-aware stream controller
 - translation stream with end-of-stream flush and `[DONE]` handling
 - usage estimation fallback when provider usage metadata is missing
 
-## 4) Cloud Sync Degradation
+### 4) Cloud Sync Degradation
 
 - sync errors are surfaced but local runtime continues
 - scheduler has retry-capable logic, but periodic execution currently calls single-attempt sync by default
 
-## 5) Data Integrity
+### 5) Data Integrity
 
-- DB shape migration/repair for missing keys
-- corrupt JSON reset safeguards for localDb and usageDb
+- SQLite schema migration handling for model version changes
+- corrupt JSON reset safeguards for usage.json and log.txt
 
 ## Observability and Operational Signals
 
 Runtime visibility sources:
 
 - console logs from `src/sse/utils/logger.js`
-- per-request usage aggregates in `usage.json`
+- per-request usage aggregates in SQLite DB and `usage.json`
 - textual request status log in `log.txt`
 - optional deep request/translation logs under `logs/` when `ENABLE_REQUEST_LOGS=true`
 - dashboard usage endpoints (`/api/usage/*`) for UI consumption
@@ -540,18 +600,16 @@ Environment variables actively used by code:
 - Outbound proxy: `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY` and lowercase variants
 - Platform/runtime helpers (not app-specific config): `APPDATA`, `NODE_ENV`, `PORT`, `HOSTNAME`
 
-## Known Architectural Notes
-
-1. `usageDb` currently stores under `~/.9router` and does not follow `DATA_DIR`.
-2. `/api/v1/route.js` returns a static model list and is not the main models source used by `/v1/models`.
-3. Request logger writes full headers/body when enabled; treat log directory as sensitive.
-4. Cloud behavior depends on correct `NEXT_PUBLIC_BASE_URL` and cloud endpoint reachability.
-
 ## Operational Verification Checklist
 
-- Build from source: `cd /root/dev/9router && npm run build`
-- Build Docker image: `cd /root/dev/9router && docker build -t 9router .`
+- Build from source: `cd /repo && npm run build:all`
+- Build Docker image: `cd /repo && docker build -t mairouter .`
 - Start service and verify:
-- `GET /api/settings`
-- `GET /api/v1/models`
-- CLI target base URL should be `http://<host>:12890/v1` when `PORT=12890`
+  - `GET /api/health` → `{"ok":true}`
+  - `GET /api/settings`
+  - `GET /api/v1/models`
+  - CLI target base URL should be `http://<host>:12890/v1` when `PORT=12890`
+
+## Attribution
+
+Mairouter is a fork of [9Router](https://github.com/decolua/9router) by decolua. See [NOTICE.md](NOTICE.md) for full attribution and [LICENSE](LICENSE) for license information.

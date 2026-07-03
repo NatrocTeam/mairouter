@@ -1,0 +1,129 @@
+name: Provider / Integration Request
+description: Request support for a new AI provider, OAuth flow, or API format
+title: "[Provider] "
+labels: [provider-request, enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a new provider integration! Please include API documentation URLs and example endpoints so we can implement support accurately.
+
+  - type: input
+    id: name
+    attributes:
+      label: Provider name
+      description: The official name of the provider (e.g., "Anthropic", "Groq", "Fireworks")
+      placeholder: e.g. Groq
+    validations:
+      required: true
+
+  - type: input
+    id: website
+    attributes:
+      label: Provider website
+      description: Link to the provider's homepage or developer docs
+      placeholder: https://console.groq.com/docs
+
+  - type: dropdown
+    id: api_type
+    attributes:
+      label: API type
+      description: What API format does this provider use?
+      multiple: false
+      options:
+        - OpenAI-compatible /v1/chat/completions
+        - Anthropic-compatible /v1/messages
+        - Google Gemini :generateContent
+        - OAuth-only (no public API key auth)
+        - Custom / SDK-based
+    validations:
+      required: true
+
+  - type: dropdown
+    id: auth
+    attributes:
+      label: Authentication method
+      description: How does this provider authenticate requests?
+      multiple: false
+      options:
+        - API Key (Bearer token)
+        - OAuth 2.0 (authorization code)
+        - OAuth 2.0 (device code)
+        - Bearer Token (non-API-key)
+        - Cookie-based
+        - No auth (local / open)
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: capabilities
+    attributes:
+      label: Supported capabilities
+      description: Which model types does this provider support? (check all that apply)
+      options:
+        - label: LLM / Chat
+        - label: Embeddings
+        - label: Image Generation
+        - label: Text-to-Speech (TTS)
+        - label: Speech-to-Text (STT)
+        - label: Web Search
+        - label: Web Fetch / URL extraction
+        - label: Image-to-Text / Vision
+        - label: Video generation
+        - label: Music generation
+
+  - type: dropdown
+    id: free_tier
+    attributes:
+      label: Free tier availability
+      description: Does this provider have a free or trial tier?
+      multiple: false
+      options:
+        - "Yes — rate-limited free tier"
+        - "Yes — limited free quota"
+        - "No — paid only"
+        - "Unknown"
+    validations:
+      required: true
+
+  - type: input
+    id: docs_url
+    attributes:
+      label: API documentation URL
+      description: Link to the API reference documentation
+      placeholder: https://docs.example.com/api-reference
+    validations:
+      required: true
+
+  - type: textarea
+    id: endpoint_example
+    attributes:
+      label: Endpoint example
+      description: Example curl command or request body demonstrating the API
+      placeholder: |
+        curl https://api.example.com/v1/chat/completions \
+          -H "Authorization: Bearer $KEY" \
+          -d '{"model":"example-model","messages":[{"role":"user","content":"Hello"}]}'
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Why should this provider be added? Any special requirements, user base, or migration notes?
+      placeholder: e.g., "This provider has the cheapest Llama 3 hosting" or "Many users in region X rely on this"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have searched for existing provider requests before submitting
+          required: true
+        - label: I have checked the providers registry (open-sse/providers/registry/) to verify this provider is not already supported via an existing entry
+          required: true
+        - label: I have verified this provider is not already supported as an OpenAI-compatible provider
+          required: true

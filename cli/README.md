@@ -75,6 +75,32 @@ When started without `--skip-update`, mairouter automatically checks npm for a n
 
 SQLite dependencies (`sql.js`, `better-sqlite3`) are installed into `~/.mairouter/runtime/node_modules` at startup rather than bundled with the package. This avoids Windows `EBUSY` errors when updating the global CLI.
 
+## Data and Logs
+
+- **Configuration**: `~/.mairouter/config.json`
+- **Database**: `${DATA_DIR}/db/data.sqlite` — provider connections, API keys, combos, settings, usage
+- **Usage tracking**: `${DATA_DIR}/usage.json`
+- **Request logs**: `${DATA_DIR}/log.txt`
+- **Runtime deps**: `~/.mairouter/runtime/node_modules/` (SQLite, tray binaries)
+
+Set the `DATA_DIR` environment variable to change the data directory; defaults to `~/.mairouter/`.
+
+## System Tray Mode Details
+
+In `--tray` mode, the server runs as a background process:
+
+| Platform | Implementation              | Notes                                     |
+| -------- | --------------------------- | ----------------------------------------- |
+| Windows  | PowerShell `NotifyIcon`     | Zero binary dependencies; no AV false pos |
+| macOS    | `systray2` (auto-installed) | Native menu bar icon                      |
+| Linux    | `systray2` (auto-installed) | Native notification area icon             |
+
+## Agent Skills
+
+Mairouter includes drop-in agent skills for AI assistants (Claude, Cursor, ChatGPT). These let an AI agent use your mairouter gateway for chat, image generation, TTS, STT, embeddings, web search, and web fetch — all through a single `MAIROUTER_URL` environment variable.
+
+See the [skills documentation](../skills/README.md) for the full list and usage.
+
 ## What You Can Do From the CLI
 
 | Menu          | Actions                                                             |

@@ -5,21 +5,21 @@ description: Web search via mairouter /v1/search using Tavily / Exa / Brave / Se
 
 # mairouter — Web Search
 
-Requires `NINEROUTER_URL` (and `NINEROUTER_KEY` if auth enabled). See https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter/SKILL.md for setup.
+Requires `MAIROUTER_URL` (and `NINEROUTER_KEY` if auth enabled). See https://raw.githubusercontent.com/NatrocTeam/mairouter/refs/heads/master/skills/mairouter/SKILL.md for setup.
 
 ## Discover
 
 ```bash
-curl $NINEROUTER_URL/v1/models/web | jq '.data[] | select(.kind=="webSearch") | .id'
+curl $MAIROUTER_URL/v1/models/web | jq '.data[] | select(.kind=="webSearch") | .id'
 # Per-provider params (searchTypes, maxResults, required options like cx for google-pse)
-curl "$NINEROUTER_URL/v1/models/info?id=tavily/search"
+curl "$MAIROUTER_URL/v1/models/info?id=tavily/search"
 ```
 
 IDs end in `/search` (e.g. `tavily/search`). Combos (`owned_by:"combo"`) chain providers with auto-fallback.
 
 ## Endpoint
 
-`POST $NINEROUTER_URL/v1/search`
+`POST $MAIROUTER_URL/v1/search`
 
 | Field                                                | Required | Notes                                            |
 | ---------------------------------------------------- | -------- | ------------------------------------------------ |
@@ -32,7 +32,7 @@ IDs end in `/search` (e.g. `tavily/search`). Combos (`owned_by:"combo"`) chain p
 ## Examples
 
 ```bash
-curl -X POST $NINEROUTER_URL/v1/search \
+curl -X POST $MAIROUTER_URL/v1/search \
   -H "Authorization: Bearer $NINEROUTER_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"tavily","query":"mairouter open source","max_results":5}'
@@ -41,7 +41,7 @@ curl -X POST $NINEROUTER_URL/v1/search \
 JS:
 
 ```js
-const r = await fetch(`${process.env.NINEROUTER_URL}/v1/search`, {
+const r = await fetch(`${process.env.MAIROUTER_URL}/v1/search`, {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.NINEROUTER_KEY}`,

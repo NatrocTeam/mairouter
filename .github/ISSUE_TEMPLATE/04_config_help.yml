@@ -1,0 +1,92 @@
+name: Configuration / Setup Help
+description: Questions about installing, configuring, or running mairouter
+title: "[Help] "
+labels: [help-wanted, question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before posting, please check:
+        - [Root README](https://github.com/NatrocTeam/mairouter#readme) — quick start and features
+        - [CLI Manual](https://github.com/NatrocTeam/mairouter/blob/main/cli/README.md) — CLI options and TUI
+        - [Environment Variables](https://github.com/NatrocTeam/mairouter/blob/main/.env.example) — all config vars
+        - [Architecture](https://github.com/NatrocTeam/mairouter/blob/main/docs/ARCHITECTURE.md) — system design
+
+  - type: dropdown
+    id: topic
+    attributes:
+      label: Topic
+      description: What area do you need help with?
+      multiple: false
+      options:
+        - Installation (npm / Docker)
+        - CLI usage (options, TUI, system tray)
+        - Docker deployment
+        - Environment variables / configuration
+        - Provider setup (API key)
+        - OAuth providers setup
+        - Combo models
+        - Dashboard login / initial setup
+        - Tunnels (Cloudflare / Tailscale)
+        - Proxy pools
+        - Cloud Sync
+        - Agent skills
+        - OIDC / External authentication
+        - CLI tool config writers
+        - API keys / authentication
+        - RTK / Headroom / token savings
+        - Database / data directory
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to do?
+      description: Describe what you want to achieve in detail
+      placeholder: I'm trying to [...]
+    validations:
+      required: true
+
+  - type: textarea
+    id: tried
+    attributes:
+      label: What have you tried?
+      description: Steps you've already taken, configs you've changed, error messages you've seen
+      placeholder: I've tried [...], but got error [...]
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: |
+        OS, Node version, installation method.
+        Include output of `node --version` and `mairouter --version` if applicable.
+      placeholder: |
+        OS: Windows 11
+        Node: 22.0.0
+        Install: npm global
+        Browser: Chrome (if dashboard issue)
+        Proxy: none / HTTP_PROXY=http://...
+    validations:
+      required: true
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Relevant configuration
+      description: Sanitized config snippets or environment variables (remove any secrets before posting!)
+      placeholder: |
+        JWT_SECRET=...
+        DATA_DIR=~/.mairouter
+        PORT=12890
+      render: shell
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have read the README, CLI manual, and documentation before posting
+          required: true

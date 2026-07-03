@@ -1,0 +1,84 @@
+name: Feature Request
+description: Suggest a new feature or improvement for mairouter
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting a feature! Please describe the problem you're trying to solve and how you envision the solution working.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem does this solve? What doesn't work or is missing?
+      placeholder: I'm always frustrated when [...]
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How should this feature work? Be as specific as possible.
+      placeholder: |
+        Add a new endpoint /v1/... that [...]
+        Or: Add a setting in the dashboard to [...]
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternative solutions
+      description: What workarounds or alternative approaches have you considered?
+      placeholder: I've tried [...], but it doesn't work because [...]
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected component
+      description: Which part of mairouter would this affect?
+      multiple: false
+      options:
+        - Core routing engine (open-sse/)
+        - Format translation (open-sse/translator/)
+        - Provider integration (open-sse/providers/)
+        - Token saver / RTK (open-sse/rtk/)
+        - Web Dashboard (src/app/)
+        - CLI (cli/)
+        - OAuth flows (src/lib/oauth/)
+        - MITM Proxy (src/mitm/)
+        - MCP Bridge (src/app/api/mcp/)
+        - API endpoints (src/app/api/)
+        - Tunnels / Cloudflare / Tailscale
+        - Proxy pools
+        - Database / persistence (src/lib/db/)
+        - Agent skills (skills/)
+        - Docker / deployment
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use case
+      description: How would you use this feature? Who else would benefit?
+      placeholder: |
+        I run mairouter for my team and we need [...]
+        This would help users who [...]
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have checked existing feature requests before submitting
+          required: true
+        - label: This is not a provider integration request (use the Provider Request template for new providers)
+          required: true
+        - label: I have checked the CHANGELOG.md to see if this feature is already planned
+          required: false

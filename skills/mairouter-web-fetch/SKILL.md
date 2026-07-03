@@ -5,21 +5,21 @@ description: Fetch URL → markdown / text / HTML via mairouter /v1/web/fetch us
 
 # mairouter — Web Fetch
 
-Requires `NINEROUTER_URL` (and `NINEROUTER_KEY` if auth enabled). See https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter/SKILL.md for setup.
+Requires `MAIROUTER_URL` (and `NINEROUTER_KEY` if auth enabled). See https://raw.githubusercontent.com/NatrocTeam/mairouter/refs/heads/master/skills/mairouter/SKILL.md for setup.
 
 ## Discover
 
 ```bash
-curl $NINEROUTER_URL/v1/models/web | jq '.data[] | select(.kind=="webFetch") | .id'
+curl $MAIROUTER_URL/v1/models/web | jq '.data[] | select(.kind=="webFetch") | .id'
 # Per-provider params
-curl "$NINEROUTER_URL/v1/models/info?id=firecrawl/fetch"
+curl "$MAIROUTER_URL/v1/models/info?id=firecrawl/fetch"
 ```
 
 IDs end in `/fetch` (e.g. `firecrawl/fetch`, `jina/fetch`). `fetch-combo` chains providers with auto-fallback.
 
 ## Endpoint
 
-`POST $NINEROUTER_URL/v1/web/fetch`
+`POST $MAIROUTER_URL/v1/web/fetch`
 
 | Field                   | Required | Notes                                                     |
 | ----------------------- | -------- | --------------------------------------------------------- |
@@ -33,7 +33,7 @@ IDs end in `/fetch` (e.g. `firecrawl/fetch`, `jina/fetch`). `fetch-combo` chains
 ### Jina Reader
 
 ```bash
-curl -X POST $NINEROUTER_URL/v1/web/fetch \
+curl -X POST $MAIROUTER_URL/v1/web/fetch \
   -H "Authorization: Bearer $NINEROUTER_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"jina-reader","url":"https://mairouter.com","format":"markdown"}'
@@ -42,7 +42,7 @@ curl -X POST $NINEROUTER_URL/v1/web/fetch \
 ### Exa
 
 ```bash
-curl -X POST $NINEROUTER_URL/v1/web/fetch \
+curl -X POST $MAIROUTER_URL/v1/web/fetch \
   -H "Authorization: Bearer $NINEROUTER_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"exa","url":"https://example.com","format":"markdown","max_characters":0}'
@@ -51,7 +51,7 @@ curl -X POST $NINEROUTER_URL/v1/web/fetch \
 ### Firecrawl
 
 ```bash
-curl -X POST $NINEROUTER_URL/v1/web/fetch \
+curl -X POST $MAIROUTER_URL/v1/web/fetch \
   -H "Authorization: Bearer $NINEROUTER_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"firecrawl","url":"https://example.com","format":"markdown","max_characters":0}'
@@ -60,7 +60,7 @@ curl -X POST $NINEROUTER_URL/v1/web/fetch \
 ### Tavily
 
 ```bash
-curl -X POST $NINEROUTER_URL/v1/web/fetch \
+curl -X POST $MAIROUTER_URL/v1/web/fetch \
   -H "Authorization: Bearer $NINEROUTER_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"tavily","url":"https://example.com","format":"markdown","max_characters":0}'
@@ -69,7 +69,7 @@ curl -X POST $NINEROUTER_URL/v1/web/fetch \
 JS:
 
 ```js
-const r = await fetch(`${process.env.NINEROUTER_URL}/v1/web/fetch`, {
+const r = await fetch(`${process.env.MAIROUTER_URL}/v1/web/fetch`, {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.NINEROUTER_KEY}`,

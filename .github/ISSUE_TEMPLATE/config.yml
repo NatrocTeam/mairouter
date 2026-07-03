@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Policy
+    url: https://github.com/NatrocTeam/mairouter/security/advisories/new
+    about: Report a security vulnerability — please do not open a public issue
+  - name: 9Router Upstream
+    url: https://github.com/decolua/9router
+    about: The upstream project mairouter is forked from — check here for upstream-specific issues
+  - name: Contributing Guide
+    url: https://github.com/NatrocTeam/mairouter/blob/main/CONTRIBUTING.md
+    about: Development setup, build instructions, and PR guidelines
+  - name: GitHub Discussions
+    url: https://github.com/NatrocTeam/mairouter/discussions
+    about: Questions, ideas, feature proposals, and general discussion

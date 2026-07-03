@@ -5,21 +5,21 @@ description: Speech-to-text via mairouter /v1/audio/transcriptions using OpenAI 
 
 # mairouter — Speech-to-Text
 
-Requires `NINEROUTER_URL` (and `NINEROUTER_KEY` if auth enabled). See https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter/SKILL.md for setup.
+Requires `MAIROUTER_URL` (and `NINEROUTER_KEY` if auth enabled). See https://raw.githubusercontent.com/NatrocTeam/mairouter/refs/heads/master/skills/mairouter/SKILL.md for setup.
 
 ## Discover
 
 ```bash
-curl $NINEROUTER_URL/v1/models/stt | jq '.data[].id'
+curl $MAIROUTER_URL/v1/models/stt | jq '.data[].id'
 # Per-model params (language, response_format, prompt, temperature support)
-curl "$NINEROUTER_URL/v1/models/info?id=openai/whisper-1"
+curl "$MAIROUTER_URL/v1/models/info?id=openai/whisper-1"
 ```
 
 `model` = STT model ID (e.g. `openai/whisper-1`, `groq/whisper-large-v3`, `deepgram/nova-3`, `gemini/gemini-2.5-flash`).
 
 ## Endpoint
 
-`POST $NINEROUTER_URL/v1/audio/transcriptions` (OpenAI Whisper compatible, `multipart/form-data`)
+`POST $MAIROUTER_URL/v1/audio/transcriptions` (OpenAI Whisper compatible, `multipart/form-data`)
 
 | Field             | Required | Notes                                                      |
 | ----------------- | -------- | ---------------------------------------------------------- |
@@ -33,7 +33,7 @@ curl "$NINEROUTER_URL/v1/models/info?id=openai/whisper-1"
 ## Examples
 
 ```bash
-curl -X POST "$NINEROUTER_URL/v1/audio/transcriptions" \
+curl -X POST "$MAIROUTER_URL/v1/audio/transcriptions" \
   -H "Authorization: Bearer $NINEROUTER_KEY" \
   -F "model=openai/whisper-1" \
   -F "file=@audio.mp3" \
@@ -51,7 +51,7 @@ form.append(
   new Blob([await (await import("node:fs/promises")).readFile("audio.mp3")]),
   "audio.mp3",
 );
-const r = await fetch(`${process.env.NINEROUTER_URL}/v1/audio/transcriptions`, {
+const r = await fetch(`${process.env.MAIROUTER_URL}/v1/audio/transcriptions`, {
   method: "POST",
   headers: { Authorization: `Bearer ${process.env.NINEROUTER_KEY}` },
   body: form,

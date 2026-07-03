@@ -1,0 +1,147 @@
+name: Bug Report
+description: Report a bug in mairouter — runtime errors, provider connection failures, translation issues, dashboard problems, or unexpected behavior
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report. Please include as much detail as possible — logs, reproduction steps, and environment info help us diagnose faster.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug description
+      description: What happened? What did you expect to happen?
+      placeholder: A clear and concise description of the issue.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: How can we reproduce this bug?
+      placeholder: |
+        1. Start mairouter with 'mairouter'
+        2. Configure provider '...'
+        3. Send request with model '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider
+      description: Which upstream provider is involved?
+      multiple: false
+      options:
+        - Anthropic
+        - OpenAI
+        - Gemini / Vertex AI
+        - DeepSeek
+        - Kiro
+        - Qwen
+        - OpenRouter
+        - Ollama
+        - Cursor
+        - Codex
+        - Antigravity
+        - GitHub Models
+        - Groq
+        - Perplexity
+        - Fireworks
+        - Together
+        - Mistral
+        - Cohere
+        - xAI
+        - GLM
+        - Kimi
+        - MiniMax
+        - GitHub
+        - OpenCode
+        - N/A (dashboard / CLI / general)
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Model used
+      description: The exact model ID (e.g., `openai/gpt-4o`, `cc/claude-opus-4-7`, `gemini/gemini-2.5-pro`)
+      placeholder: e.g. openai/gpt-4o
+
+  - type: dropdown
+    id: api_format
+    attributes:
+      label: API format
+      description: Which endpoint format were you using?
+      multiple: false
+      options:
+        - OpenAI /v1/chat/completions
+        - OpenAI /v1/responses
+        - Anthropic /v1/messages
+        - Google Gemini /v1beta/models (generateContent)
+        - Other / unsure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      description: Streaming or non-streaming?
+      multiple: false
+      options:
+        - Streaming
+        - Non-streaming
+        - Both
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: mairouter version
+      description: Output of `mairouter --version` or the version from package.json
+      placeholder: e.g. 1.0.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: |
+        OS, Node version, browser (if dashboard), installation method.
+        Examples:
+          - Windows 11 / Node 22 / Docker
+          - macOS Sequoia / Node 20 / npm global
+          - Linux Ubuntu 24.04 / source build
+      placeholder: OS, Node version, installation method, browser, proxy settings, etc.
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Error output
+      description: Error messages, stack traces, console output, or relevant log excerpts. Remove any sensitive information (API keys, tokens).
+      placeholder: Paste error output here
+      render: shell
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have checked for existing issues before submitting
+          required: true
+        - label: I am running the latest version of mairouter
+          required: true
+        - label: I have included relevant logs, error messages, or reproduction steps
+          required: true
+        - label: I have checked for existing issues with the same provider/model combination
+          required: false

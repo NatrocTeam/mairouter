@@ -5,24 +5,24 @@ description: Text-to-speech via mairouter /v1/audio/speech using OpenAI / Eleven
 
 # mairouter — Text-to-Speech
 
-Requires `NINEROUTER_URL` (and `NINEROUTER_KEY` if auth enabled). See https://raw.githubusercontent.com/decolua/mairouter/refs/heads/master/skills/mairouter/SKILL.md for setup.
+Requires `MAIROUTER_URL` (and `NINEROUTER_KEY` if auth enabled). See https://raw.githubusercontent.com/NatrocTeam/mairouter/refs/heads/master/skills/mairouter/SKILL.md for setup.
 
 ## Discover
 
 ```bash
 # 1) List models
-curl $NINEROUTER_URL/v1/models/tts | jq '.data[].id'
+curl $MAIROUTER_URL/v1/models/tts | jq '.data[].id'
 # 2) Per-model metadata (params, voicesUrl if voice-by-id)
-curl "$NINEROUTER_URL/v1/models/info?id=el/eleven_multilingual_v2"
+curl "$MAIROUTER_URL/v1/models/info?id=el/eleven_multilingual_v2"
 # 3) List voices (elevenlabs, edge-tts, deepgram, inworld, local-device). Optional ?lang=vi
-curl "$NINEROUTER_URL/v1/audio/voices?provider=edge-tts&lang=vi" | jq '.data[].model'
+curl "$MAIROUTER_URL/v1/audio/voices?provider=edge-tts&lang=vi" | jq '.data[].model'
 ```
 
 `model` field in `/v1/audio/speech` = voice ID directly (e.g. `edge-tts/vi-VN-HoaiMyNeural`, `el/<voice_id>`, or `openai/tts-1` model+default voice).
 
 ## Endpoint
 
-`POST $NINEROUTER_URL/v1/audio/speech`
+`POST $MAIROUTER_URL/v1/audio/speech`
 
 | Field   | Required | Notes                          |
 | ------- | -------- | ------------------------------ |
@@ -36,7 +36,7 @@ Query `?response_format=mp3` (default, raw bytes) or `?response_format=json` (`{
 Save MP3:
 
 ```bash
-curl -X POST "$NINEROUTER_URL/v1/audio/speech" \
+curl -X POST "$MAIROUTER_URL/v1/audio/speech" \
   -H "Authorization: Bearer $NINEROUTER_KEY" \
   -H "Content-Type: application/json" \
   -d '{"model":"openai/tts-1","input":"Hello world"}' \
@@ -47,7 +47,7 @@ JS (save file):
 
 ```js
 import { writeFile } from "node:fs/promises";
-const r = await fetch(`${process.env.NINEROUTER_URL}/v1/audio/speech`, {
+const r = await fetch(`${process.env.MAIROUTER_URL}/v1/audio/speech`, {
   method: "POST",
   headers: {
     Authorization: `Bearer ${process.env.NINEROUTER_KEY}`,
