@@ -1,5 +1,5 @@
 // Standalone detached updater process.
-// Spawns `npm i -g <pkg>@latest`, exposes progress via tiny HTTP server.
+// Spawns `npm install -g <pkg>@latest`, exposes progress via tiny HTTP server.
 // Survives after parent Next server exits (detached + unref by spawner).
 
 const { spawn } = require("child_process");
@@ -150,7 +150,7 @@ function runInstall() {
   state.attempt += 1;
   setPhase("installing");
   pushLog(
-    `[updater] attempt ${state.attempt}/${maxRetries} — npm i -g ${packageName} --prefer-online`,
+    `[updater] attempt ${state.attempt}/${maxRetries} — npm install -g ${packageName} --prefer-online`,
   );
 
   const isWin = process.platform === "win32";

@@ -17,8 +17,8 @@ export const GITHUB_CONFIG = {
 // Updater configuration
 export const UPDATER_CONFIG = {
   npmPackageName: "mairouter",
-  installCmd: "npm i -g mairouter",
-  installCmdLatest: "npm i -g mairouter@latest --prefer-online",
+  installCmd: "npm install -g mairouter",
+  installCmdLatest: "npm install -g mairouter@latest --prefer-online",
   shutdownCountdownSec: 3,
   exitDelayMs: 500,
   statusPort: 20129,

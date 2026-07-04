@@ -242,7 +242,7 @@ export async function killAppProcesses() {
 // Resolve npx/mairouter binary to relaunch after update (cross-platform)
 function resolveRelaunchCommand() {
   const isWin = process.platform === "win32";
-  // Prefer `npx mairouter` — works regardless of global bin path changes after npm i -g
+  // Prefer `npx mairouter` — works regardless of global bin path changes after npm install -g
   const npx = isWin ? "npx.cmd" : "npx";
   return { cmd: npx, args: [UPDATER_CONFIG.npmPackageName] };
 }

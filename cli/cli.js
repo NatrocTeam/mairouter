@@ -70,7 +70,7 @@ try {
 
 // Configuration constants
 const APP_NAME = pkg.name; // Use from package.json
-const INSTALL_CMD_LATEST = `npm i -g ${APP_NAME}@latest --prefer-online`;
+const INSTALL_CMD_LATEST = `npm install -g ${APP_NAME}@latest --prefer-online`;
 
 const DEFAULT_PORT = 12890;
 const DEFAULT_HOST = "0.0.0.0";
