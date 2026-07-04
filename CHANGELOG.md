@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.2.1 2026-07-04 [(9dca42d)](https://github.com/NatrocTeam/mairouter/commit/9dca42decf7fa7134b4018c906ad2715274b8684)
+
+### Fixed
+
+- **NVIDIA NIM thinking/reasoning for non-OpenAI clients** — corrected response format translation in `translateNonStreamingResponse()` so Anthropic (Claude) clients receive Claude-format JSON with proper `thinking` blocks instead of raw OpenAI-format `choices[]` when requesting non-streaming
+- **NVIDIA NIM per-model `reasoning_effort` clamping** — added `effortRemap` capability to map incompatible effort levels (`minimal`, `low`, `xhigh`) to values each model's API actually accepts: `nvidia/nemotron-3-ultra-550b-a55b` (supports `none|medium|high`), `deepseek-ai/deepseek-v4-flash` and `deepseek-ai/deepseek-v4-pro` (supports `none|high|max`)
+- **Hardcoded `budget_tokens` in `providerThinking` injection** — removed the pinned `budget_tokens: 10000` so `providerThinking: "on"` lets the model determine its own effort level via `{ mode: "auto" }`
+
+### Added
+
+- **OpenAI-to-Claude non-streaming converter** — `open-sse/translator/response/openai-to-claude-non-streaming.js` converts OpenAI chat completion responses to Claude message format, preserving `reasoning_content` as a `thinking` block
+- **Unit tests** — `tests/unit/non-streaming-response-thinking.test.js` with 12 test cases covering the full conversion logic
+
 ## v1.2.0 2026-07-03 [(fa700a5)](https://github.com/NatrocTeam/mairouter/commit/fa700a5c2122a2c0c71190745225eafcba111b41)
 
 ### Added
