@@ -1,8 +1,8 @@
 # AGENTS.md — Testing (/tests/)
 
-Test suite menggunakan [Vitest](https://vitest.dev/). Konfigurasi di `tests/vitest.config.js`.
+Test suite using [Vitest](https://vitest.dev/). Configuration in `tests/vitest.config.js`.
 
-## Cara Menjalankan
+## How to Run
 
 ```bash
 cd tests
@@ -11,11 +11,11 @@ npx vitest run --reporter=verbose  # Verbose output
 npx vitest               # Watch mode
 ```
 
-## Struktur Test
+## Test Structure
 
 ```
 tests/
-├── vitest.config.js         — Konfigurasi Vitest
+├── vitest.config.js         — Vitest configuration
 ├── unit/                    — Unit tests
 │   ├── model-routing.test.js
 │   ├── kiro-model-slots.test.js
@@ -31,14 +31,14 @@ tests/
 │   ├── rtk.multi-provider.e2e.test.js
 │   └── dashboard-guard.test.js
 ├── translator/              — Translator integration tests
-│   ├── registerAll.js       — Registrasi semua translator
-│   ├── real/                — Real provider tests (panggil API beneran)
+│   ├── registerAll.js       — Register all translators
+│   ├── real/                — Real provider tests (calls actual API)
 │   │   ├── all-formats.real.test.js
 │   │   ├── thinking.real.test.js
 │   │   ├── vision-capability-survey.real.test.js
 │   │   ├── file-base64-survey.real.test.js
 │   │   └── antigravity-models.real.test.js
-└── __baseline__/            — Baseline fixtures untuk structural validation
+└── __baseline__/            — Baseline fixtures for structural validation
     ├── alias-baseline.json
     ├── oauth-urls-baseline.json
     ├── providers-baseline.json
@@ -48,7 +48,7 @@ tests/
 
 ## Key Test Files
 
-| File                                    | Apa yang Di-test                                               |
+| File                                    | What is Tested                                                 |
 | --------------------------------------- | -------------------------------------------------------------- |
 | `model-routing.test.js`                 | Built-in provider aliases vs compatible node prefixes          |
 | `provider-thinking-config.test.js`      | Provider-level thinking config per-model                       |
@@ -57,19 +57,19 @@ tests/
 | `dashboard-guard.test.js`               | Dashboard auth guard logic                                     |
 | `rtk.multi-provider.e2e.test.js`        | RTK multi-provider end-to-end                                  |
 | `kiro-external-idp.test.js`             | Kiro external identity provider                                |
-| `thinking.real.test.js`                 | Thinking block translation dengan real providers               |
+| `thinking.real.test.js`                 | Thinking block translation with real providers                 |
 | `vision-capability-survey.real.test.js` | Vision capability across providers                             |
 
 ## Pattern
 
-- **Unit tests**: import dari `open-sse/` langsung, set env vars via `process.env` atau vitest config
-- **Real tests**: panggil API beneran — butuh credentials terkonfigurasi. Skip jika tidak ada.
-- **Baseline**: gunakan `__baseline__/` JSON untuk structural validation, bukan hardcode assertion
+- **Unit tests**: import from `open-sse/` directly, set env vars via `process.env` or vitest config
+- **Real tests**: call the actual API — requires configured credentials. Skipped if unavailable.
+- **Baseline**: use `__baseline__/` JSON for structural validation, not hardcoded assertions
 
 ## ⚠️ IMPORTANT RULES
 
-1. **Real provider tests** panggil API beneran (butuh credentials) — jangan asumsi semua test bisa jalan tanpa config
-2. **JANGAN** mock tiap provider — gunakan baseline fixtures untuk structural validation
-3. **Translator test** butuh `registerAll.js` untuk registrasi semua translator sebelum test jalan
-4. **Runtime dir** jangan di-test — `~/.mairouter/runtime/` dibuat oleh hooks, test harus jalan tanpa itu
-5. **DB test** pakai in-memory SQLite — jangan tulis ke file sistem
+1. **Real provider tests** call the actual API (need credentials) — don't assume all tests can run without config
+2. **DO NOT** mock every provider — use baseline fixtures for structural validation
+3. **Translator tests** need `registerAll.js` to register all translators before tests run
+4. **Runtime dir** should not be tested — `~/.mairouter/runtime/` is created by hooks, tests should run without it
+5. **DB tests** use in-memory SQLite — do not write to the file system
