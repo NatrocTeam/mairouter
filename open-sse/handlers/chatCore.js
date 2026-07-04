@@ -125,7 +125,10 @@ export async function handleChatCore({
     const mode = providerThinking.mode;
     if (mode === "on" && !body.thinking) {
       console.log("Injecting provider-level thinking config override: on");
-      body = { ...body, thinking: { type: "enabled", budget_tokens: 10000 } };
+      // No budget_tokens: let the applyThinking logic map it to the provider's
+      // default effort (via { mode: "auto" } in captureThinking) instead of
+      // always pinning to "medium" with a hardcoded 10000 budget.
+      body = { ...body, thinking: { type: "enabled" } };
     } else if (mode === "off" && !body.thinking) {
       body = { ...body, thinking: { type: "disabled" } };
     } else if (!body.reasoning_effort) {

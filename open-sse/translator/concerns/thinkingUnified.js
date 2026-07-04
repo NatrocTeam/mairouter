@@ -189,6 +189,11 @@ function applyFormat(fmt, body, cfg, caps) {
       let level = toLevel(eff);
       // OpenAI accepts: none|minimal|low|medium|high|xhigh — clamp "max" to "xhigh"
       if (level === "max") level = "xhigh";
+      // Apply model-specific effort level remapping (e.g. NVIDIA NIM models accept
+      // only a subset of OpenAI effort values). effortRemap is set in capabilities.
+      if (level && caps.effortRemap?.[level]) {
+        level = caps.effortRemap[level];
+      }
       if (level) body.reasoning_effort = level;
       break;
     }

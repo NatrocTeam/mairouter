@@ -1,6 +1,7 @@
 import { FORMATS } from "../../translator/formats.js";
 import { needsTranslation } from "../../translator/index.js";
 import { ollamaBodyToOpenAI } from "../../translator/response/ollama-to-openai.js";
+import { openaiToClaudeNonStreaming } from "../../translator/response/openai-to-claude-non-streaming.js";
 import {
   addBufferToUsage,
   filterUsageForFormat,
@@ -25,8 +26,20 @@ export function translateNonStreamingResponse(
   targetFormat,
   sourceFormat,
 ) {
-  if (targetFormat === sourceFormat || targetFormat === FORMATS.OPENAI)
-    return responseBody;
+  if (targetFormat === sourceFormat) return responseBody;
+
+  // Reverse translation: response is in OpenAI format but client expects a
+  // different format (e.g. Claude → NVIDIA NIM non-streaming request).
+  // Without this, non-OpenAI clients receive an incompatible response format.
+  if (targetFormat === FORMATS.OPENAI) {
+    switch (sourceFormat) {
+      case FORMATS.CLAUDE:
+        return openaiToClaudeNonStreaming(responseBody);
+      default:
+        // Unknown source format: fall back to OpenAI format (backward compat).
+        return responseBody;
+    }
+  }
 
   // Gemini / Antigravity
   if (

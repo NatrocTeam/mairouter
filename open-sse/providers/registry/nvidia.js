@@ -27,6 +27,7 @@ export default {
       id: "nvidia/nemotron-3-ultra-550b-a55b",
       name: "NemoTron 3 Ultra 550B A55B",
     },
+    { id: "qwen/qwen3.5-397b-a17b", name: "Qwen 3.5 397B A17B" },
     { id: "z-ai/glm-5.2", name: "GLM 5.2" },
     {
       id: "nvidia/nv-embed-v1",

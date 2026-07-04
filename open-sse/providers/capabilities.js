@@ -46,6 +46,7 @@ export const DEFAULT_CAPABILITIES = {
   thinkingFormat: null,
   thinkingCanDisable: true, // false → model cannot turn thinking off (clamp to min instead of disable)
   thinkingRange: null, // { min, max } for budget formats; null = no clamp
+  effortRemap: null, // { from: to } for effort level remapping; null = standard levels
   // limits (tokens)
   contextWindow: 200000,
   maxOutput: 64000,
@@ -197,6 +198,12 @@ export const PROVIDER_CAPABILITIES = {
       reasoning: true,
       thinkingFormat: "openai",
       thinkingCanDisable: false,
+      effortRemap: {
+        minimal: "medium",
+        low: "medium",
+        xhigh: "high",
+        max: "high",
+      },
       contextWindow: 1000000,
       maxOutput: 1000000,
     },
@@ -218,6 +225,12 @@ export const PROVIDER_CAPABILITIES = {
       reasoning: true,
       thinkingFormat: "openai",
       thinkingCanDisable: false,
+      effortRemap: {
+        minimal: "high",
+        low: "high",
+        medium: "high",
+        xhigh: "max",
+      },
       contextWindow: 1000000,
       maxOutput: 1000000,
     },
@@ -225,8 +238,22 @@ export const PROVIDER_CAPABILITIES = {
       reasoning: true,
       thinkingFormat: "openai",
       thinkingCanDisable: false,
+      effortRemap: {
+        minimal: "high",
+        low: "high",
+        medium: "high",
+        xhigh: "max",
+      },
       contextWindow: 1000000,
       maxOutput: 1000000,
+    },
+    "qwen/qwen3.5-397b-a17b": {
+      vision: true,
+      reasoning: true,
+      thinkingFormat: "openai",
+      thinkingCanDisable: false,
+      contextWindow: 262144,
+      maxOutput: 81920,
     },
   },
   // CodeBuddy.cn — authoritative per-model metadata from the gateway's model
