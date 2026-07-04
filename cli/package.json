@@ -21,6 +21,14 @@
     "postinstall": "node hooks/postinstall.js",
     "prepublishOnly": "npm run build"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NatrocTeam/mairouter.git"
+  },
+  "bugs": {
+    "url": "https://github.com/NatrocTeam/mairouter/issues"
+  },
+  "homepage": "https://github.com/NatrocTeam/mairouter#readme",
   "dependencies": {
     "enquirer": "^2.4.1",
     "node-forge": "^1.3.3",

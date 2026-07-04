@@ -7,6 +7,15 @@
   "contributors": [
     "Mairouter contributors"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NatrocTeam/mairouter.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/NatrocTeam/mairouter/issues"
+  },
+  "homepage": "https://github.com/NatrocTeam/mairouter#readme",
   "license": "MIT",
   "scripts": {
     "dev": "next dev --webpack --port 20127",

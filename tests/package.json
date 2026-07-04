@@ -4,6 +4,16 @@
   "private": true,
   "type": "module",
   "description": "Unit tests for mairouter embeddings endpoint",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NatrocTeam/mairouter.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/NatrocTeam/mairouter/issues"
+  },
+  "homepage": "https://github.com/NatrocTeam/mairouter#readme",
+  "license": "MIT",
   "scripts": {
     "test": "NODE_PATH=/tmp/node_modules /tmp/node_modules/.bin/vitest run --reporter=verbose",
     "test:watch": "NODE_PATH=/tmp/node_modules /tmp/node_modules/.bin/vitest --reporter=verbose"
