@@ -129,7 +129,7 @@ export class GithubExecutor extends BaseExecutor {
 
   // Newer OpenAI models (gpt-5+, o1, o3, o4) require max_completion_tokens instead of max_tokens
   requiresMaxCompletionTokens(model) {
-    return /gpt-5|o[134]-/i.test(model);
+    return /gpt-5|\bo[134](?:\b|-)/i.test(model);
   }
 
   transformRequest(model, body, _stream, _credentials) {

@@ -29,6 +29,17 @@ function captureSizeSnapshot(body) {
   };
 }
 
+function hasClaudeThinkingBlocks(body) {
+  return body?.messages?.some(
+    (message) =>
+      Array.isArray(message?.content) &&
+      message.content.some(
+        (block) =>
+          block?.type === "thinking" || block?.type === "redacted_thinking",
+      ),
+  );
+}
+
 function setDiagnostic(diagnostics, reason) {
   if (diagnostics && !diagnostics.reason) diagnostics.reason = reason;
 }
@@ -147,6 +158,13 @@ export async function compressWithHeadroom(
 
     // Claude shape: translate → OpenAI → compress → translate back.
     if (format === "claude") {
+      if (hasClaudeThinkingBlocks(body)) {
+        setDiagnostic(
+          diagnostics,
+          "skipped: thinking blocks not round-trippable through OpenAI",
+        );
+        return null;
+      }
       const oai = claudeToOpenAIRequest(model, body, false);
       if (!Array.isArray(oai?.messages)) {
         setDiagnostic(

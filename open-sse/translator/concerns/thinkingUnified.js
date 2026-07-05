@@ -63,9 +63,10 @@ export function extractThinking(body) {
     if (t.type === "disabled") return { mode: "none" };
     if (t.type === "adaptive" || t.type === "enabled") {
       const budget = Number(t.budget_tokens);
+      const display = t.display ? { display: t.display } : {};
       if (Number.isFinite(budget) && budget > 0)
-        return { mode: "budget", budget };
-      return { mode: "auto" };
+        return { mode: "budget", budget, ...display };
+      return { mode: "auto", ...display };
     }
   }
 
@@ -202,8 +203,27 @@ function applyFormat(fmt, body, cfg, caps) {
         body.thinking = { type: "disabled" };
         break;
       }
+      body.thinking = { type: "adaptive" };
+      if (cfg.display) body.thinking.display = cfg.display;
       const level = toLevel(eff);
-      body.output_config = { effort: level === "xhigh" ? "high" : level };
+      if (level && level !== "auto") {
+        body.output_config = { effort: level === "xhigh" ? "high" : level };
+      }
+      break;
+    }
+    case "nemotron": {
+      if (none && canDisable) {
+        body.reasoning_effort = "none";
+        break;
+      }
+      let level = toLevel(eff);
+      if (level === "max") level = "xhigh";
+      if (level && caps.effortRemap?.[level]) {
+        level = caps.effortRemap[level];
+      }
+      if (level && level !== "auto") body.reasoning_effort = level;
+      const budget = toBudget(eff, caps.thinkingRange);
+      if (budget !== undefined) body.reasoning_budget = budget;
       break;
     }
     case "claude-budget": {

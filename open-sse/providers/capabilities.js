@@ -196,35 +196,33 @@ export const PROVIDER_CAPABILITIES = {
   nvidia: {
     "nvidia/nemotron-3-ultra-550b-a55b": {
       reasoning: true,
-      thinkingFormat: "openai",
-      thinkingCanDisable: false,
+      thinkingFormat: "nemotron",
+      thinkingRange: { min: -1, max: 32768 },
       effortRemap: {
         minimal: "medium",
         low: "medium",
         xhigh: "high",
         max: "high",
       },
-      contextWindow: 1000000,
-      maxOutput: 1000000,
+      contextWindow: 1048576,
+      maxOutput: 32768,
     },
     "minimaxai/minimax-m2.7": {
       reasoning: true,
       thinkingFormat: "openai",
       thinkingCanDisable: false,
       contextWindow: 204800,
-      maxOutput: 131072,
+      maxOutput: 16384,
     },
     "z-ai/glm-5.2": {
       reasoning: true,
       thinkingFormat: "openai",
-      thinkingCanDisable: false,
       contextWindow: 1000000,
-      maxOutput: 1000000,
+      maxOutput: 32768,
     },
     "deepseek-ai/deepseek-v4-flash": {
       reasoning: true,
       thinkingFormat: "openai",
-      thinkingCanDisable: false,
       effortRemap: {
         minimal: "high",
         low: "high",
@@ -232,12 +230,11 @@ export const PROVIDER_CAPABILITIES = {
         xhigh: "max",
       },
       contextWindow: 1000000,
-      maxOutput: 1000000,
+      maxOutput: 16384,
     },
     "deepseek-ai/deepseek-v4-pro": {
       reasoning: true,
       thinkingFormat: "openai",
-      thinkingCanDisable: false,
       effortRemap: {
         minimal: "high",
         low: "high",
@@ -245,15 +242,16 @@ export const PROVIDER_CAPABILITIES = {
         xhigh: "max",
       },
       contextWindow: 1000000,
-      maxOutput: 1000000,
+      maxOutput: 16384,
     },
+    // contextWindow uses documented native/recommended serving context, not YaRN max.
     "qwen/qwen3.5-397b-a17b": {
       vision: true,
       reasoning: true,
       thinkingFormat: "openai",
       thinkingCanDisable: false,
       contextWindow: 262144,
-      maxOutput: 81920,
+      maxOutput: 32768,
     },
   },
   // CodeBuddy.cn — authoritative per-model metadata from the gateway's model

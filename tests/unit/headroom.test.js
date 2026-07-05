@@ -72,6 +72,57 @@ describe("compressWithHeadroom", () => {
     expect(body.input[0].content).toBe("short");
   });
 
+  it("skips Claude compression when thinking blocks are present", async () => {
+    global.fetch = vi.fn();
+    const diagnostics = {};
+    const body = {
+      messages: [
+        {
+          role: "assistant",
+          content: [
+            { type: "thinking", thinking: "private", signature: "sig" },
+          ],
+        },
+      ],
+    };
+
+    const stats = await compressWithHeadroom(body, {
+      enabled: true,
+      url: "http://localhost:8787",
+      model: "claude-opus-4.8",
+      format: "claude",
+      diagnostics,
+    });
+
+    expect(stats).toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(diagnostics.reason).toBe(
+      "skipped: thinking blocks not round-trippable through OpenAI",
+    );
+  });
+
+  it("skips Claude compression when redacted thinking blocks are present", async () => {
+    global.fetch = vi.fn();
+    const body = {
+      messages: [
+        {
+          role: "assistant",
+          content: [{ type: "redacted_thinking", data: "opaque" }],
+        },
+      ],
+    };
+
+    const stats = await compressWithHeadroom(body, {
+      enabled: true,
+      url: "http://localhost:8787",
+      model: "claude-opus-4.8",
+      format: "claude",
+    });
+
+    expect(stats).toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
   it("fails open on bad response", async () => {
     global.fetch = vi.fn(
       async () =>

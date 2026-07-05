@@ -45,6 +45,13 @@ describe("extractThinking", () => {
       extractThinking({ thinking: { type: "enabled", budget_tokens: 4096 } }),
     ).toEqual({ mode: "budget", budget: 4096 });
   });
+  it("claude adaptive preserves display intent", () => {
+    expect(
+      extractThinking({
+        thinking: { type: "adaptive", display: "summarized" },
+      }),
+    ).toEqual({ mode: "auto", display: "summarized" });
+  });
   it("claude disabled", () => {
     expect(extractThinking({ thinking: { type: "disabled" } })).toEqual({
       mode: "none",
@@ -77,15 +84,34 @@ describe("extractThinking", () => {
 });
 
 describe("applyThinking per provider format", () => {
-  it("claude 4.6+ → adaptive output_config (no budget_tokens)", () => {
+  it("claude 4.6+ → adaptive thinking + output_config", () => {
     const out = apply(
       "claude",
       "claude-opus-4.7",
       { reasoning_effort: "high" },
       "claude",
     );
+    expect(out.thinking).toEqual({ type: "adaptive" });
     expect(out.output_config).toEqual({ effort: "high" });
-    expect(out.thinking).toBeUndefined();
+  });
+  it("claude adaptive omits invalid auto effort", () => {
+    const out = apply(
+      "claude",
+      "claude-opus-4.8",
+      { thinking: { type: "adaptive" } },
+      "claude",
+    );
+    expect(out.thinking).toEqual({ type: "adaptive" });
+    expect(out.output_config).toBeUndefined();
+  });
+  it("claude adaptive preserves display", () => {
+    const out = apply(
+      "claude",
+      "claude-opus-4.8",
+      { thinking: { type: "adaptive", display: "summarized" } },
+      "claude",
+    );
+    expect(out.thinking).toEqual({ type: "adaptive", display: "summarized" });
   });
   it("claude haiku → enabled+budget", () => {
     const out = apply(
@@ -228,6 +254,53 @@ describe("applyThinking per provider format", () => {
       "codex",
     );
     expect(out.reasoning_effort).toBe("xhigh");
+  });
+  it("NVIDIA DeepSeek can disable documented reasoning_effort none", () => {
+    const out = apply(
+      "openai",
+      "deepseek-ai/deepseek-v4-pro",
+      { reasoning_effort: "none" },
+      "nvidia",
+    );
+    expect(out.reasoning_effort).toBe("none");
+  });
+  it("NVIDIA Nemotron maps effort and reasoning_budget", () => {
+    const out = apply(
+      "openai",
+      "nvidia/nemotron-3-ultra-550b-a55b",
+      { thinking: { type: "enabled", budget_tokens: 50000 } },
+      "nvidia",
+    );
+    expect(out.reasoning_effort).toBe("high");
+    expect(out.reasoning_budget).toBe(32768);
+  });
+  it("NVIDIA Nemotron can disable documented reasoning_effort none", () => {
+    const out = apply(
+      "openai",
+      "nvidia/nemotron-3-ultra-550b-a55b",
+      { reasoning_effort: "none" },
+      "nvidia",
+    );
+    expect(out.reasoning_effort).toBe("none");
+    expect(out.reasoning_budget).toBeUndefined();
+  });
+  it("NVIDIA Qwen3.5 keeps current undocumented OpenAI thinking format", () => {
+    const out = apply(
+      "openai",
+      "qwen/qwen3.5-397b-a17b",
+      { reasoning_effort: "high" },
+      "nvidia",
+    );
+    expect(out.reasoning_effort).toBe("high");
+  });
+  it("NVIDIA GLM-5.2 keeps current undocumented OpenAI thinking format", () => {
+    const out = apply(
+      "openai",
+      "z-ai/glm-5.2",
+      { reasoning_effort: "high" },
+      "nvidia",
+    );
+    expect(out.reasoning_effort).toBe("high");
   });
 });
 

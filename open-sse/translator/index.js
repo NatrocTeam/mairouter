@@ -15,8 +15,10 @@ import { assertClaudeTranslationIsLossless } from "./concerns/translationCompati
 // Registry for translators. Lazy-init guards against circular-import order:
 // translator modules call register() (side-effect) before this module's body runs.
 // var (not let): hoisted as undefined so register() can run during circular import (no TDZ).
-let requestRegistry;
-let responseRegistry;
+// eslint-disable-next-line no-var
+var requestRegistry;
+// eslint-disable-next-line no-var
+var responseRegistry;
 
 // Register translator
 export function register(from, to, requestFn, responseFn) {
