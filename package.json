@@ -1,6 +1,6 @@
 {
   "name": "mairouter-app",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "mairouter web dashboard",
   "private": true,
   "author": "NatrocTeam",
@@ -23,12 +23,14 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "version:bump": "node scripts/version.js",
     "build": "next build --webpack",
     "build:cli": "cd cli && npm run build",
     "build:all": "npm run build && npm run build:cli",
     "install:test": "cd tests && npm install",
     "install:cli": "cd cli && npm install",
     "install:all": "npm install && npm run install:test && npm run install:cli",
+    "quality": "npm run lint && npm run format:check",
     "clean": "rimraf .next .next-cli-build tests/node_modules tests/package-lock.json cli/.build-home cli/app cli/node_modules cli/package-lock.json package-lock.json node_modules"
   },
   "dependencies": {

@@ -1,5 +1,18 @@
 # Changelog
 
+## v1.2.2 2026-07-05 [(5140879)](https://github.com/NatrocTeam/mairouter/commit/5140879ab7f98b2f6d43145f08594992738f05a4)
+
+### Fixed
+
+- **Reasoning token handling across providers** — aligned per-model capability limits and thinking formats for NVIDIA NIM models, including Nemotron reasoning budgets, DeepSeek/GLM output limits, and Qwen's safe native context window
+- **Claude adaptive thinking translation** — preserved `display` intent, emitted adaptive thinking blocks for Claude 4.6+ models, and avoided sending invalid `auto` effort in `output_config`
+- **Headroom compression with Claude thinking blocks** — skipped OpenAI round-trip compression when Claude `thinking` or `redacted_thinking` blocks are present to avoid losing non-round-trippable reasoning content
+- **GitHub o-series max token mapping** — detected bare reasoning model names such as `o3` in addition to hyphenated variants, ensuring `max_tokens` is converted to `max_completion_tokens`
+
+### Added
+
+- **Regression tests** — added and updated coverage for NVIDIA capabilities, Nemotron reasoning budgets, Claude adaptive thinking, Headroom thinking-block safeguards, and GitHub `max_completion_tokens` handling
+
 ## v1.2.1 2026-07-04 [(9dca42d)](https://github.com/NatrocTeam/mairouter/commit/9dca42decf7fa7134b4018c906ad2715274b8684)
 
 ### Fixed
