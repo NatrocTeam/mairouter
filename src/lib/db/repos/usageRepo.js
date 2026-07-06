@@ -2,6 +2,10 @@ import { EventEmitter } from "events";
 import { getAdapter } from "../driver.js";
 import { parseJson, stringifyJson } from "../helpers/jsonCol.js";
 import {
+  getChartDayBucketCount,
+  getUsagePeriodDays,
+} from "../../usagePeriods.js";
+import {
   getMeta as _getMeta,
   setMeta as _setMeta,
 } from "../helpers/metaStore.js";
@@ -20,6 +24,9 @@ const PERIOD_MS = {
   "7d": 604800000,
   "30d": 2592000000,
   "60d": 5184000000,
+  "90d": 7776000000,
+  "180d": 15552000000,
+  "365d": 31536000000,
 };
 
 // In-memory state shared across Next.js modules
@@ -646,8 +653,7 @@ export async function getUsageStats(period = "all") {
   const useDailySummary = period !== "24h" && period !== "today";
 
   if (useDailySummary) {
-    const periodDays = { "7d": 7, "30d": 30, "60d": 60 };
-    const maxDays = periodDays[period] || null;
+    const maxDays = getUsagePeriodDays(period);
     const dayRows = loadDaysInRange(db, maxDays);
 
     for (const dr of dayRows) {
@@ -1066,7 +1072,29 @@ export async function getChartData(period = "7d") {
     return buckets;
   }
 
-  const bucketCount = period === "7d" ? 7 : period === "30d" ? 30 : 60;
+  const labelDateKey = (dateKey) => {
+    const [year, month, day] = dateKey.split("-").map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  if (period === "all") {
+    const dayRows = loadDaysInRange(db, null);
+    return dayRows
+      .sort((a, b) => a.dateKey.localeCompare(b.dateKey))
+      .map((r) => {
+        const dayData = parseJson(r.data, {});
+        return {
+          label: labelDateKey(r.dateKey),
+          tokens: (dayData.promptTokens || 0) + (dayData.completionTokens || 0),
+          cost: dayData.cost || 0,
+        };
+      });
+  }
+
+  const bucketCount = getChartDayBucketCount(period) ?? 60;
   const today = new Date();
   const labelFn = (d) =>
     d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
