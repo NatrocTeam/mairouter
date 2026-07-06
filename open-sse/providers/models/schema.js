@@ -6,7 +6,6 @@ export const MODEL_DEFAULTS = {
   quotaFamily: "normal",
   strip: [],
   targetFormat: null,
-  translationPolicy: {},
 };
 
 // Normalize a registry model entry: accept terse "id" string, fill name via regex when omitted.
@@ -29,7 +28,4 @@ export function modelStrip(model) {
 }
 export function modelTargetFormat(model) {
   return model?.targetFormat || MODEL_DEFAULTS.targetFormat;
-}
-export function modelTranslationPolicy(model) {
-  return model?.translationPolicy || MODEL_DEFAULTS.translationPolicy;
 }

@@ -13,7 +13,6 @@ import { createRequestLogger } from "../utils/requestLogger.js";
 import {
   getModelTargetFormat,
   getModelStrip,
-  getModelTranslationPolicy,
   getModelUpstreamId,
   getModelType,
   PROVIDER_ID_TO_ALIAS,
@@ -111,15 +110,19 @@ export async function handleChatCore({
 
   const alias = PROVIDER_ID_TO_ALIAS[provider] || provider;
   const modelTargetFormat = getModelTargetFormat(alias, model);
-  // Multi-endpoint providers: pick transport matching sourceFormat → zero translation
-  const runtimeTransport = resolveTransport(provider, sourceFormat);
+  const upstreamModel = getModelUpstreamId(alias, model);
+  // Multi-endpoint providers: pick transport matching sourceFormat + model → zero translation
+  const runtimeTransport = resolveTransport(
+    provider,
+    sourceFormat,
+    model,
+    upstreamModel,
+  );
   const targetFormat =
     modelTargetFormat || runtimeTransport?.format || getTargetFormat(provider);
   if (runtimeTransport && credentials)
     credentials.runtimeTransport = runtimeTransport;
   const stripList = getModelStrip(alias, model);
-  const translationPolicy = getModelTranslationPolicy(alias, model);
-  const upstreamModel = getModelUpstreamId(alias, model);
 
   // Inject provider-level thinking config override (only if client hasn't set)
   // on/off → extended type (body.thinking), none/low/medium/high → effort type (body.reasoning_effort)
@@ -204,9 +207,8 @@ export async function handleChatCore({
 
   const caps = getCapabilitiesForModel(provider, model);
   const effectiveTranslationPolicy = {
-    ...translationPolicy,
     allowToolResultImageSplit:
-      translationPolicy.allowToolResultImageSplit === true &&
+      targetFormat === FORMATS.OPENAI &&
       caps.vision === true &&
       !stripList.includes("image"),
   };

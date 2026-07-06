@@ -65,75 +65,36 @@ describe("bug: Claude → OpenAI bridge data loss", () => {
     expect(json).not.toContain("sig");
   });
 
-  it("tool_result image fails closed instead of being stringified or dropped", () => {
-    expect(() =>
-      T(FORMATS.CLAUDE, FORMATS.OPENAI, {
-        messages: [
-          {
-            role: "assistant",
-            content: [
-              { type: "tool_use", id: "call_1", name: "shot", input: {} },
-            ],
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "tool_result",
-                tool_use_id: "call_1",
-                content: [
-                  {
-                    type: "image",
-                    source: {
-                      type: "base64",
-                      media_type: "image/png",
-                      data: "ZZZ",
-                    },
+  it("tool_result image is split into a following user image message for OpenAI targets", () => {
+    const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+      messages: [
+        {
+          role: "assistant",
+          content: [
+            { type: "tool_use", id: "call_1", name: "shot", input: {} },
+          ],
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "call_1",
+              content: [
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: "image/png",
+                    data: "ZZZ",
                   },
-                ],
-              },
-            ],
-          },
-        ],
-      }),
-    ).toThrowError(/image tool_result block.*not supported/);
-  });
-
-  it("tool_result image can be split into a following user image message when enabled", () => {
-    const out = T(
-      FORMATS.CLAUDE,
-      FORMATS.OPENAI,
-      {
-        messages: [
-          {
-            role: "assistant",
-            content: [
-              { type: "tool_use", id: "call_1", name: "shot", input: {} },
-            ],
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "tool_result",
-                tool_use_id: "call_1",
-                content: [
-                  {
-                    type: "image",
-                    source: {
-                      type: "base64",
-                      media_type: "image/png",
-                      data: "ZZZ",
-                    },
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      { translationPolicy: { allowToolResultImageSplit: true } },
-    );
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
 
     expect(out.messages[0].tool_calls[0].id).toBe("call_1");
     expect(out.messages[1]).toEqual(
@@ -157,41 +118,36 @@ describe("bug: Claude → OpenAI bridge data loss", () => {
   });
 
   it("mixed text and image tool_result keeps text in tool message and forwards image", () => {
-    const out = T(
-      FORMATS.CLAUDE,
-      FORMATS.OPENAI,
-      {
-        messages: [
-          {
-            role: "assistant",
-            content: [
-              { type: "tool_use", id: "call_1", name: "shot", input: {} },
-            ],
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "tool_result",
-                tool_use_id: "call_1",
-                content: [
-                  { type: "text", text: "screenshot captured" },
-                  {
-                    type: "image",
-                    source: {
-                      type: "base64",
-                      media_type: "image/png",
-                      data: "ZZZ",
-                    },
+    const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+      messages: [
+        {
+          role: "assistant",
+          content: [
+            { type: "tool_use", id: "call_1", name: "shot", input: {} },
+          ],
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "call_1",
+              content: [
+                { type: "text", text: "screenshot captured" },
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: "image/png",
+                    data: "ZZZ",
                   },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      { translationPolicy: { allowToolResultImageSplit: true } },
-    );
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
 
     expect(out.messages[1].role).toBe("tool");
     expect(out.messages[1].content).toContain("screenshot captured");

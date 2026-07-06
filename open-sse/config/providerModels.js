@@ -6,7 +6,6 @@ import {
   modelQuotaFamily,
   modelStrip,
   modelTargetFormat,
-  modelTranslationPolicy,
 } from "../providers/models/schema.js";
 import { CODEX_REVIEW_SUFFIX } from "../providers/models/helpers.js";
 
@@ -95,10 +94,4 @@ export function getModelsByProviderId(providerId) {
 // Returns array of content types to strip, e.g. ["image", "audio"]
 export function getModelStrip(alias, modelId) {
   return modelStrip(PROVIDER_MODELS[alias]?.find((m) => m.id === modelId));
-}
-
-export function getModelTranslationPolicy(alias, modelId) {
-  return modelTranslationPolicy(
-    PROVIDER_MODELS[alias]?.find((m) => m.id === modelId),
-  );
 }

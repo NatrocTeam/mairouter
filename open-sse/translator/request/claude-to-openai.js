@@ -39,11 +39,16 @@ export function claudeToOpenAIRequest(
   _credentials = null,
   { translationPolicy = {}, stripList = [] } = {},
 ) {
+  const effectiveTranslationPolicy = {
+    allowToolResultImageSplit: true,
+    ...translationPolicy,
+  };
+
   // Keep this invariant on the exported translator too, even when callers
   // bypass translateRequest() and invoke this function directly.
   assertClaudeTranslationIsLossless(body, FORMATS.OPENAI, {
     stripList,
-    translationPolicy,
+    translationPolicy: effectiveTranslationPolicy,
   });
 
   const result = {
@@ -83,7 +88,9 @@ export function claudeToOpenAIRequest(
   if (body.messages && Array.isArray(body.messages)) {
     for (let i = 0; i < body.messages.length; i++) {
       const msg = body.messages[i];
-      const converted = convertClaudeMessage(msg, { translationPolicy });
+      const converted = convertClaudeMessage(msg, {
+        translationPolicy: effectiveTranslationPolicy,
+      });
       if (converted) {
         // Handle array of messages (multiple tool results)
         if (Array.isArray(converted)) {

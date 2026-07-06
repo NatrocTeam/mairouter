@@ -83,76 +83,77 @@ describe("Claude Code CLI context → OpenAI", () => {
     expect(json).not.toContain("ENCRYPTED_BLOB");
   });
 
-  it("tool_result image block fails closed", () => {
-    expect(() =>
-      T(FORMATS.CLAUDE, FORMATS.OPENAI, {
-        messages: [
-          {
-            role: "assistant",
-            content: [
-              { type: "tool_use", id: "call_1", name: "screenshot", input: {} },
-            ],
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "tool_result",
-                tool_use_id: "call_1",
-                content: [
-                  {
-                    type: "image",
-                    source: {
-                      type: "base64",
-                      media_type: "image/png",
-                      data: "IMG",
-                    },
+  it("tool_result image block is split for OpenAI targets", () => {
+    const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+      messages: [
+        {
+          role: "assistant",
+          content: [
+            { type: "tool_use", id: "call_1", name: "screenshot", input: {} },
+          ],
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "call_1",
+              content: [
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: "image/png",
+                    data: "IMG",
                   },
-                ],
-              },
-            ],
-          },
-        ],
-      }),
-    ).toThrowError(/image tool_result block.*not supported/);
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(out.messages[1]).toEqual(
+      expect.objectContaining({ role: "tool", tool_call_id: "call_1" }),
+    );
+    expect(out.messages[1].content).toContain("forwarded");
+    expect(JSON.stringify(out.messages[2])).toContain(
+      "data:image/png;base64,IMG",
+    );
   });
 
-  it("tool_result image block can be split when explicitly enabled", () => {
-    const out = T(
-      FORMATS.CLAUDE,
-      FORMATS.OPENAI,
-      {
-        messages: [
-          {
-            role: "assistant",
-            content: [
-              { type: "tool_use", id: "call_1", name: "screenshot", input: {} },
-            ],
-          },
-          {
-            role: "user",
-            content: [
-              {
-                type: "tool_result",
-                tool_use_id: "call_1",
-                content: [
-                  { type: "text", text: "captured browser preview" },
-                  {
-                    type: "image",
-                    source: {
-                      type: "base64",
-                      media_type: "image/png",
-                      data: "IMG",
-                    },
+  it("mixed text and image tool_result keeps text in the tool message", () => {
+    const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+      messages: [
+        {
+          role: "assistant",
+          content: [
+            { type: "tool_use", id: "call_1", name: "screenshot", input: {} },
+          ],
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "call_1",
+              content: [
+                { type: "text", text: "captured browser preview" },
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: "image/png",
+                    data: "IMG",
                   },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-      { translationPolicy: { allowToolResultImageSplit: true } },
-    );
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
 
     expect(out.messages[1]).toEqual(
       expect.objectContaining({ role: "tool", tool_call_id: "call_1" }),

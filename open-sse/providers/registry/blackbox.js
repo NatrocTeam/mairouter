@@ -1,3 +1,5 @@
+import { CLAUDE_API_HEADERS } from "../shared.js";
+
 export default {
   id: "blackbox",
   priority: 50,
@@ -21,9 +23,33 @@ export default {
     defaultMode: "auto",
   },
   transport: {
-    baseUrl: "https://api.blackbox.ai/v1/chat/completions",
+    baseUrl: "https://api.blackbox.ai/chat/completions",
     thinkingFormat: "openai",
   },
+  // Official docs expose OpenAI Chat Completions, Anthropic Messages, and
+  // OpenAI Responses protocols under separate endpoints. Keep Chat as the
+  // default, and use model-aware transports to avoid sending GPT models to
+  // Anthropic Messages or non-Codex models to Responses-only examples.
+  transports: [
+    {
+      format: "openai",
+      baseUrl: "https://api.blackbox.ai/chat/completions",
+      auth: { combined: true, header: "Authorization", scheme: "bearer" },
+    },
+    {
+      format: "claude",
+      baseUrl: "https://api.blackbox.ai/v1/messages",
+      headers: { ...CLAUDE_API_HEADERS },
+      auth: { combined: true, header: "Authorization", scheme: "bearer" },
+      modelPatterns: ["blackboxai/anthropic/*"],
+    },
+    {
+      format: "openai-responses",
+      baseUrl: "https://api.blackbox.ai/v1/responses",
+      auth: { combined: true, header: "Authorization", scheme: "bearer" },
+      modelPatterns: ["blackboxai/openai/*codex*"],
+    },
+  ],
   models: [
     {
       id: "claude-fable-5",

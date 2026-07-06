@@ -121,7 +121,7 @@ function assertTextOnlyToolResult(
 
       if (
         targetFormat === FORMATS.OPENAI &&
-        translationPolicy.allowToolResultImageSplit === true
+        translationPolicy.allowToolResultImageSplit !== false
       ) {
         assertImageSource(nested, targetFormat, nestedPath);
         continue;

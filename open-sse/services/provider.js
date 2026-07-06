@@ -1,4 +1,5 @@
 import { PROVIDERS } from "../config/providers.js";
+import { matchPattern } from "../providers/pricing.js";
 import {
   OPENAI_COMPAT_BASE,
   ANTHROPIC_COMPAT_BASE,
@@ -151,14 +152,34 @@ export function getTargetFormat(provider) {
   return config.format || "openai";
 }
 
+function transportMatchesModel(transport, model, upstreamModel) {
+  const patterns = transport.modelPatterns;
+  if (!Array.isArray(patterns) || patterns.length === 0) return true;
+  const candidates = [model, upstreamModel].filter(Boolean);
+  return patterns.some((pattern) =>
+    candidates.some((candidate) => matchPattern(pattern, candidate)),
+  );
+}
+
 // Resolve which transport to use for a provider given the client sourceFormat.
 // Multi-endpoint providers (transport.transports[]) pick the entry matching sourceFormat
-// to avoid lossy translation; falls back to the default transport when no match.
-export function resolveTransport(provider, sourceFormat) {
+// and, when declared, modelPatterns to avoid lossy or invalid endpoint routing.
+export function resolveTransport(
+  provider,
+  sourceFormat,
+  model = null,
+  upstreamModel = null,
+) {
   const config = PROVIDERS[provider];
   const transports = config?.transports;
   if (!Array.isArray(transports) || !transports.length) return null;
-  return transports.find((t) => t.format === sourceFormat) || null;
+  return (
+    transports.find(
+      (t) =>
+        t.format === sourceFormat &&
+        transportMatchesModel(t, model, upstreamModel),
+    ) || null
+  );
 }
 
 // Check if last message is from user

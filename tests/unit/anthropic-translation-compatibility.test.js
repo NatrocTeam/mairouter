@@ -107,7 +107,7 @@ describe("Anthropic cross-provider translation compatibility", () => {
     );
   });
 
-  it("rejects image nested inside tool_result by default", () => {
+  it("allows image nested inside tool_result for OpenAI targets", () => {
     const body = {
       messages: [
         {
@@ -134,6 +134,36 @@ describe("Anthropic cross-provider translation compatibility", () => {
 
     expect(() =>
       assertClaudeTranslationIsLossless(body, FORMATS.OPENAI),
+    ).not.toThrow();
+  });
+
+  it("rejects image nested inside tool_result for non-OpenAI targets", () => {
+    const body = {
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "toolu_1",
+              content: [
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: "image/png",
+                    data: "AAAA",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(() =>
+      assertClaudeTranslationIsLossless(body, FORMATS.KIRO),
     ).toThrowError(/image tool_result block.*not supported/);
   });
 
@@ -184,7 +214,7 @@ describe("Anthropic cross-provider translation compatibility", () => {
     ["base64", { type: "base64", media_type: "image/png", data: "AAAA" }],
     ["url", { type: "url", url: "https://example.com/a.png" }],
   ])(
-    "allows valid %s image nested inside tool_result when split is enabled",
+    "allows valid %s image nested inside tool_result for OpenAI targets",
     (_, source) => {
       const body = {
         messages: [
@@ -205,9 +235,7 @@ describe("Anthropic cross-provider translation compatibility", () => {
       };
 
       expect(() =>
-        assertClaudeTranslationIsLossless(body, FORMATS.OPENAI, {
-          translationPolicy: { allowToolResultImageSplit: true },
-        }),
+        assertClaudeTranslationIsLossless(body, FORMATS.OPENAI),
       ).not.toThrow();
     },
   );
@@ -272,9 +300,7 @@ describe("Anthropic cross-provider translation compatibility", () => {
       };
 
       expect(() =>
-        assertClaudeTranslationIsLossless(body, FORMATS.OPENAI, {
-          translationPolicy: { allowToolResultImageSplit: true },
-        }),
+        assertClaudeTranslationIsLossless(body, FORMATS.OPENAI),
       ).toThrowError(expected);
     },
   );
