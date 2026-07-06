@@ -6,8 +6,21 @@ import "./registerAll.js";
 import { translateRequest } from "../../open-sse/translator/index.js";
 import { FORMATS } from "../../open-sse/translator/formats.js";
 
-const T = (src, tgt, body, provider = null) =>
-  translateRequest(src, tgt, "m", body, true, null, provider);
+const T = (src, tgt, body, { provider = null, translationPolicy = {} } = {}) =>
+  translateRequest(
+    src,
+    tgt,
+    "m",
+    body,
+    true,
+    null,
+    provider,
+    null,
+    [],
+    null,
+    null,
+    translationPolicy,
+  );
 
 describe("Claude Code CLI context → OpenAI", () => {
   // claude-to-openai.js:24-27 — system array only maps .text; cache_control/non-text dropped
@@ -50,21 +63,24 @@ describe("Claude Code CLI context → OpenAI", () => {
     expect(JSON.stringify(out)).toContain("step-by-step plan");
   });
 
-  it("redacted_thinking fails closed instead of being silently dropped", () => {
-    expect(() =>
-      T(FORMATS.CLAUDE, FORMATS.OPENAI, {
-        messages: [
-          {
-            role: "assistant",
-            content: [
-              { type: "redacted_thinking", data: "ENCRYPTED_BLOB" },
-              { type: "text", text: "answer" },
-            ],
-          },
-          { role: "user", content: "go" },
-        ],
-      }),
-    ).toThrowError(/redacted_thinking block.*portable signed equivalent/);
+  it("redacted_thinking is converted to a placeholder instead of being dropped", () => {
+    const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+      messages: [
+        {
+          role: "assistant",
+          content: [
+            { type: "redacted_thinking", data: "ENCRYPTED_BLOB" },
+            { type: "text", text: "answer" },
+          ],
+        },
+        { role: "user", content: "go" },
+      ],
+    });
+
+    const json = JSON.stringify(out);
+    expect(json).toContain("[Redacted thinking block]");
+    expect(json).toContain("answer");
+    expect(json).not.toContain("ENCRYPTED_BLOB");
   });
 
   it("tool_result image block fails closed", () => {
@@ -99,5 +115,61 @@ describe("Claude Code CLI context → OpenAI", () => {
         ],
       }),
     ).toThrowError(/image tool_result block.*not supported/);
+  });
+
+  it("tool_result image block can be split when explicitly enabled", () => {
+    const out = T(
+      FORMATS.CLAUDE,
+      FORMATS.OPENAI,
+      {
+        messages: [
+          {
+            role: "assistant",
+            content: [
+              { type: "tool_use", id: "call_1", name: "screenshot", input: {} },
+            ],
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "tool_result",
+                tool_use_id: "call_1",
+                content: [
+                  { type: "text", text: "captured browser preview" },
+                  {
+                    type: "image",
+                    source: {
+                      type: "base64",
+                      media_type: "image/png",
+                      data: "IMG",
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      { translationPolicy: { allowToolResultImageSplit: true } },
+    );
+
+    expect(out.messages[1]).toEqual(
+      expect.objectContaining({ role: "tool", tool_call_id: "call_1" }),
+    );
+    expect(out.messages[1].content).toContain("captured browser preview");
+    expect(out.messages[1].content).toContain("forwarded");
+    expect(out.messages[2]).toEqual(
+      expect.objectContaining({
+        role: "user",
+        content: expect.arrayContaining([
+          expect.objectContaining({ text: expect.stringContaining("call_1") }),
+          expect.objectContaining({
+            type: "image_url",
+            image_url: { url: "data:image/png;base64,IMG" },
+          }),
+        ]),
+      }),
+    );
   });
 });

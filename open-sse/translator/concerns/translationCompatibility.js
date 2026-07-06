@@ -81,7 +81,12 @@ function assertImageSource(block, targetFormat, path) {
   }
 }
 
-function assertTextOnlyToolResult(block, targetFormat, path) {
+function assertTextOnlyToolResult(
+  block,
+  targetFormat,
+  path,
+  { stripList = [], translationPolicy = {} } = {},
+) {
   // is_error is handled by claude-to-openai.js which prefixes the content
   // with "[Tool Error]\n". No need to fail — the semantic survives lossily.
 
@@ -98,14 +103,37 @@ function assertTextOnlyToolResult(block, targetFormat, path) {
 
   for (let index = 0; index < block.content.length; index += 1) {
     const nested = block.content[index];
-    if (nested?.type !== CLAUDE_BLOCK.TEXT || typeof nested.text !== "string") {
-      incompatible(
-        targetFormat,
-        `${path}.content[${index}]`,
-        `${nested?.type ?? "unknown"} tool_result block`,
-        "is not supported by the target tool-message contract",
-      );
+    const nestedPath = `${path}.content[${index}]`;
+
+    if (nested?.type === CLAUDE_BLOCK.TEXT && typeof nested.text === "string") {
+      continue;
     }
+
+    if (nested?.type === CLAUDE_BLOCK.IMAGE) {
+      if (targetFormat === FORMATS.OPENAI && stripList.includes("image")) {
+        incompatible(
+          targetFormat,
+          nestedPath,
+          "image tool_result block",
+          "would be removed by the selected model translation policy",
+        );
+      }
+
+      if (
+        targetFormat === FORMATS.OPENAI &&
+        translationPolicy.allowToolResultImageSplit === true
+      ) {
+        assertImageSource(nested, targetFormat, nestedPath);
+        continue;
+      }
+    }
+
+    incompatible(
+      targetFormat,
+      nestedPath,
+      `${nested?.type ?? "unknown"} tool_result block`,
+      "is not supported by the target tool-message contract",
+    );
   }
 }
 
@@ -120,7 +148,7 @@ function assertTextOnlyToolResult(block, targetFormat, path) {
 export function assertClaudeTranslationIsLossless(
   body,
   targetFormat,
-  { stripList = [] } = {},
+  { stripList = [], translationPolicy = {} } = {},
 ) {
   if (!body || targetFormat === FORMATS.CLAUDE) return;
 
@@ -183,7 +211,10 @@ export function assertClaudeTranslationIsLossless(
         }
         assertImageSource(block, targetFormat, path);
       } else if (type === CLAUDE_BLOCK.TOOL_RESULT) {
-        assertTextOnlyToolResult(block, targetFormat, path);
+        assertTextOnlyToolResult(block, targetFormat, path, {
+          stripList,
+          translationPolicy,
+        });
       } else if (type === CLAUDE_BLOCK.TOOL_USE && block.caller) {
         incompatible(
           targetFormat,

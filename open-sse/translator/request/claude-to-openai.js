@@ -11,11 +11,40 @@ function stripAnthropicBillingHeader(text) {
   return text.replace(/^x-anthropic-billing-header:[^\n]*(?:\r?\n)?/i, "");
 }
 
+function convertClaudeImageToOpenAIPart(block) {
+  if (block.source?.type === "base64") {
+    return {
+      type: OPENAI_BLOCK.IMAGE_URL,
+      image_url: {
+        url: encodeDataUri(block.source.media_type, block.source.data),
+      },
+    };
+  }
+
+  if (block.source?.type === "url") {
+    return {
+      type: OPENAI_BLOCK.IMAGE_URL,
+      image_url: { url: block.source.url },
+    };
+  }
+
+  return null;
+}
+
 // Convert Claude request to OpenAI format
-export function claudeToOpenAIRequest(model, body, stream) {
+export function claudeToOpenAIRequest(
+  model,
+  body,
+  stream,
+  _credentials = null,
+  { translationPolicy = {}, stripList = [] } = {},
+) {
   // Keep this invariant on the exported translator too, even when callers
   // bypass translateRequest() and invoke this function directly.
-  assertClaudeTranslationIsLossless(body, FORMATS.OPENAI);
+  assertClaudeTranslationIsLossless(body, FORMATS.OPENAI, {
+    stripList,
+    translationPolicy,
+  });
 
   const result = {
     model: model,
@@ -54,7 +83,7 @@ export function claudeToOpenAIRequest(model, body, stream) {
   if (body.messages && Array.isArray(body.messages)) {
     for (let i = 0; i < body.messages.length; i++) {
       const msg = body.messages[i];
-      const converted = convertClaudeMessage(msg);
+      const converted = convertClaudeMessage(msg, { translationPolicy });
       if (converted) {
         // Handle array of messages (multiple tool results)
         if (Array.isArray(converted)) {
@@ -142,7 +171,7 @@ function fixMissingToolResponsesOpenAI(messages) {
 }
 
 // Convert single Claude message - returns single message or array of messages
-function convertClaudeMessage(msg) {
+function convertClaudeMessage(msg, { translationPolicy = {} } = {}) {
   const role =
     msg.role === ROLE.USER || msg.role === ROLE.TOOL
       ? ROLE.USER
@@ -158,6 +187,7 @@ function convertClaudeMessage(msg) {
     const parts = [];
     const toolCalls = [];
     const toolResults = [];
+    const toolResultImageParts = [];
 
     for (const block of msg.content) {
       switch (block.type) {
@@ -200,21 +230,11 @@ function convertClaudeMessage(msg) {
           }
           break;
 
-        case CLAUDE_BLOCK.IMAGE:
-          if (block.source?.type === "base64") {
-            parts.push({
-              type: OPENAI_BLOCK.IMAGE_URL,
-              image_url: {
-                url: encodeDataUri(block.source.media_type, block.source.data),
-              },
-            });
-          } else if (block.source?.type === "url") {
-            parts.push({
-              type: OPENAI_BLOCK.IMAGE_URL,
-              image_url: { url: block.source.url },
-            });
-          }
+        case CLAUDE_BLOCK.IMAGE: {
+          const imagePart = convertClaudeImageToOpenAIPart(block);
+          if (imagePart) parts.push(imagePart);
           break;
+        }
 
         case CLAUDE_BLOCK.TOOL_USE:
           toolCalls.push({
@@ -229,13 +249,37 @@ function convertClaudeMessage(msg) {
 
         case CLAUDE_BLOCK.TOOL_RESULT: {
           let resultContent = "";
+          const imageParts = [];
+
           if (typeof block.content === "string") {
             resultContent = block.content;
           } else if (Array.isArray(block.content)) {
-            resultContent = block.content
-              .filter((c) => c.type === CLAUDE_BLOCK.TEXT)
-              .map((c) => c.text)
-              .join("\n");
+            const textParts = [];
+            for (const nested of block.content) {
+              if (nested?.type === CLAUDE_BLOCK.TEXT) {
+                textParts.push(nested.text);
+              } else if (
+                nested?.type === CLAUDE_BLOCK.IMAGE &&
+                translationPolicy.allowToolResultImageSplit === true
+              ) {
+                const imagePart = convertClaudeImageToOpenAIPart(nested);
+                if (imagePart) imageParts.push(imagePart);
+              }
+            }
+            resultContent = textParts.join("\n");
+          }
+
+          if (imageParts.length > 0) {
+            const suffix = imageParts.length === 1 ? "" : "s";
+            const attachmentNote = `[Tool result contained ${imageParts.length} image attachment${suffix}; forwarded in the following user message.]`;
+            resultContent = resultContent
+              ? `${attachmentNote}\n${resultContent}`
+              : attachmentNote;
+            toolResultImageParts.push({
+              type: OPENAI_BLOCK.TEXT,
+              text: `[Tool result image attachment${suffix} from tool_use_id: ${block.tool_use_id}]`,
+            });
+            toolResultImageParts.push(...imageParts);
           }
 
           // Prefix error results so downstream providers see the failure
@@ -256,15 +300,20 @@ function convertClaudeMessage(msg) {
       }
     }
 
-    // If has tool results, return array of tool messages
+    // If has tool results, return tool messages first so OpenAI sees every
+    // assistant tool_call answered before any follow-up user content.
     if (toolResults.length > 0) {
-      if (parts.length > 0) {
-        return [
-          ...toolResults,
-          { role: ROLE.USER, content: collapseTextParts(parts) },
-        ];
+      const messages = [...toolResults];
+      if (toolResultImageParts.length > 0) {
+        messages.push({
+          role: ROLE.USER,
+          content: collapseTextParts(toolResultImageParts),
+        });
       }
-      return toolResults;
+      if (parts.length > 0) {
+        messages.push({ role: ROLE.USER, content: collapseTextParts(parts) });
+      }
+      return messages;
     }
 
     // If has tool calls, return assistant message with tool_calls

@@ -107,30 +107,56 @@ describe("Anthropic cross-provider translation compatibility", () => {
     );
   });
 
-  it.each(["image", "document", "search_result"])(
-    "rejects %s nested inside tool_result",
-    (type) => {
-      const nested =
-        type === "image"
-          ? {
-              type,
-              source: { type: "base64", media_type: "image/png", data: "AAAA" },
-            }
-          : type === "document"
-            ? {
-                type,
-                source: {
-                  type: "base64",
-                  media_type: "application/pdf",
-                  data: "PDF",
+  it("rejects image nested inside tool_result by default", () => {
+    const body = {
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "toolu_1",
+              content: [
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: "image/png",
+                    data: "AAAA",
+                  },
                 },
-              }
-            : {
-                type,
-                source: "https://example.com",
-                title: "result",
-                content: [{ type: "text", text: "x" }],
-              };
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(() =>
+      assertClaudeTranslationIsLossless(body, FORMATS.OPENAI),
+    ).toThrowError(/image tool_result block.*not supported/);
+  });
+
+  it.each([
+    [
+      "document",
+      {
+        type: "document",
+        source: { type: "base64", media_type: "application/pdf", data: "PDF" },
+      },
+    ],
+    [
+      "search_result",
+      {
+        type: "search_result",
+        source: "https://example.com",
+        title: "result",
+        content: [{ type: "text", text: "x" }],
+      },
+    ],
+  ])(
+    "rejects %s nested inside tool_result even when image split is enabled",
+    (type, nested) => {
       const body = {
         messages: [
           {
@@ -147,8 +173,109 @@ describe("Anthropic cross-provider translation compatibility", () => {
       };
 
       expect(() =>
-        assertClaudeTranslationIsLossless(body, FORMATS.OPENAI),
+        assertClaudeTranslationIsLossless(body, FORMATS.OPENAI, {
+          translationPolicy: { allowToolResultImageSplit: true },
+        }),
       ).toThrowError(new RegExp(`${type} tool_result block.*not supported`));
+    },
+  );
+
+  it.each([
+    ["base64", { type: "base64", media_type: "image/png", data: "AAAA" }],
+    ["url", { type: "url", url: "https://example.com/a.png" }],
+  ])(
+    "allows valid %s image nested inside tool_result when split is enabled",
+    (_, source) => {
+      const body = {
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "tool_result",
+                tool_use_id: "toolu_1",
+                content: [
+                  { type: "text", text: "screenshot captured" },
+                  { type: "image", source },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      expect(() =>
+        assertClaudeTranslationIsLossless(body, FORMATS.OPENAI, {
+          translationPolicy: { allowToolResultImageSplit: true },
+        }),
+      ).not.toThrow();
+    },
+  );
+
+  it("rejects nested tool_result image split when images are stripped", () => {
+    const body = {
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "toolu_1",
+              content: [
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: "image/png",
+                    data: "AAAA",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(() =>
+      assertClaudeTranslationIsLossless(body, FORMATS.OPENAI, {
+        stripList: ["image"],
+        translationPolicy: { allowToolResultImageSplit: true },
+      }),
+    ).toThrowError(
+      /image tool_result block.*removed by the selected model translation policy/,
+    );
+  });
+
+  it.each([
+    [
+      { type: "base64", media_type: "image/png", data: "" },
+      /malformed base64 image source/,
+    ],
+    [{ type: "url", url: "relative/image.png" }, /malformed URL image source/],
+  ])(
+    "rejects malformed nested tool_result image sources",
+    (source, expected) => {
+      const body = {
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "tool_result",
+                tool_use_id: "toolu_1",
+                content: [{ type: "image", source }],
+              },
+            ],
+          },
+        ],
+      };
+
+      expect(() =>
+        assertClaudeTranslationIsLossless(body, FORMATS.OPENAI, {
+          translationPolicy: { allowToolResultImageSplit: true },
+        }),
+      ).toThrowError(expected);
     },
   );
 
@@ -204,6 +331,40 @@ describe("Anthropic cross-provider translation compatibility", () => {
         FORMATS.OPENAI,
       ),
     ).toThrowError(/document block.*not supported by the selected model/);
+  });
+
+  it("fails nested tool_result images before model capability filtering", () => {
+    const body = {
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "toolu_1",
+              content: [
+                {
+                  type: "image",
+                  source: {
+                    type: "base64",
+                    media_type: "image/png",
+                    data: "AAAA",
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(() =>
+      assertClaudeModalitiesSupported(
+        body,
+        { vision: false, pdf: true },
+        FORMATS.OPENAI,
+      ),
+    ).toThrowError(/image block.*not supported by the selected model/);
   });
 
   it("fails before an explicit model strip policy can remove Claude images", () => {

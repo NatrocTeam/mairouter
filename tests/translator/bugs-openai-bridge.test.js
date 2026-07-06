@@ -5,8 +5,21 @@ import "./registerAll.js";
 import { translateRequest } from "../../open-sse/translator/index.js";
 import { FORMATS } from "../../open-sse/translator/formats.js";
 
-const T = (src, tgt, body, provider = null) =>
-  translateRequest(src, tgt, "m", body, true, null, provider);
+const T = (src, tgt, body, { provider = null, translationPolicy = {} } = {}) =>
+  translateRequest(
+    src,
+    tgt,
+    "m",
+    body,
+    true,
+    null,
+    provider,
+    null,
+    [],
+    null,
+    null,
+    translationPolicy,
+  );
 
 describe("bug: Claude → OpenAI bridge data loss", () => {
   it("image with source.type=url is preserved (NOT dropped)", () => {
@@ -28,8 +41,8 @@ describe("bug: Claude → OpenAI bridge data loss", () => {
     expect(json, "remote image url silently dropped").toContain("a.png");
   });
 
-  it("signed thinking fails closed instead of being silently dropped", () => {
-    const body = {
+  it("signed thinking is converted to text instead of being silently dropped", () => {
+    const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
       messages: [
         {
           role: "assistant",
@@ -44,10 +57,12 @@ describe("bug: Claude → OpenAI bridge data loss", () => {
         },
         { role: "user", content: "go" },
       ],
-    };
-    expect(() => T(FORMATS.CLAUDE, FORMATS.OPENAI, body)).toThrowError(
-      /Cannot translate claude to openai losslessly.*thinking block/,
-    );
+    });
+
+    const json = JSON.stringify(out);
+    expect(json).toContain("secret reasoning");
+    expect(json).toContain("answer");
+    expect(json).not.toContain("sig");
   });
 
   it("tool_result image fails closed instead of being stringified or dropped", () => {
@@ -84,13 +99,17 @@ describe("bug: Claude → OpenAI bridge data loss", () => {
     ).toThrowError(/image tool_result block.*not supported/);
   });
 
-  it("tool_result is_error fails closed instead of becoming success", () => {
-    expect(() =>
-      T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+  it("tool_result image can be split into a following user image message when enabled", () => {
+    const out = T(
+      FORMATS.CLAUDE,
+      FORMATS.OPENAI,
+      {
         messages: [
           {
             role: "assistant",
-            content: [{ type: "tool_use", id: "call_1", name: "f", input: {} }],
+            content: [
+              { type: "tool_use", id: "call_1", name: "shot", input: {} },
+            ],
           },
           {
             role: "user",
@@ -98,14 +117,113 @@ describe("bug: Claude → OpenAI bridge data loss", () => {
               {
                 type: "tool_result",
                 tool_use_id: "call_1",
-                is_error: true,
-                content: "boom",
+                content: [
+                  {
+                    type: "image",
+                    source: {
+                      type: "base64",
+                      media_type: "image/png",
+                      data: "ZZZ",
+                    },
+                  },
+                ],
               },
             ],
           },
         ],
+      },
+      { translationPolicy: { allowToolResultImageSplit: true } },
+    );
+
+    expect(out.messages[0].tool_calls[0].id).toBe("call_1");
+    expect(out.messages[1]).toEqual(
+      expect.objectContaining({ role: "tool", tool_call_id: "call_1" }),
+    );
+    expect(out.messages[1].content).toContain("forwarded");
+    expect(out.messages[2]).toEqual(
+      expect.objectContaining({
+        role: "user",
+        content: expect.arrayContaining([
+          expect.objectContaining({ text: expect.stringContaining("call_1") }),
+          expect.objectContaining({
+            type: "image_url",
+            image_url: { url: "data:image/png;base64,ZZZ" },
+          }),
+        ]),
       }),
-    ).toThrowError(/tool_result\.is_error.*no equivalent error flag/);
+    );
+    expect(out.messages[1].content).not.toContain("source");
+    expect(out.messages[1].content).not.toContain("[object Object]");
+  });
+
+  it("mixed text and image tool_result keeps text in tool message and forwards image", () => {
+    const out = T(
+      FORMATS.CLAUDE,
+      FORMATS.OPENAI,
+      {
+        messages: [
+          {
+            role: "assistant",
+            content: [
+              { type: "tool_use", id: "call_1", name: "shot", input: {} },
+            ],
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "tool_result",
+                tool_use_id: "call_1",
+                content: [
+                  { type: "text", text: "screenshot captured" },
+                  {
+                    type: "image",
+                    source: {
+                      type: "base64",
+                      media_type: "image/png",
+                      data: "ZZZ",
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      { translationPolicy: { allowToolResultImageSplit: true } },
+    );
+
+    expect(out.messages[1].role).toBe("tool");
+    expect(out.messages[1].content).toContain("screenshot captured");
+    expect(out.messages[1].content).toContain("forwarded");
+    expect(JSON.stringify(out.messages[2])).toContain(
+      "data:image/png;base64,ZZZ",
+    );
+  });
+
+  it("tool_result is_error is marked in tool content instead of becoming success", () => {
+    const out = T(FORMATS.CLAUDE, FORMATS.OPENAI, {
+      messages: [
+        {
+          role: "assistant",
+          content: [{ type: "tool_use", id: "call_1", name: "f", input: {} }],
+        },
+        {
+          role: "user",
+          content: [
+            {
+              type: "tool_result",
+              tool_use_id: "call_1",
+              is_error: true,
+              content: "boom",
+            },
+          ],
+        },
+      ],
+    });
+
+    const tool = out.messages.find((m) => m.role === "tool");
+    expect(tool.content).toContain("[Tool Error]\nboom");
   });
 
   // claude-to-openai.js:24-27 — system array only takes .text, drops cache_control/non-text

@@ -67,6 +67,7 @@ export function translateRequest(
   stripList = [],
   connectionId = null,
   _clientTool = null,
+  translationPolicy = {},
 ) {
   ensureInitialized();
   let result = body;
@@ -75,7 +76,10 @@ export function translateRequest(
   // Cross-provider formats cannot safely carry signed thinking, tool error
   // semantics, or multimodal tool results, so those requests fail closed.
   if (sourceFormat === FORMATS.CLAUDE && sourceFormat !== targetFormat) {
-    assertClaudeTranslationIsLossless(result, targetFormat, { stripList });
+    assertClaudeTranslationIsLossless(result, targetFormat, {
+      stripList,
+      translationPolicy,
+    });
   }
 
   // Strip explicit content types (opt-in via strip[] in PROVIDER_MODELS entry)
@@ -106,12 +110,13 @@ export function translateRequest(
 
   // If same format, skip translation steps
   if (sourceFormat !== targetFormat) {
+    const translatorOptions = { translationPolicy, stripList };
     // Direct route: if a translator is registered for this exact source:target
     // pair, use it instead of pivoting through OpenAI. This is lossless for
     // pairs like claude:kiro (avoids the claude->openai->kiro double-hop).
     const directFn = requestRegistry.get(`${sourceFormat}:${targetFormat}`);
     if (directFn) {
-      result = directFn(model, result, stream, credentials);
+      result = directFn(model, result, stream, credentials, translatorOptions);
     } else {
       // Step 1: source -> openai (if source is not openai)
       if (sourceFormat !== FORMATS.OPENAI) {
@@ -119,7 +124,13 @@ export function translateRequest(
           `${sourceFormat}:${FORMATS.OPENAI}`,
         );
         if (toOpenAI) {
-          result = toOpenAI(model, result, stream, credentials);
+          result = toOpenAI(
+            model,
+            result,
+            stream,
+            credentials,
+            translatorOptions,
+          );
           // Log OpenAI intermediate format
           reqLogger?.logOpenAIRequest?.(result);
         }
@@ -131,7 +142,13 @@ export function translateRequest(
           `${FORMATS.OPENAI}:${targetFormat}`,
         );
         if (fromOpenAI) {
-          result = fromOpenAI(model, result, stream, credentials);
+          result = fromOpenAI(
+            model,
+            result,
+            stream,
+            credentials,
+            translatorOptions,
+          );
         }
       }
     }

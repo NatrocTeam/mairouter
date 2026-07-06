@@ -13,6 +13,7 @@ import { createRequestLogger } from "../utils/requestLogger.js";
 import {
   getModelTargetFormat,
   getModelStrip,
+  getModelTranslationPolicy,
   getModelUpstreamId,
   getModelType,
   PROVIDER_ID_TO_ALIAS,
@@ -117,6 +118,7 @@ export async function handleChatCore({
   if (runtimeTransport && credentials)
     credentials.runtimeTransport = runtimeTransport;
   const stripList = getModelStrip(alias, model);
+  const translationPolicy = getModelTranslationPolicy(alias, model);
   const upstreamModel = getModelUpstreamId(alias, model);
 
   // Inject provider-level thinking config override (only if client hasn't set)
@@ -200,9 +202,17 @@ export async function handleChatCore({
   // Expose raw client headers to translators/executors for session-id resolution
   if (credentials) credentials.rawHeaders = clientRawRequest?.headers || {};
 
+  const caps = getCapabilitiesForModel(provider, model);
+  const effectiveTranslationPolicy = {
+    ...translationPolicy,
+    allowToolResultImageSplit:
+      translationPolicy.allowToolResultImageSplit === true &&
+      caps.vision === true &&
+      !stripList.includes("image"),
+  };
+
   // Auto-strip media blocks the model can't read (vision/audio/pdf) before translation.
   if (!passthrough) {
-    const caps = getCapabilitiesForModel(provider, model);
     if (sourceFormat === FORMATS.CLAUDE) {
       try {
         assertClaudeModalitiesSupported(body, caps, targetFormat);
@@ -261,6 +271,7 @@ export async function handleChatCore({
         stripList,
         connectionId,
         clientTool,
+        effectiveTranslationPolicy,
       );
     } catch (error) {
       if (isTranslationCompatibilityError(error)) {
