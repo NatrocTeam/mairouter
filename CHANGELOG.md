@@ -1,5 +1,19 @@
 # Changelog
 
+## v1.3.0 2026-07-06 [(e0faefc)](https://github.com/NatrocTeam/mairouter/commit/e0faefc569f7a24170cdc01d1f5a4303582a154c)
+
+### Added
+
+- **Extended usage analytics periods** — ported 90d, 180d, 365d, and all-time usage views from upstream 9router; added shared `USAGE_PERIOD_OPTIONS` and `USAGE_PERIOD_TO_SECONDS` in `src/lib/usagePeriods.js` for consistent handling across dashboard selectors, API validation, and DB aggregation
+- **Blackbox multi-protocol transport** — declared three separate transports (OpenAI Chat, Anthropic Messages, OpenAI Responses) with model-aware routing so GPT models are sent to Chat, Claude models to Messages, and Codex models to Responses endpoints
+- **Model-aware transport resolution** — `resolveTransport()` now accepts `model` and `upstreamModel` parameters to match transports by `modelPatterns`, preventing endpoint misrouting for multi-protocol providers
+- **Default tool_result image splitting for OpenAI targets** — Claude `tool_result` blocks containing images are now automatically split into tool messages and user image messages when translating to OpenAI format, without requiring explicit per-model `translationPolicy` configuration
+- **Regression tests** — `provider-transport.test.js` for model-aware Blackbox transport selection; `usage-periods.test.js` for period helpers and extended chart buckets
+
+### Removed
+
+- **Per-model translationPolicy** — removed `translationPolicy` field from model schema and `getModelTranslationPolicy()` helper; image splitting behavior is now determined at runtime by target format, model vision capability, and image strip list
+
 ## v1.2.2 2026-07-05 [(5140879)](https://github.com/NatrocTeam/mairouter/commit/5140879ab7f98b2f6d43145f08594992738f05a4)
 
 ### Fixed
